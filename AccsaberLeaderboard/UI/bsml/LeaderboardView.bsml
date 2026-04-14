@@ -1,0 +1,11 @@
+<!--A lot of this was stolen from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->
+<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+    <horizontal horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='100' pref-height='70'>
+        <vertical horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='10' pref-height='20'>
+            <vertical-icon-segments id='vertical-icon-segments' select-cell='OnCellSelected' />
+        </vertical>
+        <vertical horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='80' pref-height='70'>
+            <leaderboard id='leaderboard' cell-size='5.99' />
+        </vertical>
+    </horizontal>
+</bg>
