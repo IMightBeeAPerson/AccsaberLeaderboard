@@ -1,14 +1,13 @@
-﻿using IPA;
+﻿using AccsaberLeaderboard.Configuration;
+using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
+using System.Reflection;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using HarmonyLib;
+using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
+using AccsaberLeaderboard.Installers;
 
 namespace AccsaberLeaderboard
 {
@@ -17,6 +16,7 @@ namespace AccsaberLeaderboard
     {
         internal static Plugin Instance { get; private set; }
         internal static IPALogger Log { get; private set; }
+        internal static HarmonyLib.Harmony Harmony { get; private set; }
 
         [Init]
         /// <summary>
@@ -27,7 +27,7 @@ namespace AccsaberLeaderboard
         public void Init(IPALogger logger, Config conf)
         {
             Instance = this;
-            PluginConfig.Instance = conf.Generated<Configuration.PluginConfig>();
+            PluginConfig.Instance = conf.Generated<PluginConfig>();
             Log = logger;
         }
 
@@ -47,8 +47,9 @@ namespace AccsaberLeaderboard
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-            new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
-
+            //new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
+            Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
+            Harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
         [OnExit]

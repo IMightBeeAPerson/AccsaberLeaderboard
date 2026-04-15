@@ -10,7 +10,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 {
     [ViewDefinition("AccsaberLeaderboard.UI.bsml.PanelView.bsml")]
     [HotReload(RelativePathToLayout = @"..\UI\bsml\PanelView.bsml")]
-    internal sealed class PanelViewController: BSMLAutomaticViewController
+    internal class PanelViewController : BSMLAutomaticViewController
     {
+        private void Awake()
+        {
+            Plugin.Log.Info("PanelViewController Awake");
+        }
     }
 }

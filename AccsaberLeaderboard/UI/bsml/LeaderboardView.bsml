@@ -5,7 +5,7 @@
             <vertical-icon-segments id='vertical-icon-segments' select-cell='OnCellSelected' />
         </vertical>
         <vertical horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='80' pref-height='70'>
-            <leaderboard id='leaderboard' cell-size='5.99' />
+            <table-view id='leaderboard' cell-size='5.99' />
         </vertical>
     </horizontal>
 </bg>

@@ -18,7 +18,7 @@ namespace AccsaberLeaderboard.API
         {
             try
             {
-                IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page, 10).ConfigureAwait(false);
+                IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, 10).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
                 return [.. scores.Select(score => new LeaderboardTableView.ScoreData(GetScore(score), GetPlayerName(score), GetRank(score), (bool)score["fullCombo"]))];
             } catch (Exception e)
             {

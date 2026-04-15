@@ -41,6 +41,14 @@
     <DisableZipRelease>True</DisableZipRelease>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony, Version=2.10.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Libs\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="SiraUtil, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Plugins\SiraUtil.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -62,10 +70,6 @@
     </Reference>
     <Reference Include="BSML">
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Zenject">
-      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BeatmapCore">
@@ -112,6 +116,14 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.VRModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Zenject, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\BSManager\BSInstances\1.40.8\Beat Saber_Data\Managed\Zenject.dll</HintPath>
+    </Reference>
+    <Reference Include="Zenject-usage, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AccsaberAPI.cs" />
@@ -119,6 +131,10 @@
     <Compile Include="API\HelpfulPaths.cs" />
     <Compile Include="API\Throttler.cs" />
     <Compile Include="Calculators\APCalc.cs" />
+    <Compile Include="Harmony\LoadPatch.cs" />
+    <Compile Include="Harmony\SldvcPatch.cs" />
+    <Compile Include="Installers\InstallerHelper.cs" />
+    <Compile Include="Installers\MainUIInstaller.cs" />
     <Compile Include="Models\APCategory.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
@@ -144,8 +160,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Containers\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
