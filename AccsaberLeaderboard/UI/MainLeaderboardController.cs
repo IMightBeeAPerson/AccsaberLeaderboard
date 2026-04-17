@@ -26,7 +26,7 @@ namespace AccsaberLeaderboard.UI
 
         public override bool ShowForLevel(IPreviewBeatmapLevel selectedLevel)
         {
-            return true;
+            return true;// _leaderboardViewController.ValidMapSelected;
         }
         public void Initialize()
         {

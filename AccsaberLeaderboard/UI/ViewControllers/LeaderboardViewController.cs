@@ -1,11 +1,19 @@
-﻿using BeatSaberMarkupLanguage.Attributes;
+﻿using AccsaberLeaderboard.API;
+using AccsaberLeaderboard.Harmony;
+using AccsaberLeaderboard.Models;
+using BeatSaberMarkupLanguage.Attributes;
+using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using AccsaberLeaderboard.API;
+using UnityEngine;
 using Zenject;
-using JetBrains.Annotations;
+
+using static LeaderboardTableView;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -14,17 +22,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
     internal class LeaderboardViewController : BSMLAutomaticViewController
     {
 #pragma warning disable IDE0044, IDE0051
-        #region Static Variables & Fields
-
-        //private static StandardLevelDetailViewController sldvc => SldvcPatch.Instance;
-
-        #endregion
 
         #region Instance Variables & Fields
 
-        [UsedImplicitly] private readonly List<LeaderboardTableView.ScoreData> _scores = scoreDatas;
-        [UsedImplicitly] private string currentHash;
-        [UsedImplicitly] private BeatmapDifficulty currentDifficulty;
+        private readonly List<AccsaberScoreData> _scores = scoreDatas;
+        private string currentHash;
+        private BeatmapDifficulty currentDifficulty;
+
+        public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
 
         #endregion
 
@@ -36,25 +41,28 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #region UI Values & Components
 
-        [UIComponent("leaderboard"), UsedImplicitly]
-        private TableView leaderboard;
+        [UIComponent("leaderboard")]
+        private CustomCellListTableData leaderboard;
 
-        [UIComponent("vertical-icon-segments"), UsedImplicitly]
+        [UIValue("leaderboard-infos")]
+        private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreData.AccsaberScoreDataInfo(score))];
+
+        [UIComponent("vertical-icon-segments")]
         private SegmentedControl iconSegments;
 
-        private static readonly List<LeaderboardTableView.ScoreData> scoreDatas = [];
+        private static readonly List<AccsaberScoreData> scoreDatas = [];
 
         #endregion
 
         #region UI Actions
 
-        [UIAction("OnCellSelected"), UsedImplicitly]
+        [UIAction("OnCellSelected")]
         private void OnCellSelected(SegmentedControl _, int index)
         {
             // Handle segment selection if needed
         }
 
-        [UIAction("#post-parse"), UsedImplicitly]
+        [UIAction("#post-parse")]
         private void PostParse()
         {
             // Subscribe to map selection event
@@ -66,9 +74,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
+            SldvcPatch.SldvcSet += TrySubscribeToMapSelection;
         }
-        //protected void OnEnable() { }
-        //protected void OnDisable() { }
 
         #endregion
 
@@ -81,6 +88,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             }
         }
 
+        private void TryUpdateCurrentMap()
+        {
+            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
+            {
+                OnDifficultyBeatmapChanged(sldvc, sldvc.selectedDifficultyBeatmap);
+            }
+        }
+
         private void OnDifficultyBeatmapChanged(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
         {
             if (beatmap == null || beatmap.level == null)
@@ -88,7 +103,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
             string levelId = beatmap.level.levelID;
-            string hash = null;
+            string hash;
             if (levelId.StartsWith("custom_level_"))
                 hash = levelId.Substring("custom_level_".Length);
             else
@@ -98,73 +113,73 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             currentDifficulty = beatmap.difficulty;
 
             // Optionally, reload leaderboard for the new map
-            _ = LoadLeaderboardAsync(currentHash, currentDifficulty);
-        }
-
-        private void TryUpdateCurrentMap()
-        {
-            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
-            {
-                OnDifficultyBeatmapChanged(sldvc, sldvc.selectedDifficultyBeatmap);
-            }
+            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
         }
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
-            LeaderboardTableView.ScoreData[] scores = await AccsaberAPI.GetScoreData(1, hash, diff);
+            AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(1, hash, diff);
             _scores.Clear();
             if (scores is not null)
                 _scores.AddRange(scores);
 
-            leaderboard.SetDataSource(new ScoreTableDataSource(_scores), reloadData: true);
+            //leaderboard.SetDataSource(new AccsaberLeaderboardTableView(_scores), reloadData: true);
+            IEnumerator ReloadData()
+            {
+                yield return new WaitForEndOfFrame();
+                leaderboard.data = LeaderboardInfos;
+                leaderboard.tableView.ReloadData();
+            }
+            StartCoroutine(ReloadData());
         }
 
         // DataSource for TableView
-        private class ScoreTableDataSource(List<LeaderboardTableView.ScoreData> scores) : TableView.IDataSource
+        /*private class AccsaberLeaderboardTableView(List<AccsaberScoreData> scores) : LeaderboardTableView
         {
-            private readonly List<LeaderboardTableView.ScoreData> _scores = scores;
+            private new List<AccsaberScoreData> _scores = scores;
+            //[SerializeField] private new float _rowHeight = 6f;
 
-            public int NumberOfCells()
+            public override TableCell CellForIdx(TableView tableView, int idx)
             {
-                return _scores.Count;
-            }
-
-            public float CellSize()
-            {
-                return 6f; // Match your BSML cell-size
-            }
-
-            public TableCell CellForIdx(TableView tableView, int idx)
-            {
-                // You should implement a custom TableCell for your leaderboard row
-                // For now, use a basic cell
-                LeaderboardCell cell = tableView.DequeueReusableCellForIdentifier("LeaderboardCell") as LeaderboardCell;
-                cell ??= new LeaderboardCell
-                    {
-                        reuseIdentifier = "LeaderboardCell"
-                    };
-                LeaderboardTableView.ScoreData score = _scores[idx];
+                AccsaberLeaderboardTableCell cell = tableView.DequeueReusableCellForIdentifier("AccsaberLeaderboardTableCell") as AccsaberLeaderboardTableCell;
+                cell ??= new AccsaberLeaderboardTableCell
+                {
+                    reuseIdentifier = "AccsaberLeaderboardTableCell"
+                };
+                AccsaberScoreData score = _scores[idx];
                 cell.SetData(score);
                 return cell;
+            }
+
+            public override void SetScores(List<ScoreData> scores, int specialScorePos)
+            {
+                _scores = [.. scores.Cast<AccsaberScoreData>()];
+                _tableView.SetDataSource(this, reloadData: true);
             }
         }
 
         // Example TableCell implementation
-        private class LeaderboardCell : TableCell
+        private class AccsaberLeaderboardTableCell : LeaderboardTableCell
         {
-            private TMPro.TextMeshProUGUI _text;
+            //private TMPro.TextMeshProUGUI _text;
+
+            //public float AP;
 
             protected override void Start()
             {
                 base.Start();
-                _text = gameObject.AddComponent<TMPro.TextMeshProUGUI>();
-                _text.fontSize = 3;
+                //_text = gameObject.AddComponent<TMPro.TextMeshProUGUI>();
+                //_text.fontSize = 3;
             }
 
-            public void SetData(LeaderboardTableView.ScoreData data)
+            public void SetData(AccsaberScoreData data)
             {
-                _text.text = $"{data.rank}. {data.playerName} - {data.score}";
+                //_text.text = $"#{data.rank} {data.playerName} - {data.AP}ap {data.Acc:N4}%";
+                rank = data.rank;
+                playerName = data.playerName;
+                score = data.score;
+                showFullCombo = data.fullCombo;
             }
-        }
+        }//*/
     }
 }

@@ -14,12 +14,12 @@ namespace AccsaberLeaderboard.API
     internal static class AccsaberAPI
     {
         private static readonly Throttler throttler = new(400, 60);
-        public static async Task<LeaderboardTableView.ScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
+        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
         {
             try
             {
                 IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, 10).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
-                return [.. scores.Select(score => new LeaderboardTableView.ScoreData(GetScore(score), GetPlayerName(score), GetRank(score), (bool)score["fullCombo"]))];
+                return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetPlayerName(score), GetRank(score), GetFullCombo(score), GetPP(score), GetAcc(score)))];
             } catch (Exception e)
             {
                 Plugin.Log.Error("Failure to get score data for map.");
@@ -38,6 +38,8 @@ namespace AccsaberLeaderboard.API
         public static int GetRank(JToken scoreData) => (int)scoreData["rank"];
         public static string GetPlayerName(JToken scoreData) => scoreData["userName"].ToString();
         public static float GetAcc(JToken scoreData) => (float)scoreData["accuracy"];
+        public static int GetMistakes(JToken scoreData) => (int)scoreData["misses"] + (int)scoreData["wallHits"] + (int)scoreData["bombHits"] + (int)scoreData["badCuts"];
+        public static bool GetFullCombo(JToken scoreData) => GetMistakes(scoreData) == 0;
         public static async Task<int> GetMaxScore(string hash, int diffNum, string modeName) =>
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum))))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
@@ -50,7 +52,7 @@ namespace AccsaberLeaderboard.API
             return JToken.Parse(dataStr);
         }
         public static float GetPP(JToken scoreData) => (float)scoreData["ap"];
-        public static int GetScore(JToken scoreData) => (int)scoreData["baseScore"];
+        public static int GetScore(JToken scoreData) => (int)scoreData["score"];
         public static async Task<float> GetProfilePP(string userId)
         {
             return (float)JToken.Parse(await CallAPI_String(string.Format(APAPI_PLAYERID, userId)).ConfigureAwait(false))?["ap"];

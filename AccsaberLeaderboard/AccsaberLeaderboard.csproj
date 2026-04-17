@@ -135,6 +135,7 @@
     <Compile Include="Harmony\SldvcPatch.cs" />
     <Compile Include="Installers\InstallerHelper.cs" />
     <Compile Include="Installers\MainUIInstaller.cs" />
+    <Compile Include="Models\AccsaberScoreData.cs" />
     <Compile Include="Models\APCategory.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
