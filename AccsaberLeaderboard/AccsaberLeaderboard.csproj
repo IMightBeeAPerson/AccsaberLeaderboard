@@ -169,5 +169,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\you.png" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\accReloaded.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -2,6 +2,6 @@
 {
     internal enum APCategory
     {
-        None, True, Standard, Tech
+        None, True, Standard, Tech, Overall
     }
 }

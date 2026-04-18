@@ -1,15 +1,9 @@
 ﻿using AccsaberLeaderboard.Configuration;
 using IPA;
-using IPA.Config;
 using IPA.Config.Stores;
 using System.Reflection;
-using UnityEngine;
-using HarmonyLib;
-using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
-using AccsaberLeaderboard.Installers;
 using System.Threading.Tasks;
-using BS_Utils.Utilities;
 
 namespace AccsaberLeaderboard
 {

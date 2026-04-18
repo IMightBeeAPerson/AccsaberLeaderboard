@@ -1,20 +1,17 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-    <vertical horizontal-fit='PreferredSize' vertical-fit='PreferredSize' spacing='2' align='Center'>
-        <horizontal align='Center'>
-            <text text='Player:' font-size='3.5' />
-            <text text='{playerName}' id='playerName' font-size='3.5' color='#4af' />
-        </horizontal>
-        <horizontal align='Center'>
-            <text text='Rank:' font-size='3' />
-            <text text='{playerRank}' id='playerRank' font-size='3' color='#fa4' />
-        </horizontal>
-        <horizontal align='Center'>
-            <text text='AP:' font-size='3' />
-            <text text='{playerAP}' id='playerAP' font-size='3' color='#af4' />
-        </horizontal>
-        <horizontal align='Center'>
-            <text text='Accuracy:' font-size='3' />
-            <text text='{playerAccuracy}' id='playerAccuracy' font-size='3' color='#4fa' />
-        </horizontal>
+  <horizontal id='panelContainer' pref-width='100' pref-height='20' bg='panel-top' child-alignment='MiddleLeft'>
+    <!-- Logo -->
+    <image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='20'/>
+
+    <!-- Ranking Labels (vertically grouped, size-controlled) -->
+    <vertical pref-width='50' child-alignment='MiddleCenter'>
+      <text id='globalRankText' text='Global' font-size='7'/>
+      <text id='countryRankText' text='Country' font-size='7'/>
     </vertical>
+
+    <vertical pref-width='30'>
+      <text text='Total AP' font-color='#AAA' font-size='7'/>
+      <text id='TotalAPText' text='0ap' font-size='7'/>
+    </vertical>
+  </horizontal>
 </bg>
