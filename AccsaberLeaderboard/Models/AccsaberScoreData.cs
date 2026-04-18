@@ -1,4 +1,9 @@
-﻿using BeatSaberMarkupLanguage.Attributes;
+﻿using AccsaberLeaderboard.Utils;
+using BeatSaberMarkupLanguage.Attributes;
+using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.TypeHandlers;
+using System.Collections;
+using UnityEngine;
 
 namespace AccsaberLeaderboard.Models
 {
@@ -9,12 +14,21 @@ namespace AccsaberLeaderboard.Models
 
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
+            private readonly AccsaberScoreData scoreData = scoreData;
+
             [UIValue(nameof(Score))] public string Score => $"<color=#AAA>{scoreData.score:N0}</color>";
-            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName;
+
+            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(20);
+
             [UIValue(nameof(Rank))] public string Rank => $"<color=#FA0>#{scoreData.rank}</color>";
+
             [UIValue(nameof(FullCombo))] public bool FullCombo => scoreData.fullCombo;
+
             [UIValue(nameof(AP))] public string AP => $"<color=#A0F>{scoreData.AP:N2}ap</color>";
-            [UIValue(nameof(Acc))] public string Acc => $"<color=#0D0>{scoreData.Acc * 100f :N4}%</color>";
+
+            [UIValue(nameof(Acc))] public string Acc => $"<color=#0D0>{scoreData.Acc * 100f:N4}%</color>";
+
+            [UIValue(nameof(FontSize))] public readonly float FontSize = 3f;
         }
     }
 }

@@ -8,6 +8,8 @@ using HarmonyLib;
 using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 using AccsaberLeaderboard.Installers;
+using System.Threading.Tasks;
+using BS_Utils.Utilities;
 
 namespace AccsaberLeaderboard
 {
@@ -18,13 +20,20 @@ namespace AccsaberLeaderboard
         internal static IPALogger Log { get; private set; }
         internal static HarmonyLib.Harmony Harmony { get; private set; }
 
+        public string PlayerID { get
+            {
+                if (playerID is null) LoadPlayerID().GetAwaiter().GetResult();
+                return playerID;
+            } }
+        private string playerID = null;
+
         [Init]
         /// <summary>
         /// Called when the plugin is first loaded by IPA (either when the game starts or when the plugin is enabled if it starts disabled).
         /// [Init] methods that use a Constructor or called before regular methods like InitWithConfig.
         /// Only use [Init] with one Constructor.
         /// </summary>
-        public void Init(IPALogger logger, Config conf)
+        public void Init(IPALogger logger, IPA.Config.Config conf)
         {
             Instance = this;
             PluginConfig.Instance = conf.Generated<PluginConfig>();
@@ -46,17 +55,23 @@ namespace AccsaberLeaderboard
         [OnStart]
         public void OnApplicationStart()
         {
-            Log.Debug("OnApplicationStart");
+            //Log.Debug("OnApplicationStart");
             //new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
             Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
+            //BSEvents.menuSceneActive += () => Task.Run(LoadPlayerID);
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
-            Log.Debug("OnApplicationQuit");
+            //Log.Debug("OnApplicationQuit");
 
+        }
+
+        private async Task LoadPlayerID()
+        {
+            playerID = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
         }
     }
 }

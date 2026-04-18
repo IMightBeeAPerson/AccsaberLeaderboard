@@ -3,17 +3,15 @@ using AccsaberLeaderboard.Harmony;
 using AccsaberLeaderboard.Models;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
-using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
-
-using static LeaderboardTableView;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -28,6 +26,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private readonly List<AccsaberScoreData> _scores = scoreDatas;
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
+        private int page;
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
 
@@ -71,20 +70,50 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             TryUpdateCurrentMap();
         }
 
+        [UIAction("OnPageUp")]
+        private void OnPageUp()
+        {
+            if (page == 1) return; // Can't go back from the first page
+            page--;
+            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+        }
+
+        [UIAction("OnYouClicked")]
+        private void OnYouClicked()
+        {
+            Task.Run(async () =>
+            {
+                int playerPage = await GetPlayerPage();
+                if (playerPage != page)
+                {
+                    page = playerPage;
+                    await LoadLeaderboardAsync(currentHash, currentDifficulty);
+                }
+            });
+        }
+
+        [UIAction("OnPageDown")]
+        private void OnPageDown()
+        {
+            page++;
+            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+        }
+
+        #endregion
         private void Awake()
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
             SldvcPatch.SldvcSet += TrySubscribeToMapSelection;
         }
-
-        #endregion
-
         private void TrySubscribeToMapSelection()
         {
             if (sldvc is not null)
             {
-                sldvc.didChangeDifficultyBeatmapEvent -= OnDifficultyBeatmapChanged;
-                sldvc.didChangeDifficultyBeatmapEvent += OnDifficultyBeatmapChanged;
+                void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap) => UpdateDiff(beatmap);
+                void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType) => TryUpdateCurrentMap();
+
+                sldvc.didChangeDifficultyBeatmapEvent += Handler1;
+                sldvc.didChangeContentEvent += Handler2;
             }
         }
 
@@ -92,11 +121,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
             {
-                OnDifficultyBeatmapChanged(sldvc, sldvc.selectedDifficultyBeatmap);
+                UpdateDiff(sldvc.selectedDifficultyBeatmap);
             }
         }
 
-        private void OnDifficultyBeatmapChanged(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
+        private void UpdateDiff(IDifficultyBeatmap beatmap)
         {
             if (beatmap == null || beatmap.level == null)
                 return;
@@ -111,15 +140,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             currentHash = hash;
             currentDifficulty = beatmap.difficulty;
+            page = 1; // reset to first page on map change
 
-            // Optionally, reload leaderboard for the new map
+            // reload leaderboard for the new map
             Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
         }
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
-            AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(1, hash, diff);
             _scores.Clear();
+            AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(page, hash, diff);
             if (scores is not null)
                 _scores.AddRange(scores);
 
@@ -131,6 +161,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 leaderboard.tableView.ReloadData();
             }
             StartCoroutine(ReloadData());
+        }
+
+        private async Task<int> GetPlayerPage()
+        {
+            return (int)Math.Ceiling(AccsaberAPI.GetRank(await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString())) / (float)AccsaberAPI.PAGE_LENGTH);
         }
 
         // DataSource for TableView

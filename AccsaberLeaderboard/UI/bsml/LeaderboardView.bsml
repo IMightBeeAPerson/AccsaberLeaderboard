@@ -1,22 +1,32 @@
-<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-    <vertical horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='100' pref-height='80' spacing='0' anchor-pos-y='-5'>
-        <!-- Title -->
-        <horizontal horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-height='8' align='Center'>
-            <text text='AccSaber Leaderboard' font-size='6' align='Center' />
-        </horizontal>
-        <!-- Leaderboard Table -->
-        <horizontal horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='100' pref-height='60' align='Center'>
-          <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='5'>
-            <horizontal horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='100' pref-height='5' spacing='1'>
-                <text text='~Rank' font-size='4' align='Left'/>
-                <text text='~PlayerName' font-size='4' align='Left'/>
-                <text text='~AP' font-size='4' align='Right'/>
-                <text text='~Acc' font-size='4' align='Right'/>
-                <text text='~Score' font-size='4' align='Right'/>
-            </horizontal>
-          </custom-list>
-        </horizontal>
-    </vertical>
+<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
+  <vertical pref-width='80' pref-height='80' spacing='1' anchor-pos-y='-5'>
+
+    <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='5.5'>
+      <horizontal pref-width='80' pref-height='5.4' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='round-rect-panel'>
+        <vertical pref-width='10' child-alignment='MiddleCenter'>
+          <text text='~Rank' align='Left' font-size='~FontSize'/>
+        </vertical>
+        <vertical pref-width='30' child-alignment='MiddleCenter'>
+          <text text='~PlayerName' align='Left' font-size='~FontSize'/>
+        </vertical>
+        <vertical pref-width='14' child-alignment='MiddleCenter'>
+          <text text='~AP' align='Right' font-size='~FontSize'/>
+        </vertical>
+        <vertical pref-width='14' child-alignment='MiddleCenter'>
+          <text text='~Acc' align='Center' font-size='~FontSize'/>
+        </vertical>
+        <vertical pref-width='12' child-alignment='MiddleCenter'>
+          <text text='~Score' align='Right' font-size='~FontSize'/>
+        </vertical>
+      </horizontal>
+    </custom-list>
+  </vertical>
+
+  <vertical anchor-pos-x='50' anchor-pos-y='10' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='25' pref-width='8' bg='round-rect-panel'>
+    <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
+    <clickable-image src='AccsaberLeaderboard.Resources.you.png' pref-width='5' pref-height='5' on-click='OnYouClicked'/>
+    <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
+  </vertical>
 </bg>
 
-<!--A lot of this was stolen from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->
+<!--A lot of this was inspired from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->

@@ -45,6 +45,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Libs\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="BS_Utils, Version=1.12.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Plugins\BS_Utils.dll</HintPath>
+    </Reference>
     <Reference Include="SiraUtil, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Plugins\SiraUtil.dll</HintPath>
@@ -144,6 +148,7 @@
     <Compile Include="UI\MainLeaderboardController.cs" />
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
+    <Compile Include="Utils\MiscUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />
@@ -161,6 +166,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\you.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

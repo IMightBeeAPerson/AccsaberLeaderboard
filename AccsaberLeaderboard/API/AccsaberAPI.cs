@@ -14,11 +14,12 @@ namespace AccsaberLeaderboard.API
     internal static class AccsaberAPI
     {
         private static readonly Throttler throttler = new(400, 60);
+        public static readonly int PAGE_LENGTH = 10;
         public static async Task<AccsaberScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
         {
             try
             {
-                IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, 10).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
+                IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, PAGE_LENGTH).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
                 return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetPlayerName(score), GetRank(score), GetFullCombo(score), GetPP(score), GetAcc(score)))];
             } catch (Exception e)
             {
@@ -44,7 +45,7 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum))))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<JToken> GetScoreData(string userId, string hash, string diff, string mode, bool quiet = false, CancellationToken ct = default)
+        public static async Task<JToken> GetScoreData(string userId, string hash, string diff, CancellationToken ct = default)
         {
             string reloadedDiff = DiffNumToReloadedDiff(FromDiff((BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), diff)));
             string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), ct: ct).ConfigureAwait(false);
