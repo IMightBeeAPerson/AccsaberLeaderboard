@@ -20,7 +20,7 @@ namespace AccsaberLeaderboard.API
             try
             {
                 IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, PAGE_LENGTH).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
-                return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetPlayerName(score), GetRank(score), GetFullCombo(score), GetPP(score), GetAcc(score)))];
+                return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetUserName(score), GetRank(score), GetFullCombo(score), GetAP(score), GetAcc(score), GetPlayerId(score)))];
             }
             catch (Exception e)
             {
@@ -38,13 +38,16 @@ namespace AccsaberLeaderboard.API
         public static bool AreRatingsNull(JToken diffData) => diffData["complexity"] is null;
         public static int GetMaxScore(JToken diffData) => (int)(diffData["maxScore"] ?? 0);
         public static int GetRank(JToken scoreData) => (int)scoreData["rank"];
-        public static string GetPlayerName(JToken scoreData) => scoreData["userName"].ToString();
+        public static string GetUserName(JToken scoreData) => scoreData["userName"].ToString();
         public static float GetAcc(JToken scoreData) => (float)scoreData["accuracy"];
         public static int GetMistakes(JToken scoreData) => (int)scoreData["misses"] + (int)scoreData["wallHits"] + (int)scoreData["bombHits"] + (int)scoreData["badCuts"];
         public static bool GetFullCombo(JToken scoreData) => GetMistakes(scoreData) == 0;
-        public static float GetPP(JToken scoreData) => (float)scoreData["ap"];
+        public static float GetAP(JToken scoreData) => (float)scoreData["ap"];
         public static int GetScore(JToken scoreData) => (int)scoreData["score"];
+        public static string GetPlayerId(JToken scoreData) => scoreData["userId"].ToString();
         public static string GetPlayerTitle(JToken playerData) => playerData["levelTitle"]?.ToString();
+        public static int GetPlayerLevel(JToken playerData) => (int)playerData["level"];
+        public static string GetPlayerName(JToken playerData) => playerData["name"].ToString();
         public static JToken GetPlayerStats(JToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());

@@ -1,14 +1,15 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Models;
+using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.TypeHandlers;
 using BeatSaberMarkupLanguage.ViewControllers;
+using BS_Utils.Utilities;
 using Newtonsoft.Json.Linq;
-using System.Collections;
+using System;
 using System.Threading.Tasks;
 using TMPro;
-using UnityEngine;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -25,6 +26,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
+            BSEvents.levelCleared += SucceededMap;
             Task.Run(UpdatePlayer);
         }
 
@@ -35,38 +37,24 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             TotalAPText.text = $"<color=#A0F>{totalAP:N2}ap</color>";
         }
 
+        private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)
+        {
+            Task.Run(async () => { await Task.Delay(5000); await UpdatePlayer(); });
+        }
         private async Task UpdatePlayer()
         {
             try
             {
                 JToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
                 JToken overallPlayerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
-                SetRanks(AccsaberAPI.GetGlobalRank(overallPlayerStats), AccsaberAPI.GetCountryRank(overallPlayerStats), AccsaberAPI.GetPP(overallPlayerStats));
+                SetRanks(AccsaberAPI.GetGlobalRank(overallPlayerStats), AccsaberAPI.GetCountryRank(overallPlayerStats), AccsaberAPI.GetAP(overallPlayerStats));
 
-                BackgroundableHandler.TrySetBackgroundColor(panelContainer, GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6');
+                BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6');
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Plugin.Log.Error($"Error updating player info: {ex}");
             }
-        }
-        private static string GetColorForTitle(string title)
-        { //Newcomer Apprentice Adept Skilled Expert Master Grandmaster Legend Transendent Mythic Ascendant
-            return title switch
-            { // Made up colors for now, later get them through the API if possible
-                "Newcomer" => "#999",
-                "Apprentice" => "#05F",
-                "Adept" => "#2F4",
-                "Skilled" => "#A70",
-                "Expert" => "#EEE",
-                "Master" => "#FF0",
-                "Grandmaster" => "#80E",
-                "Legend" => "#FA0",
-                "Transcendent" => "#0FF",
-                "Mythic" => "#F00",
-                "Ascendant" => "#F38",
-                _ => "#FFFFFF"
-            };
         }
     }
 }

@@ -1,17 +1,22 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Harmony;
 using AccsaberLeaderboard.Models;
+using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using Zenject;
+using static AccsaberLeaderboard.Models.AccsaberScoreData;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -40,25 +45,48 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #region UI Values & Components
 
+        [UIParams] private BSMLParserParams parserParams;
+
         [UIComponent("leaderboard")]
         private CustomCellListTableData leaderboard;
 
         [UIValue("leaderboard-infos")]
         private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreData.AccsaberScoreDataInfo(score))];
 
-        [UIComponent("vertical-icon-segments")]
-        private SegmentedControl iconSegments;
-
         private static readonly List<AccsaberScoreData> scoreDatas = [];
+
+        #endregion
+
+        #region Modal UI Components
+
+        [UIObject("PlayerInfoWindow")] private GameObject playerInfoWindow;
+
+        [UIComponent("modal_playerName")] private TextMeshProUGUI modalPlayerName;
+        [UIComponent("modal_levelRank")] private TextMeshProUGUI modalLevelRank;
+        [UIComponent("modal_level")] private TextMeshProUGUI modalLevel;
+        [UIComponent("modal_globalRank")] private TextMeshProUGUI modalGlobalRank;
+        [UIComponent("modal_countryRank")] private TextMeshProUGUI modalCountryRank;
+        [UIComponent("modal_overall")] private TextMeshProUGUI modalOverall;
+        [UIComponent("modal_tech")] private TextMeshProUGUI modalTech;
+        [UIComponent("modal_true")] private TextMeshProUGUI modalTrue;
+        [UIComponent("modal_standard")] private TextMeshProUGUI modalStandard;  
 
         #endregion
 
         #region UI Actions
 
         [UIAction("OnCellSelected")]
-        private void OnCellSelected(SegmentedControl _, int index)
+        private void OnCellSelected(TableView _, AccsaberScoreDataInfo cell)
         {
-            // Handle segment selection if needed
+            parserParams.EmitEvent("ShowPlayerInfo");
+            IEnumerator WaitThenUpdate()
+            {
+                yield return new WaitForEndOfFrame();
+
+                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(60, 60);
+            }
+            StartCoroutine(WaitThenUpdate());
+            Task.Run(() => SetupModal(cell.PlayerId));
         }
 
         [UIAction("#post-parse")]
@@ -104,6 +132,33 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
             SldvcPatch.SldvcSet += TrySubscribeToMapSelection;
+        }
+        private async Task SetupModal(string playerId)
+        {
+            JToken playerInfo = await AccsaberAPI.GetPlayerInfo(playerId, true);
+            string rank = AccsaberAPI.GetPlayerTitle(playerInfo);
+            JToken stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
+
+            IEnumerator SetTexts()
+            {
+                yield return new WaitForEndOfFrame();
+
+                modalPlayerName.SetText(AccsaberAPI.GetPlayerName(playerInfo));
+
+                modalLevelRank.SetText($"<color={MiscUtils.GetColorForTitle(rank)}>{rank}</color>");
+                modalLevel.SetText($"<color=#0F0>Level {AccsaberAPI.GetPlayerLevel(playerInfo)}</color>");
+
+                modalGlobalRank.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalCountryRank.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+
+                modalOverall.SetText($"<color=#FF0>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalTech.SetText($"<color=#F55>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech)):N2}ap</color>");
+
+                modalTrue.SetText($"<color=#090>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True)):N2}ap</color>");
+                modalStandard.SetText($"<color=#33F>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard)):N2}ap</color>");
+            }
+            StartCoroutine(SetTexts());
+
         }
         private void TrySubscribeToMapSelection()
         {

@@ -1,20 +1,18 @@
 ﻿using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
-using BeatSaberMarkupLanguage.Components;
-using BeatSaberMarkupLanguage.TypeHandlers;
-using System.Collections;
-using UnityEngine;
 
 namespace AccsaberLeaderboard.Models
 {
-    internal class AccsaberScoreData(int score, string playerName, int rank, bool fullCombo, float ap, float acc) : LeaderboardTableView.ScoreData(score, playerName, rank, fullCombo)
+    internal class AccsaberScoreData(int score, string playerName, int rank, bool fullCombo, float ap, float acc, string playerId) : LeaderboardTableView.ScoreData(score, playerName, rank, fullCombo)
     {
         public float AP { get; private set; } = ap;
         public float Acc { get; private set; } = acc;
-
+        public string PlayerId { get; private set; } = playerId;
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
             private readonly AccsaberScoreData scoreData = scoreData;
+
+            public string PlayerId => scoreData.PlayerId;
 
             [UIValue(nameof(Score))] public string Score => $"<color=#AAA>{scoreData.score:N0}</color>";
 

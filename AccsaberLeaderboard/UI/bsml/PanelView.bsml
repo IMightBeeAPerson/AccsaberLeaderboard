@@ -1,9 +1,7 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <horizontal id='panelContainer' pref-width='100' pref-height='20' bg='panel-top' child-alignment='MiddleLeft'>
-    <!-- Logo -->
     <image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='20'/>
 
-    <!-- Ranking Labels (vertically grouped, size-controlled) -->
     <vertical pref-width='50' child-alignment='MiddleCenter'>
       <text id='globalRankText' text='Global' font-size='7'/>
       <text id='countryRankText' text='Country' font-size='7'/>
