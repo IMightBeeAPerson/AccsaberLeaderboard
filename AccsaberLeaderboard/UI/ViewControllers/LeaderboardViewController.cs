@@ -129,7 +129,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Task.Run(async () =>
             {
                 int playerPage = await GetPlayerPage();
-                if (playerPage != page)
+                if (playerPage != page && playerPage >= 0)
                 {
                     page = playerPage;
                     await LoadLeaderboardAsync(currentHash, currentDifficulty);
@@ -326,7 +326,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private async Task<int> GetPlayerPage()
         {
-            return (int)Math.Ceiling(AccsaberAPI.GetRank(await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString())) / (float)AccsaberAPI.PAGE_LENGTH);
+            JToken scoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString());
+            if (scoreInfo is null) return -1; // Player has no score on this map
+            return (int)Math.Ceiling(AccsaberAPI.GetRank(scoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
         }
 
         // DataSource for TableView

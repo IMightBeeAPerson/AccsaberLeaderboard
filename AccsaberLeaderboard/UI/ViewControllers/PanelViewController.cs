@@ -33,7 +33,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
         [UIAction("OpenPlayerProfile")] private void OpenPlayerProfile() => OnPlayerPictureClicked?.Invoke();
-            private void OpenReloaded() => Application.OpenURL($"https://accsaber.com/u/{Plugin.Instance.PlayerID}");
+        [UIAction("OpenReloaded")] private void OpenReloaded() => Application.OpenURL($"https://accsaberreloaded.com/players/{Plugin.Instance.PlayerID}");
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
