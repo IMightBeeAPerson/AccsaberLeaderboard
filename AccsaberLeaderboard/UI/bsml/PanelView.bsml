@@ -9,7 +9,7 @@
     </vertical>
 
     <vertical pref-width='18' pad-down='1' pad-up='1'>
-      <img id='profilePicture' preserve-aspect='true' pref-width='18' pref-height='18'/>
+      <clickable-image id='profilePicture' preserve-aspect='true' pref-width='18' pref-height='18' on-click='OpenPlayerProfile' default-color='#FFFF' highlight-color='#FFFF'/>
     </vertical>
     <vertical perf-width='10'/>
   </horizontal>

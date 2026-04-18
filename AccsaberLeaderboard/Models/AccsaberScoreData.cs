@@ -16,7 +16,7 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(Score))] public string Score => $"<color=#AAA>{scoreData.score:N0}</color>";
 
-            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(20);
+            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(15);
 
             [UIValue(nameof(Rank))] public string Rank => $"<color=#FA0>#{scoreData.rank}</color>";
 
@@ -25,6 +25,7 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(AP))] public string AP => $"<color=#A0F>{scoreData.AP:N2}ap</color>";
 
             [UIValue(nameof(Acc))] public string Acc => $"<color=#0D0>{scoreData.Acc * 100f:N4}%</color>";
+            [UIValue(nameof(BGColor))] public string BGColor => PlayerId.Equals(Plugin.Instance.PlayerID) ? "#0AA9" : "#0009";
 
             [UIValue(nameof(FontSize))] public readonly float FontSize = 3.5f;
         }

@@ -24,11 +24,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
     {
 #pragma warning disable IDE0044, IDE0051
 
+        internal static event Action OnPlayerPictureClicked;
+
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
         [UIComponent("totalAPText")] private TextMeshProUGUI TotalAPText;
         [UIComponent("profilePicture")] private ImageView profilePicture;
+
+        [UIAction("OpenPlayerProfile")] private void OpenPlayerProfile() => OnPlayerPictureClicked?.Invoke();
+            private void OpenReloaded() => Application.OpenURL($"https://accsaber.com/u/{Plugin.Instance.PlayerID}");
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");

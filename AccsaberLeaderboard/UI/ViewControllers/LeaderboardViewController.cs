@@ -74,19 +74,26 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("modal_playerImage")] private ImageView modalPlayerImage;
 
+
         [UIComponent("modal_playerName")] private TextMeshProUGUI modalPlayerName;
+
         [UIComponent("modal_levelRank")] private TextMeshProUGUI modalLevelRank;
         [UIComponent("modal_level")] private TextMeshProUGUI modalLevel;
+
         [UIComponent("modal_globalRank")] private TextMeshProUGUI modalGlobalRank;
         [UIComponent("modal_countryRank")] private TextMeshProUGUI modalCountryRank;
         [UIComponent("modal_overall")] private TextMeshProUGUI modalOverall;
+
         [UIComponent("modal_tech")] private TextMeshProUGUI modalTech;
         [UIComponent("modal_true")] private TextMeshProUGUI modalTrue;
-        [UIComponent("modal_standard")] private TextMeshProUGUI modalStandard;  
-        [UIComponent("modal_tech_rank")] private TextMeshProUGUI modalTechRank;  
-        [UIComponent("modal_true_rank")] private TextMeshProUGUI modalTrueRank;  
-        [UIComponent("modal_standard_rank")] private TextMeshProUGUI modalStandardRank;  
-
+        [UIComponent("modal_standard")] private TextMeshProUGUI modalStandard;
+        
+        [UIComponent("modal_tech_rank_global")] private TextMeshProUGUI modalTechGlobalRank;  
+        [UIComponent("modal_tech_rank_country")] private TextMeshProUGUI modalTechCountryRank;  
+        [UIComponent("modal_true_rank_global")] private TextMeshProUGUI modalTrueGlobalRank;  
+        [UIComponent("modal_true_rank_country")] private TextMeshProUGUI modalTrueCountryRank;  
+        [UIComponent("modal_standard_rank_global")] private TextMeshProUGUI modalStandardGlobalRank;  
+        [UIComponent("modal_standard_rank_country")] private TextMeshProUGUI modalStandardCountryRank;  
         #endregion
 
         #region UI Actions
@@ -94,22 +101,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnCellSelected")]
         private void OnCellSelected(TableView _, AccsaberScoreDataInfo cell)
         {
-            parserParams.EmitEvent("ShowPlayerInfo");
-            IEnumerator WaitThenUpdate()
-            {
-                yield return new WaitForEndOfFrame();
-
-                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(70, 80);
-                modalLoader.SetActive(true);
-                modalContainer.SetActive(false);
-            }
-            StartCoroutine(WaitThenUpdate());
-            Task.Run(() => SetupModal(cell.PlayerId));
+            ShowPlayer(cell.PlayerId);
         }
 
         [UIAction("#post-parse")]
         private void PostParse()
         {
+            // Subscribe to player picture click event from PanelViewController
+            PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
             // Subscribe to map selection event
             TrySubscribeToMapSelection();
             // Optionally, load leaderboard for the current map if available
@@ -150,6 +149,20 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
         }
+        private void ShowPlayer(string playerId)
+        {
+            parserParams.EmitEvent("ShowPlayerInfo");
+            IEnumerator WaitThenUpdate()
+            {
+                yield return new WaitForEndOfFrame();
+
+                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(70, 80);
+                modalLoader.SetActive(true);
+                modalContainer.SetActive(false);
+            }
+            StartCoroutine(WaitThenUpdate());
+            Task.Run(() => SetupModal(playerId));
+        }
         private async Task SetupModal(string playerId)
         {
             JToken playerInfo = await AccsaberAPI.GetPlayerInfo(playerId, true);
@@ -172,15 +185,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
 
                 modalTech.SetText($"<color=#F55>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTechRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                modalTechGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalTechCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
                 modalTrue.SetText($"<color=#090>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTrueRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                modalTrueGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalTrueCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
                 modalStandard.SetText($"<color=#33F>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalStandardRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");    
+                modalStandardGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");  
+                modalStandardCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
                 modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
@@ -217,10 +233,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private void TryUpdateCurrentMap()
         {
+#if NEW_VERSION
             if (sldvc is not null && sldvc.beatmapLevel is not null)
-            {
                 UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
-            }
+#else
+            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
+                UpdateDiff(sldvc.selectedDifficultyBeatmap);
+#endif
         }
 
 #if NEW_VERSION

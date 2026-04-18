@@ -4,7 +4,7 @@
       <loading preserve-aspect='true'/>    
     </vertical>
     <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='5.8' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false'>
-      <horizontal pref-width='80' pref-height='5.7' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='round-rect-panel'>
+      <horizontal pref-width='80' pref-height='5.7' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
         <vertical pref-width='10' child-alignment='MiddleCenter'>
           <text text='~Rank' align='Left' font-size='~FontSize'/>
         </vertical>
@@ -51,17 +51,26 @@
           <vertical>
             <text text='True' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_true' text='True' align='Center'/>
-            <text id='modal_true_rank' text='True Rank' font-size='3' align='Center'/>
+            <horizontal>
+              <text id='modal_true_rank_global' text='True Rank' font-size='3' align='Left'/>
+              <text id='modal_true_rank_country' text='True Rank' font-size='3' align='Right'/>
+            </horizontal>
           </vertical>
           <vertical>
             <text text='Standard' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_standard' text='Standard' align='Right'/>
-            <text id='modal_standard_rank' text='Standard Rank' font-size='3' align='Center'/>
+            <horizontal>
+              <text id='modal_standard_rank_global' text='Standard Rank' font-size='3' align='Left'/>
+              <text id='modal_standard_rank_country' text='Standard Rank' font-size='3' align='Right'/>
+            </horizontal>
           </vertical>
           <vertical>
             <text text='Tech' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_tech' text='Tech' align='Center'/>
-            <text id='modal_tech_rank' text='Tech Rank' font-size='3' align='Center'/>
+            <horizontal>
+              <text id='modal_tech_rank_global' text='Tech Rank' font-size='3' align='Left'/>
+              <text id='modal_tech_rank_country' text='Tech Rank' font-size='3' align='Right'/>
+            </horizontal>
           </vertical>
         </horizontal>
       </vertical>
