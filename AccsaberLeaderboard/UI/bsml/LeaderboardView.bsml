@@ -1,6 +1,8 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
   <vertical pref-width='80' pref-height='80' spacing='0' anchor-pos-y='-5'>
-
+    <vertical id='leaderboard_loading' pad-top='20' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false'>
+      <loading preserve-aspect='true'/>    
+    </vertical>
     <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='5.5' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false'>
       <horizontal pref-width='80' pref-height='5.4' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='round-rect-panel'>
         <vertical pref-width='10' child-alignment='MiddleCenter'>
@@ -22,16 +24,22 @@
     </custom-list>
 
     <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
-      <vertical pref-width='60' pref-height='60' bg='round-rect-panel' bg-color='#CCC'>
-        <text id='modal_playerName' text='Player name' align='Center' font-size='5'/>
-        <horizontal pad-left='15' pad-right='15'>
+      <loading id='modal_loading' preserve-aspect='true'/>
+      <vertical id='modal_container' pref-width='70' pref-height='80' bg='round-rect-panel' bg-color='#CCC'>
+        <text id='modal_playerName' text='Player name' align='Center' font-size='7'/>
+        <horizontal pad-left='17' pad-right='17'>
           <text id='modal_levelRank' text='Level Rank' align='Left'/>
           <text id='modal_level' text='Level' align='Right'/>
         </horizontal>
+        <img id='modal_playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
         <horizontal pad-left='5' pad-right='5'>
           <vertical>
             <text text='Global' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_globalRank' text='Global Rank' align='Center'/>
+          </vertical>
+          <vertical>
+            <text text='Overall' font-color='#AAA' font-size='2.5' align='Center'/>
+            <text id='modal_overall' text='Overall' align='Center'/>
           </vertical>
           <vertical>
             <text text='Country' font-color='#AAA' font-size='2.5' align='Center'/>
@@ -39,23 +47,21 @@
           </vertical>
         </horizontal>
         <horizontal pad-left='5' pad-right='5'>
-          <vertical>
-            <text text='Overall' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_overall' text='Overall' align='Center'/>
-          </vertical>
-          <vertical>
-            <text text='Tech' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_tech' text='Tech' align='Center'/>
-          </vertical>
-        </horizontal>
-        <horizontal pad-left='5' pad-right='5'>
+          
           <vertical>
             <text text='True' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_true' text='True' align='Center'/>
+            <text id='modal_true_rank' text='True Rank' font-size='3' align='Center'/>
           </vertical>
           <vertical>
             <text text='Standard' font-color='#AAA' font-size='2.5' align='Center'/>
             <text id='modal_standard' text='Standard' align='Right'/>
+            <text id='modal_standard_rank' text='Standard Rank' font-size='3' align='Center'/>
+          </vertical>
+          <vertical>
+            <text text='Tech' font-color='#AAA' font-size='2.5' align='Center'/>
+            <text id='modal_tech' text='Tech' align='Center'/>
+            <text id='modal_tech_rank' text='Tech Rank' font-size='3' align='Center'/>
           </vertical>
         </horizontal>
       </vertical>

@@ -2,6 +2,7 @@
 using AccsaberLeaderboard.Harmony;
 using AccsaberLeaderboard.Models;
 using AccsaberLeaderboard.Utils;
+using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
@@ -43,6 +44,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #endregion
 
+        #region Loading UI objects
+
+        [UIObject("modal_loading")] private GameObject modalLoader;
+        [UIObject("modal_container")] private GameObject modalContainer;
+
+        [UIObject("leaderboard_loading")] private GameObject leaderboardLoader;
+        [UIObject("leaderboard")] private GameObject leaderboardContainer;
+
+        #endregion
+
         #region UI Values & Components
 
         [UIParams] private BSMLParserParams parserParams;
@@ -61,6 +72,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIObject("PlayerInfoWindow")] private GameObject playerInfoWindow;
 
+        [UIComponent("modal_playerImage")] private ImageView modalPlayerImage;
+
         [UIComponent("modal_playerName")] private TextMeshProUGUI modalPlayerName;
         [UIComponent("modal_levelRank")] private TextMeshProUGUI modalLevelRank;
         [UIComponent("modal_level")] private TextMeshProUGUI modalLevel;
@@ -70,6 +83,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("modal_tech")] private TextMeshProUGUI modalTech;
         [UIComponent("modal_true")] private TextMeshProUGUI modalTrue;
         [UIComponent("modal_standard")] private TextMeshProUGUI modalStandard;  
+        [UIComponent("modal_tech_rank")] private TextMeshProUGUI modalTechRank;  
+        [UIComponent("modal_true_rank")] private TextMeshProUGUI modalTrueRank;  
+        [UIComponent("modal_standard_rank")] private TextMeshProUGUI modalStandardRank;  
 
         #endregion
 
@@ -83,7 +99,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 yield return new WaitForEndOfFrame();
 
-                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(60, 60);
+                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(70, 80);
+                modalLoader.SetActive(true);
+                modalContainer.SetActive(false);
             }
             StartCoroutine(WaitThenUpdate());
             Task.Run(() => SetupModal(cell.PlayerId));
@@ -149,13 +167,31 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 modalLevel.SetText($"<color=#0F0>Level {AccsaberAPI.GetPlayerLevel(playerInfo)}</color>");
 
                 modalGlobalRank.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalOverall.SetText($"<color=#FF0>{AccsaberAPI.GetAP(stats):N2}ap</color>");
                 modalCountryRank.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
-                modalOverall.SetText($"<color=#FF0>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTech.SetText($"<color=#F55>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech)):N2}ap</color>");
+                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
 
-                modalTrue.SetText($"<color=#090>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True)):N2}ap</color>");
-                modalStandard.SetText($"<color=#33F>{AccsaberAPI.GetAP(AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard)):N2}ap</color>");
+                modalTech.SetText($"<color=#F55>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalTechRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+
+                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
+                modalTrue.SetText($"<color=#090>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalTrueRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+
+                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
+                modalStandard.SetText($"<color=#33F>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalStandardRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>\t\t<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");    
+
+                //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
+                modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+
+                modalPlayerImage.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
+                
+                yield return new WaitForEndOfFrame();
+
+                modalLoader.SetActive(false);
+                modalContainer.SetActive(true);
             }
             StartCoroutine(SetTexts());
 
@@ -203,6 +239,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
+            IEnumerator ShowLoading()
+            {
+                yield return new WaitForEndOfFrame();
+                leaderboardContainer.SetActive(false);
+                leaderboardLoader.SetActive(true);
+            }
+            StartCoroutine(ShowLoading());
+
             _scores.Clear();
             AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(page, hash, diff);
             if (scores is not null)
@@ -212,8 +256,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             IEnumerator ReloadData()
             {
                 yield return new WaitForEndOfFrame();
+
                 leaderboard.data = LeaderboardInfos;
                 leaderboard.tableView.ReloadData();
+
+                yield return new WaitForEndOfFrame();
+
+                leaderboardContainer.SetActive(true);
+                leaderboardLoader.SetActive(false);
             }
             StartCoroutine(ReloadData());
         }

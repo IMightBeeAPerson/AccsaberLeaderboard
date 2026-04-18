@@ -45,6 +45,7 @@ namespace AccsaberLeaderboard.API
         public static float GetAP(JToken scoreData) => (float)scoreData["ap"];
         public static int GetScore(JToken scoreData) => (int)scoreData["score"];
         public static string GetPlayerId(JToken scoreData) => scoreData["userId"].ToString();
+        public static string GetPlayerAvatar(JToken playerData) => playerData["avatarUrl"]?.ToString();
         public static string GetPlayerTitle(JToken playerData) => playerData["levelTitle"]?.ToString();
         public static int GetPlayerLevel(JToken playerData) => (int)playerData["level"];
         public static string GetPlayerName(JToken playerData) => playerData["name"].ToString();
