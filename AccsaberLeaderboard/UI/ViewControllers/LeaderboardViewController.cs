@@ -33,6 +33,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
         private int page;
+        private AsyncLock loadLeaderboardLock = new();
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
 
@@ -58,11 +59,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIParams] private BSMLParserParams parserParams;
 
-        [UIComponent("leaderboard")]
-        private CustomCellListTableData leaderboard;
+        [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
 
         [UIValue("leaderboard-infos")]
-        private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreData.AccsaberScoreDataInfo(score))];
+        private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
 
         private static readonly List<AccsaberScoreData> scoreDatas = [];
 
@@ -149,7 +149,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
-            SldvcPatch.SldvcSet += TrySubscribeToMapSelection;
         }
         private async Task SetupModal(string playerId)
         {
@@ -185,10 +184,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                 //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
                 modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
-
+#if NEW_VERSION
+                modalPlayerImage.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
+#else
                 modalPlayerImage.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
-                
-                yield return new WaitForEndOfFrame();
+#endif
 
                 modalLoader.SetActive(false);
                 modalContainer.SetActive(true);
@@ -200,8 +200,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (sldvc is not null)
             {
+#if NEW_VERSION
+                void Handler1(StandardLevelDetailViewController controller) => TryUpdateCurrentMap();
+#else
                 void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap) => UpdateDiff(beatmap);
+#endif
                 void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType) => TryUpdateCurrentMap();
+
+                sldvc.didChangeDifficultyBeatmapEvent -= Handler1;
+                sldvc.didChangeContentEvent -= Handler2;
 
                 sldvc.didChangeDifficultyBeatmapEvent += Handler1;
                 sldvc.didChangeContentEvent += Handler2;
@@ -210,19 +217,27 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private void TryUpdateCurrentMap()
         {
-            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
+            if (sldvc is not null && sldvc.beatmapLevel is not null)
             {
-                UpdateDiff(sldvc.selectedDifficultyBeatmap);
+                UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
             }
         }
 
+#if NEW_VERSION
+        private void UpdateDiff(BeatmapLevel beatmap, BeatmapKey key)
+        {
+#else
         private void UpdateDiff(IDifficultyBeatmap beatmap)
         {
-            if (beatmap == null || beatmap.level == null)
+            if (beatmap is null || beatmap.level is null)
                 return;
-
+#endif
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
+#if NEW_VERSION
+            string levelId = beatmap.levelID;
+#else
             string levelId = beatmap.level.levelID;
+#endif
             string hash;
             if (levelId.StartsWith("custom_level_"))
                 hash = levelId.Substring("custom_level_".Length);
@@ -230,7 +245,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 hash = levelId; // fallback for official levels
 
             currentHash = hash;
+#if NEW_VERSION
+            currentDifficulty = key.difficulty;
+#else
             currentDifficulty = beatmap.difficulty;
+#endif
             page = 1; // reset to first page on map change
 
             // reload leaderboard for the new map
@@ -239,33 +258,51 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
-            IEnumerator ShowLoading()
+            AsyncLock.Releaser? theLock = await loadLeaderboardLock.TryLockAsync();
+            if (theLock is null) return;
+            using (theLock.Value)
             {
-                yield return new WaitForEndOfFrame();
-                leaderboardContainer.SetActive(false);
-                leaderboardLoader.SetActive(true);
+                try
+                {
+                    IEnumerator ShowLoading()
+                    {
+                        yield return new WaitForEndOfFrame();
+                        leaderboardContainer.SetActive(false);
+                        leaderboardLoader.SetActive(true);
+                    }
+                    StartCoroutine(ShowLoading());
+
+                    _scores.Clear();
+                    AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(page, hash, diff);
+                    if (scores is not null)
+                        _scores.AddRange(scores);
+
+                    //leaderboard.SetDataSource(new AccsaberLeaderboardTableView(_scores), reloadData: true);
+                    IEnumerator ReloadData()
+                    {
+                        yield return new WaitForEndOfFrame();
+#if NEW_VERSION
+                        leaderboard.Data = LeaderboardInfos;
+#else
+                        leaderboard.data = LeaderboardInfos;
+#endif
+                        yield return new WaitForSeconds(0.05f); // small delay to ensure data is set before reloading
+
+#if NEW_VERSION
+                        leaderboard.TableView.ReloadData();
+#else
+                        leaderboard.tableView.ReloadData();
+#endif
+                        leaderboardContainer.SetActive(true);
+                        leaderboardLoader.SetActive(false);
+                    }
+                    StartCoroutine(ReloadData());
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Error($"Error loading leaderboard: {ex}");
+                }
             }
-            StartCoroutine(ShowLoading());
-
-            _scores.Clear();
-            AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(page, hash, diff);
-            if (scores is not null)
-                _scores.AddRange(scores);
-
-            //leaderboard.SetDataSource(new AccsaberLeaderboardTableView(_scores), reloadData: true);
-            IEnumerator ReloadData()
-            {
-                yield return new WaitForEndOfFrame();
-
-                leaderboard.data = LeaderboardInfos;
-                leaderboard.tableView.ReloadData();
-
-                yield return new WaitForEndOfFrame();
-
-                leaderboardContainer.SetActive(true);
-                leaderboardLoader.SetActive(false);
-            }
-            StartCoroutine(ReloadData());
         }
 
         private async Task<int> GetPlayerPage()

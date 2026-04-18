@@ -1,4 +1,7 @@
-﻿namespace AccsaberLeaderboard.Utils
+﻿using System.Linq;
+using UnityEngine;
+
+namespace AccsaberLeaderboard.Utils
 {
     public static class MiscUtils
     {
@@ -22,8 +25,17 @@
                 "Transcendent" => "#0FF",
                 "Mythic" => "#F00",
                 "Ascendant" => "#F38",
-                _ => "#FFFFFF"
+                _ => "#FFF"
             };
+        }
+        public static Color ConvertHex(string hex)
+        {
+            if (hex[0] == '#') hex = hex.Substring(1);
+            int repeatNum = hex.Length >= 6 ? 1 : 2;
+            int[] vals = hex.Length >= 6 ? new int[hex.Length / 2] : new int[hex.Length];
+            for (int i = 0; i < hex.Length; i++)
+                vals[i] = int.Parse(new string(hex[i], repeatNum), System.Globalization.NumberStyles.HexNumber);
+            return vals.Length == 3 ? new Color(vals[0] / 255f, vals[1] / 255f, vals[2] / 255f) : new Color(vals[0] / 255f, vals[1] / 255f, vals[2] / 255f, vals[3] / 255f);
         }
     }
 }

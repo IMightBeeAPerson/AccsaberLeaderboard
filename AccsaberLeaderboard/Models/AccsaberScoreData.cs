@@ -26,7 +26,7 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(Acc))] public string Acc => $"<color=#0D0>{scoreData.Acc * 100f:N4}%</color>";
 
-            [UIValue(nameof(FontSize))] public readonly float FontSize = 3f;
+            [UIValue(nameof(FontSize))] public readonly float FontSize = 3.5f;
         }
     }
 }

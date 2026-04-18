@@ -20,6 +20,7 @@ namespace AccsaberLeaderboard.API
             try
             {
                 IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, PAGE_LENGTH).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
+                if (scores is null) return null;
                 return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetUserName(score), GetRank(score), GetFullCombo(score), GetAP(score), GetAcc(score), GetPlayerId(score)))];
             }
             catch (Exception e)
@@ -40,7 +41,12 @@ namespace AccsaberLeaderboard.API
         public static int GetRank(JToken scoreData) => (int)scoreData["rank"];
         public static string GetUserName(JToken scoreData) => scoreData["userName"].ToString();
         public static float GetAcc(JToken scoreData) => (float)scoreData["accuracy"];
-        public static int GetMistakes(JToken scoreData) => (int)scoreData["misses"] + (int)scoreData["wallHits"] + (int)scoreData["bombHits"] + (int)scoreData["badCuts"];
+        public static int GetMistakes(JToken scoreData) {
+            int outp = (int)scoreData["misses"] + (int)scoreData["badCuts"];
+            if (scoreData["bombCuts"] is not null) outp += (int)scoreData["bombCuts"];
+            if (scoreData["wallHits"] is not null) outp += (int)scoreData["wallHits"];
+            return outp;
+        }
         public static bool GetFullCombo(JToken scoreData) => GetMistakes(scoreData) == 0;
         public static float GetAP(JToken scoreData) => (float)scoreData["ap"];
         public static int GetScore(JToken scoreData) => (int)scoreData["score"];
@@ -83,7 +89,9 @@ namespace AccsaberLeaderboard.API
             string dataStr = await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, diff), ct: ct).ConfigureAwait(false);
 
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
-            JToken diffData = JToken.Parse(dataStr)["difficulties"].Children().First();
+            JToken diffData = JToken.Parse(dataStr)["difficulties"].Children().FirstOrDefault();
+
+            if (diffData is null) return null;
 
             dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffData["id"].ToString(), page, count), ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;

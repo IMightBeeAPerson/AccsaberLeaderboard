@@ -24,7 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NEW_VERSION</DefineConstants>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -45,14 +45,30 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Libs\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="BeatSaber.ViewSystem, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.ViewSystem.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="BS_Utils, Version=1.12.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Plugins\BS_Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="Core, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Core.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="DataModels, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="GameplayCore, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
     </Reference>
+    <Reference Include="PlatformUserModel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="SiraUtil, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Plugins\SiraUtil.dll</HintPath>
@@ -140,7 +156,6 @@
     <Compile Include="API\Throttler.cs" />
     <Compile Include="Calculators\APCalc.cs" />
     <Compile Include="Harmony\LoadPatch.cs" />
-    <Compile Include="Harmony\SldvcPatch.cs" />
     <Compile Include="Installers\InstallerHelper.cs" />
     <Compile Include="Installers\MainUIInstaller.cs" />
     <Compile Include="Models\AccsaberScoreData.cs" />
@@ -152,6 +167,7 @@
     <Compile Include="UI\MainLeaderboardController.cs" />
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
+    <Compile Include="Utils\AsyncLock.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
   </ItemGroup>
   <ItemGroup>

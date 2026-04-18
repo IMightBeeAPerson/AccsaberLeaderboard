@@ -1,15 +1,20 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Models;
 using AccsaberLeaderboard.Utils;
+using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.TypeHandlers;
 using BeatSaberMarkupLanguage.ViewControllers;
 using BS_Utils.Utilities;
+using HMUI;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
+using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
+using UnityEngine;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -22,7 +27,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
-        [UIComponent("TotalAPText")] private TextMeshProUGUI TotalAPText;
+        [UIComponent("totalAPText")] private TextMeshProUGUI TotalAPText;
+        [UIComponent("profilePicture")] private ImageView profilePicture;
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
@@ -32,9 +38,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public void SetRanks(int globalRank, int countryRank, float totalAP)
         {
-            globalRankText.text = $"<color=#AAA>Global Rank:</color> #{globalRank}";
-            countryRankText.text = $"<color=#AAA>Country Rank:</color> #{countryRank}";
-            TotalAPText.text = $"<color=#A0F>{totalAP:N2}ap</color>";
+            globalRankText.SetText($"<color=#AAA>Global Rank:</color> #{globalRank}");
+            countryRankText.SetText($"<color=#AAA>Country Rank:</color> #{countryRank}");
+            TotalAPText.SetText($"<color=#AAA>Total AP:</color> <color=#A0F>{totalAP:N2}ap</color>");
         }
 
         private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)
@@ -47,9 +53,26 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 JToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
                 JToken overallPlayerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
-                SetRanks(AccsaberAPI.GetGlobalRank(overallPlayerStats), AccsaberAPI.GetCountryRank(overallPlayerStats), AccsaberAPI.GetAP(overallPlayerStats));
+                IEnumerator WaitThenUpdate() 
+                {
+                    yield return new WaitForEndOfFrame();
 
-                BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6');
+                    SetRanks(AccsaberAPI.GetGlobalRank(overallPlayerStats), AccsaberAPI.GetCountryRank(overallPlayerStats), AccsaberAPI.GetAP(overallPlayerStats));
+#if NEW_VERSION
+                    panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6'));
+#else
+                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6');
+#endif
+
+                    //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
+                    profilePicture.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+#if NEW_VERSION
+                    profilePicture.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
+#else
+                    profilePicture.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
+#endif
+                }
+                StartCoroutine(WaitThenUpdate());
             }
             catch (Exception ex)
             {

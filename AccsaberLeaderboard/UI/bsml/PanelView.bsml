@@ -3,13 +3,14 @@
     <image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='20'/>
 
     <vertical pref-width='50' child-alignment='MiddleCenter'>
-      <text id='globalRankText' text='Global' font-size='7'/>
-      <text id='countryRankText' text='Country' font-size='7'/>
+      <text id='globalRankText' text='Global' font-size='4'/>
+      <text id='countryRankText' text='Country' font-size='4'/>
+      <text id='totalAPText' text='0ap' font-size='4'/>
     </vertical>
 
-    <vertical pref-width='30'>
-      <text text='Total AP' font-color='#AAA' font-size='7'/>
-      <text id='TotalAPText' text='0ap' font-size='7'/>
+    <vertical pref-width='18' pad-down='1' pad-up='1'>
+      <img id='profilePicture' preserve-aspect='true' pref-width='18' pref-height='18'/>
     </vertical>
+    <vertical perf-width='10'/>
   </horizontal>
 </bg>

@@ -24,7 +24,11 @@ namespace AccsaberLeaderboard.UI
         protected override ViewController panelViewController => _panelViewController;
         protected override ViewController leaderboardViewController => _leaderboardViewController;
 
+#if NEW_VERSION
+        public override bool ShowForLevel(BeatmapKey? beatmapKey)
+#else
         public override bool ShowForLevel(IPreviewBeatmapLevel selectedLevel)
+#endif
         {
             return true;// _leaderboardViewController.ValidMapSelected;
         }
