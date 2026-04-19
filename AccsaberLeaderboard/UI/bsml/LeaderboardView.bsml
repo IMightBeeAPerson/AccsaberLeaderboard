@@ -43,8 +43,12 @@
     </vertical>
   </vertical>
 
-  <vertical id='leaderboard_loading' anchor-pos-y='-30' anchor-pos-x='0' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false'>
+  <vertical id='leaderboard_loading' anchor-pos-y='-30' anchor-pos-x='0' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false' active='false'>
     <loading preserve-aspect='true'/>
+  </vertical>
+
+  <vertical id='leaderboard_badMap' anchor-pos-y='-30' active='false'>
+    <text text='Map is Unranked.' font-size='10'/>
   </vertical>
 
   <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>

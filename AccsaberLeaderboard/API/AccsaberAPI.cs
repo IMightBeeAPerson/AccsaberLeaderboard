@@ -139,15 +139,19 @@ namespace AccsaberLeaderboard.API
         public static async Task<string> GetLeaderboardDifficultyId(string hash, string diff, CancellationToken ct = default)
         {
             if (ct.IsCancellationRequested) return null;
-            diff = DiffNumToReloadedDiff(FromDiff((BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), diff)));
-            string dataStr = await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, diff), ct: ct).ConfigureAwait(false);
+            try
+            {
+                diff = DiffNumToReloadedDiff(FromDiff((BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), diff)));
+                string dataStr = await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, diff), ct: ct).ConfigureAwait(false);
 
-            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
-            JToken diffData = JToken.Parse(dataStr)["difficulties"].Children().FirstOrDefault();
+                if (dataStr is null || dataStr.Equals(string.Empty)) return null;
+                JToken diffData = JToken.Parse(dataStr)["difficulties"].Children().FirstOrDefault();
 
-            if (diffData is null) return null;
+                if (diffData is null) return null;
 
-            return diffData["id"].ToString();
+                return diffData["id"].ToString();
+            } catch (Exception)
+            { return null; }
         } 
         public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string hash, string diff, int page = 0, int count = 10, CancellationToken ct = default)
         {

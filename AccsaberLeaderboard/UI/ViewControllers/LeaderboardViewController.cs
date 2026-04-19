@@ -101,6 +101,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
 
+        [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
+
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
 
@@ -343,7 +345,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #if NEW_VERSION
                 void Handler1(StandardLevelDetailViewController controller) => TryUpdateCurrentMap();
 #else
-                void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap) => UpdateDiff(beatmap);
+                void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
+                {
+                    if (beatmap is not null)
+                        UpdateDiff(beatmap);
+                }
 #endif
                 void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
                 {
@@ -361,10 +367,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private void TryUpdateCurrentMap()
         {
-            if (sldvc is not null)
 #if NEW_VERSION
+            if (sldvc is not null)
                 UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
 #else
+            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
                 UpdateDiff(sldvc.selectedDifficultyBeatmap);
 #endif
         }
@@ -391,11 +398,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
 
 #if NEW_VERSION
-            if (hash.Equals(currentHash) && currentDifficulty.Equals(key.difficulty))
+            if (hash.Equals(currentHash) && key.difficulty.Equals(currentDifficulty))
                 return; // same map, no need to update
             currentDifficulty = key.difficulty;
 #else
-            if (hash.Equals(currentHash) && currentDifficulty.Equals(beatmap.difficulty))
+            if (hash.Equals(currentHash) && beatmap.difficulty.Equals(currentDifficulty))
                 return; // same map, no need to update
             currentDifficulty = beatmap.difficulty;
 #endif
@@ -413,6 +420,20 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private async Task ForceRefresh()
         {
             difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty.ToString());
+
+            if (difficultyId is null)
+            {
+                currentHash = null;
+                currentDifficulty = default;
+                IEnumerator ShowBad()
+                {
+                    yield return new WaitForEndOfFrame();
+                    leaderboardContainer.SetActive(false);
+                    badMapMessage.SetActive(true);
+                }
+                StartCoroutine(ShowBad());
+                return;
+            }
 
             JToken scoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
             currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(scoreInfo));
@@ -442,6 +463,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     IEnumerator ShowLoading()
                     {
                         yield return new WaitForEndOfFrame();
+                        badMapMessage.SetActive(false);
                         leaderboardContainer.SetActive(false);
                         leaderboardLoader.SetActive(true);
                     }
