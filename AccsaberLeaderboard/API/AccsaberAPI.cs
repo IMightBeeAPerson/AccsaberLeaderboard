@@ -21,7 +21,7 @@ namespace AccsaberLeaderboard.API
             {
                 IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, PAGE_LENGTH).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
                 if (scores is null) return null;
-                return [.. scores.Select(score => new AccsaberScoreData(GetScore(score), GetUserName(score), GetRank(score), GetFullCombo(score), GetAP(score), GetAcc(score), GetPlayerId(score)))];
+                return [.. scores.Select(ConvertToScoreData)];
             }
             catch (Exception e)
             {
@@ -29,6 +29,10 @@ namespace AccsaberLeaderboard.API
                 Plugin.Log.Debug($"Hash: {hash}, diff: {diff}\n{e}");
                 return null;
             }
+        }
+        public static AccsaberScoreData ConvertToScoreData(JToken scoreData)
+        {
+            return new AccsaberScoreData(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
         }
         public static float GetComplexity(JToken diffData) => (float)(diffData["complexity"] ?? 0f);
         public static string GetSongName(JToken diffData) => diffData["songName"].ToString();

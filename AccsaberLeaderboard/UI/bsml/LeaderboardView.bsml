@@ -1,11 +1,8 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
-  <vertical pref-width='80' pref-height='80' spacing='0' anchor-pos-y='-5'>
-    <vertical id='leaderboard_loading' pad-top='20' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false'>
-      <loading preserve-aspect='true'/>    
-    </vertical>
-    <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='5.8' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false'>
-      <horizontal pref-width='80' pref-height='5.7' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
-        <vertical pref-width='10' child-alignment='MiddleCenter'>
+  <vertical id='leaderboard_container' pref-width='80' pref-height='80' spacing='-40' anchor-pos-y='-5'>
+    <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='~leaderboard-cellSize' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false' pref-width='80' visable-cells='10'>
+      <horizontal pref-width='80' pref-height='~ContainerHeight' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
+        <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
           <text text='~Rank' align='Left' font-size='~FontSize'/>
         </vertical>
         <vertical pref-width='25' child-alignment='MiddleCenter'>
@@ -17,65 +14,91 @@
         <vertical pref-width='14' child-alignment='MiddleCenter'>
           <text text='~Acc' align='Center' font-size='~FontSize'/>
         </vertical>
-        <vertical pref-width='12' child-alignment='MiddleCenter'>
+        <vertical pref-width='12' child-alignment='MiddleCenter' pad-right='1'>
           <text text='~Score' align='Right' font-size='~FontSize'/>
         </vertical>
       </horizontal>
     </custom-list>
-
-    <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
-      <loading id='modal_loading' preserve-aspect='true'/>
-      <vertical id='modal_container' pref-width='70' pref-height='80' bg='round-rect-panel' bg-color='#CCC'>
-        <text id='modal_playerName' text='Player name' align='Center' font-size='7'/>
-        <horizontal pad-left='17' pad-right='17'>
-          <text id='modal_levelRank' text='Level Rank' align='Left'/>
-          <text id='modal_level' text='Level' align='Right'/>
-        </horizontal>
-        <img id='modal_playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
-        <horizontal pad-left='5' pad-right='5'>
-          <vertical>
-            <text text='Global' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_globalRank' text='Global Rank' align='Center'/>
-          </vertical>
-          <vertical>
-            <text text='Overall' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_overall' text='Overall' align='Center'/>
-          </vertical>
-          <vertical>
-            <text text='Country' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_countryRank' text='Country Rank' align='Center'/>
-          </vertical>
-        </horizontal>
-        <horizontal pad-left='5' pad-right='5'>
-          
-          <vertical>
-            <text text='True' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_true' text='True' align='Center'/>
-            <horizontal>
-              <text id='modal_true_rank_global' text='True Rank' font-size='3' align='Left'/>
-              <text id='modal_true_rank_country' text='True Rank' font-size='3' align='Right'/>
-            </horizontal>
-          </vertical>
-          <vertical>
-            <text text='Standard' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_standard' text='Standard' align='Right'/>
-            <horizontal>
-              <text id='modal_standard_rank_global' text='Standard Rank' font-size='3' align='Left'/>
-              <text id='modal_standard_rank_country' text='Standard Rank' font-size='3' align='Right'/>
-            </horizontal>
-          </vertical>
-          <vertical>
-            <text text='Tech' font-color='#AAA' font-size='2.5' align='Center'/>
-            <text id='modal_tech' text='Tech' align='Center'/>
-            <horizontal>
-              <text id='modal_tech_rank_global' text='Tech Rank' font-size='3' align='Left'/>
-              <text id='modal_tech_rank_country' text='Tech Rank' font-size='3' align='Right'/>
-            </horizontal>
-          </vertical>
-        </horizontal>
+    <vertical id='player_container' spacing='0' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-force-expand-width='true' child-expand-height='false' active='false'>
+      <vertical vertical-fit='PreferredSize' pref-height='1' child-expand-height='false'>
+        <text text='...' align='Left' font-size='3' pref-height='1'/>
       </vertical>
-    </modal>
+      <horizontal pref-width='80' pref-height='~leaderboard-cellSize' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~player_BGColor'>
+        <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
+          <text id='player_rankText' text='Rank' align='Left' font-size='~player_fontSize'/>
+        </vertical>
+        <vertical pref-width='25' child-alignment='MiddleCenter'>
+          <text id='player_nameText' text='PlayerName' align='Left' font-size='~player_fontSize'/>
+        </vertical>
+        <vertical pref-width='19' child-alignment='MiddleCenter' pad-right='5'>
+          <text id='player_apText' text='AP' align='Right' font-size='~player_fontSize'/>
+        </vertical>
+        <vertical pref-width='14' child-alignment='MiddleCenter'>
+          <text id='player_accText' text='Acc' align='Center' font-size='~player_fontSize'/>
+        </vertical>
+        <vertical pref-width='12' child-alignment='MiddleCenter' pad-right='1'>
+          <text id='player_scoreText' text='Score' align='Right' font-size='~player_fontSize'/>
+        </vertical>
+      </horizontal>
+    </vertical>
   </vertical>
+
+  <vertical id='leaderboard_loading' anchor-pos-y='-30' anchor-pos-x='0' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false'>
+    <loading preserve-aspect='true'/>
+  </vertical>
+
+  <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
+    <loading id='modal_loading' preserve-aspect='true'/>
+    <vertical id='modal_container' pref-width='70' pref-height='80' bg='round-rect-panel' bg-color='#CCC'>
+      <text id='modal_playerName' text='Player name' align='Center' font-size='7'/>
+      <horizontal pad-left='17' pad-right='17'>
+        <text id='modal_levelRank' text='Level Rank' align='Left'/>
+        <text id='modal_level' text='Level' align='Right'/>
+      </horizontal>
+      <img id='modal_playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
+      <horizontal pad-left='5' pad-right='5'>
+        <vertical>
+          <text text='Global' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_globalRank' text='Global Rank' align='Center'/>
+        </vertical>
+        <vertical>
+          <text text='Overall' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_overall' text='Overall' align='Center'/>
+        </vertical>
+        <vertical>
+          <text text='Country' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_countryRank' text='Country Rank' align='Center'/>
+        </vertical>
+      </horizontal>
+      <horizontal pad-left='5' pad-right='5'>
+
+        <vertical>
+          <text text='True' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_true' text='True' align='Center'/>
+          <horizontal>
+            <text id='modal_true_rank_global' text='True Rank' font-size='3' align='Left'/>
+            <text id='modal_true_rank_country' text='True Rank' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+        <vertical>
+          <text text='Standard' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_standard' text='Standard' align='Right'/>
+          <horizontal>
+            <text id='modal_standard_rank_global' text='Standard Rank' font-size='3' align='Left'/>
+            <text id='modal_standard_rank_country' text='Standard Rank' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+        <vertical>
+          <text text='Tech' font-color='#AAA' font-size='2.5' align='Center'/>
+          <text id='modal_tech' text='Tech' align='Center'/>
+          <horizontal>
+            <text id='modal_tech_rank_global' text='Tech Rank' font-size='3' align='Left'/>
+            <text id='modal_tech_rank_country' text='Tech Rank' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+      </horizontal>
+    </vertical>
+  </modal>
 
   <vertical anchor-pos-x='50' anchor-pos-y='10' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='AccsaberLeaderboard.Resources.topArrow.png' pref-width='5' pref-height='5' on-click='OnPageTop'/>

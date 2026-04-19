@@ -1,6 +1,8 @@
 ﻿using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 
+using static AccsaberLeaderboard.UI.ViewControllers.LeaderboardViewController;
+
 namespace AccsaberLeaderboard.Models
 {
     internal class AccsaberScoreData(int score, string playerName, int rank, bool fullCombo, float ap, float acc, string playerId) : LeaderboardTableView.ScoreData(score, playerName, rank, fullCombo)
@@ -10,6 +12,9 @@ namespace AccsaberLeaderboard.Models
         public string PlayerId { get; private set; } = playerId;
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
+            public static readonly float BIG_FONT_SIZE = 3.5f;
+            public static readonly float SMALL_FONT_SIZE = 2.8f;
+
             private readonly AccsaberScoreData scoreData = scoreData;
 
             public string PlayerId => scoreData.PlayerId;
@@ -25,9 +30,10 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(AP))] public string AP => $"<color=#A0F>{scoreData.AP:N2}ap</color>";
 
             [UIValue(nameof(Acc))] public string Acc => $"<color=#0D0>{scoreData.Acc * 100f:N4}%</color>";
-            [UIValue(nameof(BGColor))] public string BGColor => PlayerId.Equals(Plugin.Instance.PlayerID) ? "#0AA9" : "#0009";
+            [UIValue(nameof(BGColor))] public string BGColor => PlayerId.Equals(Plugin.Instance.PlayerID) ? CELL_HIGHLIGHT_COLOR : "#0009";
 
-            [UIValue(nameof(FontSize))] public readonly float FontSize = 3.5f;
+            [UIValue(nameof(FontSize))] public readonly float FontSize = LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
+            [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;
         }
     }
 }

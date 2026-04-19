@@ -28,8 +28,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #pragma warning disable IDE0044, IDE0051
         #region Static Variables & Properties
 
-        private static event Action RefreshRequested;
+        public static readonly float SMALL_CELL_SIZE = 5.1f;
+        public static readonly float BIG_CELL_SIZE = 5.8f;
+        public static readonly string CELL_HIGHLIGHT_COLOR = "#0AA9";
 
+        public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
+
+        private static event Action RefreshRequested;
+        private static readonly List<AccsaberScoreData> scoreDatas = [];
+
+        private static LeaderboardViewController Instance;
         #endregion
 
         #region Instance Variables & Fields
@@ -37,10 +45,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private readonly List<AccsaberScoreData> _scores = scoreDatas;
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
-        private int page, currentPage = -1;
+        private int page, currentPage = -1, currentPlayerPage;
+        private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new();
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
+        public bool OnPlayerPage => currentPage == currentPlayerPage;
 
         #endregion
 
@@ -56,20 +66,33 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIObject("modal_container")] private GameObject modalContainer;
 
         [UIObject("leaderboard_loading")] private GameObject leaderboardLoader;
-        [UIObject("leaderboard")] private GameObject leaderboardContainer;
+        [UIObject("leaderboard_container")] private GameObject leaderboardContainer;
+
+        #endregion
+
+        #region Player UI Values & Components
+
+#pragma warning disable IDE0052
+        [UIValue("player_fontSize")] private float playerFontSize = AccsaberScoreDataInfo.SMALL_FONT_SIZE;
+        [UIValue("player_BGColor")] private string playerBGColor = CELL_HIGHLIGHT_COLOR;
+#pragma warning restore IDE0052
+
+        [UIObject("player_container")] private GameObject playerContainer;
+
+        [UIComponent("player_rankText")] private TextMeshProUGUI playerRankText;
+        [UIComponent("player_nameText")] private TextMeshProUGUI playerNameText;
+        [UIComponent("player_apText")] private TextMeshProUGUI playerApText;
+        [UIComponent("player_accText")] private TextMeshProUGUI playerAccText;
+        [UIComponent("player_scoreText")] private TextMeshProUGUI playerScoreText;
 
         #endregion
 
         #region UI Values & Components
 
         [UIParams] private BSMLParserParams parserParams;
-
         [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
-
-        [UIValue("leaderboard-infos")]
-        private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
-
-        private static readonly List<AccsaberScoreData> scoreDatas = [];
+        [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
+        [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
 
         #endregion
 
@@ -117,8 +140,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             // Subscribe to refresh event from other controllers
             RefreshRequested += () =>
             {
-                currentPage = -1; // reset current page to force reload
-                Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+                currentPage = 1; // reset current page to force reload
+                Task.Run(ForceRefresh);
             };
             // Subscribe to map selection event
             TrySubscribeToMapSelection();
@@ -145,15 +168,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnYouClicked")]
         private void OnYouClicked()
         {
-            Task.Run(async () =>
-            {
-                int playerPage = await GetPlayerPage();
-                if (playerPage != page && playerPage >= 0)
-                {
-                    page = playerPage;
-                    await LoadLeaderboardAsync(currentHash, currentDifficulty);
-                }
-            });
+            if (page == 0) return;
+            page = currentPlayerPage;
+            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
         }
 
         [UIAction("OnPageDown")]
@@ -173,6 +190,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
+            Instance = this;
         }
         private void ShowPlayer(string playerId)
         {
@@ -288,7 +306,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             else
                 hash = levelId; // fallback for official levels
 
-            if (currentHash.Equals(hash))
+            if (hash.Equals(currentHash))
                 return; // same map, no need to update
 
             currentHash = hash;
@@ -298,9 +316,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             currentDifficulty = beatmap.difficulty;
 #endif
             page = 1; // reset to first page on map change
+            currentPage = 0;
+            currentPlayerPage = 0;
 
             // reload leaderboard for the new map
-            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            Task.Run(ForceRefresh);
+        }
+        private async Task ForceRefresh()
+        {
+            currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString())));
+            currentPlayerPage = await GetPlayerPage();
+            await LoadLeaderboardAsync(currentHash, currentDifficulty);
         }
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
@@ -332,10 +358,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         yield return new WaitForEndOfFrame();
 #if NEW_VERSION
                         leaderboard.Data = LeaderboardInfos;
+                        leaderboard.CellSizeValue = CellSize;
 #else
                         leaderboard.data = LeaderboardInfos;
+                        leaderboard.cellSize = CellSize;
 #endif
-                        yield return new WaitForSeconds(0.05f); // small delay to ensure data is set before reloading
+                        if (scores is not null && page != currentPlayerPage)
+                        {
+                            playerRankText.SetText(currentPlayerScore.Rank);
+                            playerNameText.SetText(currentPlayerScore.PlayerName);
+                            playerApText.SetText(currentPlayerScore.AP);
+                            playerAccText.SetText(currentPlayerScore.Acc);
+                            playerScoreText.SetText(currentPlayerScore.Score);
+                            playerContainer.SetActive(true);
+                        }
+                        else playerContainer.SetActive(false);
+                        yield return new WaitForSeconds(0.1f); // small delay to ensure data is set before reloading
 
 #if NEW_VERSION
                         leaderboard.TableView.ReloadData();
