@@ -52,7 +52,7 @@ namespace AccsaberLeaderboard.API
                 page = (page - 1) / FRIEND_PAGE_MULT;
                 do
                 {
-                    string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page - 1, PAGE_LENGTH * FRIEND_PAGE_MULT)).ConfigureAwait(false);
+                    string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page, PAGE_LENGTH * FRIEND_PAGE_MULT)).ConfigureAwait(false);
                     if (dataStr is null || dataStr.Equals(string.Empty))
                         throw new ArgumentNullException("The leaderboard api is not returning any data.");
 

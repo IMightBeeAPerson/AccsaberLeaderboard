@@ -48,8 +48,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new();
         private LeaderboardDisplayType displayType;
-        private Stack<int> previousPages = new();
+        private Stack<int> previousPages = [];
         private string difficultyId;
+
+        private Stack<(int page, int nextPage, IEnumerable<AccsaberScoreData> pageData)> cache = [];
+        private bool cachePage;
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
         public bool OnPlayerPage => currentPage <= currentPlayerPage && nextPage > currentPlayerPage;
@@ -157,7 +160,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (page == 1) return; // Already on the first page
             page = 1;
-            previousPages.Clear();
+            if (displayType == LeaderboardDisplayType.Friends)
+                previousPages.Clear();
+            cache.Clear();
             ReloadLeaderboard();
         }
 
@@ -174,6 +179,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     page = previousPages.Pop();
                     break;
             }
+            cachePage = true;
             ReloadLeaderboard();
         }
 
@@ -182,6 +188,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (page == 0 || displayType != LeaderboardDisplayType.Global) return;
             page = currentPlayerPage;
+            cache.Clear();
             ReloadLeaderboard();
         }
 
@@ -191,14 +198,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
             page = nextPage;
+            cachePage = true;
             ReloadLeaderboard();
         }
 
         [UIAction("ShowGlobal")]
         private void ShowGlobal()
         {
+            if (displayType == LeaderboardDisplayType.Global)
+                return;
             page = 1;
             currentPage = 0;
+            cache.Clear();
             previousPages.Clear();
             displayType = LeaderboardDisplayType.Global;
             FullyReloadLeaderboard();
@@ -207,8 +218,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("ShowFriends")]
         private void ShowFriends()
         {
+            if (displayType == LeaderboardDisplayType.Friends)
+                return;
             page = 1;
             currentPage = 0;
+            cache.Clear();
             displayType = LeaderboardDisplayType.Friends;
             FullyReloadLeaderboard();
         }
@@ -225,6 +239,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Plugin.Log.Debug("LeaderboardViewController Awake");
             Instance = this;
         }
+
         private void FullyReloadLeaderboard()
         {
             Task.Run(async () =>
@@ -361,6 +376,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             page = 1; // reset to first page on map change
             currentPage = 0;
             currentPlayerPage = 0;
+            cache.Clear();
+            cachePage = false;
 
             // reload leaderboard for the new map
             Task.Run(ForceRefresh);
@@ -384,7 +401,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 try
                 {
-                    currentPage = page;
+                    (int, int, IEnumerable<AccsaberScoreData>) toCache;
+                    if (cachePage)
+                    {
+                        AccsaberScoreData[] copy = new AccsaberScoreData[_scores.Count];
+                        _scores.CopyTo(copy);
+                        toCache = (currentPage, nextPage, copy);
+                    }
+                    else toCache = default;
+
+                        currentPage = page;
                     IEnumerator ShowLoading()
                     {
                         yield return new WaitForEndOfFrame();
@@ -394,6 +420,26 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     StartCoroutine(ShowLoading());
 
                     _scores.Clear();
+
+                    while (cache.Count > 0)
+                    {
+                        var item = cache.Pop();
+                        if (item.page == page)
+                        {
+                            _scores.AddRange(item.pageData);
+                            nextPage = item.nextPage;
+                            //Plugin.Log.Info($"Using cache for page #{item.page}.");
+                            goto End;
+                        }
+                        if (item.page > page)
+                        {
+                            //Plugin.Log.Info($"Discarding cache on page #{item.page}.");
+                            continue;
+                        }
+                        cache.Push(item);
+                        break;
+                    }
+
                     AccsaberScoreData[] scores;
                     switch (displayType)
                     {
@@ -413,7 +459,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         _scores.AddRange(scores);
 
-                    //leaderboard.SetDataSource(new AccsaberLeaderboardTableView(_scores), reloadData: true);
+                End:
                     IEnumerator ReloadData()
                     {
                         yield return new WaitForEndOfFrame();
@@ -424,7 +470,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         leaderboard.data = LeaderboardInfos;
                         leaderboard.cellSize = CellSize;
 #endif
-                        if (scores is not null && !OnPlayerPage)
+                        if (_scores.Count > 0 && !OnPlayerPage)
                         {
                             playerRankText.SetText(currentPlayerScore.Rank);
                             playerNameText.SetText(currentPlayerScore.PlayerName);
@@ -434,7 +480,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             playerContainer.SetActive(true);
                         }
                         else playerContainer.SetActive(false);
-                        yield return new WaitForSeconds(0.1f); // small delay to ensure data is set before reloading
+                        yield return new WaitForSeconds(0.05f); // small delay to ensure data is set before reloading
 
 #if NEW_VERSION
                         leaderboard.TableView.ReloadData();
@@ -443,6 +489,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #endif
                         leaderboardContainer.SetActive(true);
                         leaderboardLoader.SetActive(false);
+                    }
+
+                    if (cachePage)
+                    {
+                        cache.Push(toCache);
+                        cachePage = false;
+                        //Plugin.Log.Info($"Cached page #{cache.Peek().page}, stored {cache.Peek().pageData.Count()} scores.");
                     }
                     StartCoroutine(ReloadData());
                 }
