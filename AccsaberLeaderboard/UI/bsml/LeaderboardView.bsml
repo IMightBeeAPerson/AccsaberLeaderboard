@@ -100,11 +100,16 @@
     </vertical>
   </modal>
 
-  <vertical anchor-pos-x='50' anchor-pos-y='10' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
+  <vertical anchor-pos-x='50' anchor-pos-y='-10' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='AccsaberLeaderboard.Resources.topArrow.png' pref-width='5' pref-height='5' on-click='OnPageTop'/>
     <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
     <clickable-image src='AccsaberLeaderboard.Resources.you.png' pref-width='5' pref-height='5' on-click='OnYouClicked'/>
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
+  </vertical>
+
+  <vertical anchor-pos-x='50' anchor-pos-y='25' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='15' pref-width='8' bg='round-rect-panel'>
+    <clickable-image src='AccsaberLeaderboard.Resources.global.png' pref-width='5' pref-height='5' on-click='ShowGlobal'/>
+    <clickable-image src='AccsaberLeaderboard.Resources.friends.png' pref-width='5' pref-height='5' on-click='ShowFriends'/>
   </vertical>
 </bg>
 

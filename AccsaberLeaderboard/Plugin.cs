@@ -4,6 +4,7 @@ using IPA.Config.Stores;
 using System.Reflection;
 using IPALogger = IPA.Logging.Logger;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace AccsaberLeaderboard
 {
@@ -14,12 +15,24 @@ namespace AccsaberLeaderboard
         internal static IPALogger Log { get; private set; }
         internal static HarmonyLib.Harmony Harmony { get; private set; }
 
-        public string PlayerID { get
+        public string PlayerID 
+        { 
+            get
             {
                 if (playerID is null) LoadPlayerID().GetAwaiter().GetResult();
                 return playerID;
-            } }
+            } 
+        }
         private string playerID = null;
+        public HashSet<string> PlayerFriends
+        {
+            get
+            {
+                if (playerFriends is null) LoadPlayerFriends().GetAwaiter().GetResult();
+                return playerFriends;
+            }
+        }
+        private HashSet<string> playerFriends;
 
         [Init]
         /// <summary>
@@ -65,6 +78,11 @@ namespace AccsaberLeaderboard
         private async Task LoadPlayerID()
         {
             playerID = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
+        }
+        private async Task LoadPlayerFriends()
+        {
+            IReadOnlyList<string> friends = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserFriendsUserIds(false).ConfigureAwait(false);
+            playerFriends = [.. friends, PlayerID];
         }
     }
 }

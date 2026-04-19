@@ -1,5 +1,4 @@
 ﻿using AccsaberLeaderboard.API;
-using AccsaberLeaderboard.Harmony;
 using AccsaberLeaderboard.Models;
 using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
@@ -29,7 +28,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region Static Variables & Properties
 
         public static readonly float SMALL_CELL_SIZE = 5.1f;
-        public static readonly float BIG_CELL_SIZE = 5.8f;
+        public static readonly float BIG_CELL_SIZE = 5.9f;
         public static readonly string CELL_HIGHLIGHT_COLOR = "#0AA9";
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
@@ -45,12 +44,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private readonly List<AccsaberScoreData> _scores = scoreDatas;
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
-        private int page, currentPage = -1, currentPlayerPage;
+        private int page, nextPage, currentPage = -1, currentPlayerPage;
         private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new();
+        private LeaderboardDisplayType displayType;
+        private Stack<int> previousPages = new();
+        private string difficultyId;
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
-        public bool OnPlayerPage => currentPage == currentPlayerPage;
+        public bool OnPlayerPage => currentPage <= currentPlayerPage && nextPage > currentPlayerPage;
 
         #endregion
 
@@ -135,12 +137,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("#post-parse")]
         private void PostParse()
         {
+            displayType = LeaderboardDisplayType.Global;
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
             // Subscribe to refresh event from other controllers
             RefreshRequested += () =>
             {
-                currentPage = 1; // reset current page to force reload
+                currentPage = 0; // reset current page to force reload
                 Task.Run(ForceRefresh);
             };
             // Subscribe to map selection event
@@ -154,30 +157,60 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (page == 1) return; // Already on the first page
             page = 1;
-            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            previousPages.Clear();
+            ReloadLeaderboard();
         }
 
         [UIAction("OnPageUp")]
         private void OnPageUp()
         {
             if (page == 1) return; // Can't go back from the first page
-            page--;
-            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            switch (displayType)
+            {
+                case LeaderboardDisplayType.Global:
+                    page--;
+                    break;
+                case LeaderboardDisplayType.Friends:
+                    page = previousPages.Pop();
+                    break;
+            }
+            ReloadLeaderboard();
         }
 
         [UIAction("OnYouClicked")]
         private void OnYouClicked()
         {
-            if (page == 0) return;
+            if (page == 0 || displayType != LeaderboardDisplayType.Global) return;
             page = currentPlayerPage;
-            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            ReloadLeaderboard();
         }
 
         [UIAction("OnPageDown")]
         private void OnPageDown()
         {
-            page++;
-            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            if (displayType == LeaderboardDisplayType.Friends)
+                previousPages.Push(page);
+            page = nextPage;
+            ReloadLeaderboard();
+        }
+
+        [UIAction("ShowGlobal")]
+        private void ShowGlobal()
+        {
+            page = 1;
+            currentPage = 0;
+            previousPages.Clear();
+            displayType = LeaderboardDisplayType.Global;
+            FullyReloadLeaderboard();
+        }
+
+        [UIAction("ShowFriends")]
+        private void ShowFriends()
+        {
+            page = 1;
+            currentPage = 0;
+            displayType = LeaderboardDisplayType.Friends;
+            FullyReloadLeaderboard();
         }
 
         #endregion
@@ -192,6 +225,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Plugin.Log.Debug("LeaderboardViewController Awake");
             Instance = this;
         }
+        private void FullyReloadLeaderboard()
+        {
+            Task.Run(async () =>
+            {
+                currentPlayerPage = await GetPlayerPage();
+                await LoadLeaderboardAsync(currentHash, currentDifficulty);
+            });
+        }
+        private void ReloadLeaderboard() => Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
         private void ShowPlayer(string playerId)
         {
             parserParams.EmitEvent("ShowPlayerInfo");
@@ -315,6 +357,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
             currentDifficulty = beatmap.difficulty;
 #endif
+
             page = 1; // reset to first page on map change
             currentPage = 0;
             currentPlayerPage = 0;
@@ -324,8 +367,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
         private async Task ForceRefresh()
         {
-            currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString())));
-            currentPlayerPage = await GetPlayerPage();
+            difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty.ToString());
+
+            JToken scoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
+            currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(scoreInfo));
+            currentPlayerPage = await GetPlayerPage(scoreInfo);
             await LoadLeaderboardAsync(currentHash, currentDifficulty);
         }
 
@@ -348,7 +394,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     StartCoroutine(ShowLoading());
 
                     _scores.Clear();
-                    AccsaberScoreData[] scores = await AccsaberAPI.GetScoreData(page, hash, diff);
+                    AccsaberScoreData[] scores;
+                    switch (displayType)
+                    {
+                        case LeaderboardDisplayType.Global:
+                            scores = await AccsaberAPI.GetScoreData(page, difficultyId);
+                            nextPage = page + 1;
+                            break;
+                        case LeaderboardDisplayType.Friends:
+                            var scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, Plugin.Instance.PlayerFriends);
+                            scores = scoreData.scores;
+                            nextPage = scoreData.truePage;
+                            break;
+                        default:
+                            scores = null;
+                            break;
+                    }
                     if (scores is not null)
                         _scores.AddRange(scores);
 
@@ -363,7 +424,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         leaderboard.data = LeaderboardInfos;
                         leaderboard.cellSize = CellSize;
 #endif
-                        if (scores is not null && page != currentPlayerPage)
+                        if (scores is not null && !OnPlayerPage)
                         {
                             playerRankText.SetText(currentPlayerScore.Rank);
                             playerNameText.SetText(currentPlayerScore.PlayerName);
@@ -392,61 +453,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             }
         }
 
-        private async Task<int> GetPlayerPage()
+        private async Task<int> GetPlayerPage(JToken scoreInfo = null)
         {
-            JToken scoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty.ToString());
+            scoreInfo ??= await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
             if (scoreInfo is null) return -1; // Player has no score on this map
             return (int)Math.Ceiling(AccsaberAPI.GetRank(scoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
         }
         #endregion
-
-        // DataSource for TableView
-        /*private class AccsaberLeaderboardTableView(List<AccsaberScoreData> scores) : LeaderboardTableView
-        {
-            private new List<AccsaberScoreData> _scores = scores;
-            //[SerializeField] private new float _rowHeight = 6f;
-
-            public override TableCell CellForIdx(TableView tableView, int idx)
-            {
-                AccsaberLeaderboardTableCell cell = tableView.DequeueReusableCellForIdentifier("AccsaberLeaderboardTableCell") as AccsaberLeaderboardTableCell;
-                cell ??= new AccsaberLeaderboardTableCell
-                {
-                    reuseIdentifier = "AccsaberLeaderboardTableCell"
-                };
-                AccsaberScoreData score = _scores[idx];
-                cell.SetData(score);
-                return cell;
-            }
-
-            public override void SetScores(List<ScoreData> scores, int specialScorePos)
-            {
-                _scores = [.. scores.Cast<AccsaberScoreData>()];
-                _tableView.SetDataSource(this, reloadData: true);
-            }
-        }
-
-        // Example TableCell implementation
-        private class AccsaberLeaderboardTableCell : LeaderboardTableCell
-        {
-            //private TMPro.TextMeshProUGUI _text;
-
-            //public float AP;
-
-            protected override void Start()
-            {
-                base.Start();
-                //_text = gameObject.AddComponent<TMPro.TextMeshProUGUI>();
-                //_text.fontSize = 3;
-            }
-
-            public void SetData(AccsaberScoreData data)
-            {
-                //_text.text = $"#{data.rank} {data.playerName} - {data.AP}ap {data.Acc:N4}%";
-                rank = data.rank;
-                playerName = data.playerName;
-                score = data.score;
-                showFullCombo = data.fullCombo;
-            }
-        }//*/
     }
 }

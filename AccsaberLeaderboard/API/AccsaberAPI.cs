@@ -15,24 +15,74 @@ namespace AccsaberLeaderboard.API
     {
         private static readonly Throttler throttler = new(400, 60);
         public static readonly int PAGE_LENGTH = 10;
+        public static readonly int FRIEND_PAGE_MULT = 5;
         public static async Task<AccsaberScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
+        {
+            return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff.ToString()));
+        }
+        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string diffId)
         {
             try
             {
-                IEnumerable<JToken> scores = await GetLeaderboardScores(hash, diff.ToString(), page - 1, PAGE_LENGTH).ConfigureAwait(false); // page is zero indexed while the given page is one indexed
+                IEnumerable<JToken> scores = await GetLeaderboardScores(diffId, page - 1, PAGE_LENGTH).ConfigureAwait(false); 
                 if (scores is null) return null;
                 return [.. scores.Select(ConvertToScoreData)];
             }
             catch (Exception e)
             {
-                Plugin.Log.Error("Failure to get score data for map.");
-                Plugin.Log.Debug($"Hash: {hash}, diff: {diff}\n{e}");
+                Plugin.Log.Error("Failure to get score data for map.\n");
+                Plugin.Log.Debug(e);
                 return null;
             }
         }
         public static AccsaberScoreData ConvertToScoreData(JToken scoreData)
         {
             return new AccsaberScoreData(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
+        }
+        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string hash, BeatmapDifficulty diff, HashSet<string> filteredUserIds)
+        {
+            return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff.ToString()), filteredUserIds);
+        }
+        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, HashSet<string> filteredUserIds)
+        {
+            try
+            {
+                List<AccsaberScoreData> outp = new(PAGE_LENGTH);
+                int scoresNeeded = PAGE_LENGTH, truePage = page;
+                page = (page - 1) / FRIEND_PAGE_MULT;
+                do
+                {
+                    string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page - 1, PAGE_LENGTH * FRIEND_PAGE_MULT)).ConfigureAwait(false);
+                    if (dataStr is null || dataStr.Equals(string.Empty))
+                        throw new ArgumentNullException("The leaderboard api is not returning any data.");
+
+                    JToken response = JToken.Parse(dataStr);
+                    if ((bool)response["last"])
+                        break;
+                    if (((int)response["numberOfElements"]) == 0)
+                        continue;
+
+                    IEnumerable<JToken> tokens = response["content"].Children();
+
+                    IEnumerable<AccsaberScoreData> scores = tokens.Where(token => filteredUserIds.Contains(GetPlayerId(token))).Select(ConvertToScoreData);
+                    int scoreLen = scores.Count();
+                    if (scoreLen >= scoresNeeded)
+                        outp.AddRange(scores.Take(scoresNeeded));
+                    else
+                    {
+                        outp.AddRange(scores);
+                        scoresNeeded -= scoreLen;
+                    }
+                    truePage += FRIEND_PAGE_MULT;
+                    page++;
+                } while (outp.Count < PAGE_LENGTH);
+                return ([.. outp], truePage);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.Error("Issue getting friend score data.\n" + e);
+                return default;
+            }
         }
         public static float GetComplexity(JToken diffData) => (float)(diffData["complexity"] ?? 0f);
         public static string GetSongName(JToken diffData) => diffData["songName"].ToString();
@@ -70,9 +120,9 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum))))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<JToken> GetScoreData(string userId, string hash, string diff, CancellationToken ct = default)
+        public static async Task<JToken> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
-            string reloadedDiff = DiffNumToReloadedDiff(FromDiff((BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), diff)));
+            string reloadedDiff = DiffNumToReloadedDiff(FromDiff(diff));
             string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
             return JToken.Parse(dataStr);
@@ -86,7 +136,7 @@ namespace AccsaberLeaderboard.API
         {
             return (float)JToken.Parse(await CallAPI_String(string.Format(APAPI_PLAYERID_CATEGORY, userId, accSaberType.ToString().ToLower() + "_acc")).ConfigureAwait(false))?["ap"];
         }
-        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string hash, string diff, int page = 0, int count = 10, CancellationToken ct = default)
+        public static async Task<string> GetLeaderboardDifficultyId(string hash, string diff, CancellationToken ct = default)
         {
             if (ct.IsCancellationRequested) return null;
             diff = DiffNumToReloadedDiff(FromDiff((BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), diff)));
@@ -97,7 +147,15 @@ namespace AccsaberLeaderboard.API
 
             if (diffData is null) return null;
 
-            dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffData["id"].ToString(), page, count), ct: ct).ConfigureAwait(false);
+            return diffData["id"].ToString();
+        } 
+        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string hash, string diff, int page = 0, int count = 10, CancellationToken ct = default)
+        {
+            return await GetLeaderboardDifficultyId(hash, diff, ct).ContinueWith(task => GetLeaderboardScores(task.Result, page, count, ct).GetAwaiter().GetResult());
+        }
+        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string difficulty_id, int page = 0, int count = 10, CancellationToken ct = default)
+        {
+            string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, difficulty_id, page, count), ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
 
             return JToken.Parse(dataStr)["content"].Children();

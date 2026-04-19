@@ -160,6 +160,7 @@
     <Compile Include="Installers\MainUIInstaller.cs" />
     <Compile Include="Models\AccsaberScoreData.cs" />
     <Compile Include="Models\APCategory.cs" />
+    <Compile Include="Models\LeaderboardDisplayType.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
     <Compile Include="AccsaberLeaderboardController.cs" />
@@ -194,6 +195,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\topArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\friends.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\global.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
