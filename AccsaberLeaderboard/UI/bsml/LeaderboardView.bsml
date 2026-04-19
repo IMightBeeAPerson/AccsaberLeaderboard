@@ -1,5 +1,5 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
-  <vertical id='leaderboard_container' pref-width='80' pref-height='80' spacing='-40' anchor-pos-y='-5'>
+  <vertical id='leaderboard_container' pref-width='80' pref-height='80' spacing='-55' anchor-pos-y='-5'>
     <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='~leaderboard-cellSize' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false' pref-width='80' visable-cells='10'>
       <horizontal pref-width='80' pref-height='~ContainerHeight' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
         <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
@@ -19,9 +19,9 @@
         </vertical>
       </horizontal>
     </custom-list>
-    <vertical id='player_container' spacing='0' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-force-expand-width='true' child-expand-height='false' active='false'>
-      <vertical vertical-fit='PreferredSize' pref-height='1' child-expand-height='false'>
-        <text text='...' align='Left' font-size='3' pref-height='1'/>
+    <vertical id='player_container' spacing='2' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-force-expand-width='true' child-expand-height='false' active='false'>
+      <vertical child-expand-height='false'>
+        <text text='...' align='Left' font-size='3'/>
       </vertical>
       <horizontal pref-width='80' pref-height='~leaderboard-cellSize' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~player_BGColor'>
         <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
