@@ -166,7 +166,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageTop")]
         private void OnPageTop()
         {
-            if (page == 1) return; // Already on the first page
+            if (page == 1 || currentHash is null) return; // Already on the first page
             page = 1;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Clear();
@@ -177,7 +177,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageUp")]
         private void OnPageUp()
         {
-            if (page == 1) return; // Can't go back from the first page
+            if (page == 1 || currentHash is null) return; // Can't go back from the first page
             switch (displayType)
             {
                 case LeaderboardDisplayType.Global:
@@ -194,7 +194,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnYouClicked")]
         private void OnYouClicked()
         {
-            if (page == 0 || displayType != LeaderboardDisplayType.Global) return;
+            if (page == 0 || displayType != LeaderboardDisplayType.Global || currentHash is null) return;
             page = currentPlayerPage;
             cache.Clear();
             ReloadLeaderboard();
@@ -203,7 +203,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageDown")]
         private void OnPageDown()
         {
-            if (_scores.Count < AccsaberAPI.PAGE_LENGTH)
+            if (_scores.Count < AccsaberAPI.PAGE_LENGTH || currentHash is null)
                 return;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
@@ -215,7 +215,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("ShowGlobal")]
         private void ShowGlobal()
         {
-            if (displayType == LeaderboardDisplayType.Global)
+            if (displayType == LeaderboardDisplayType.Global || currentHash is null)
                 return;
             page = 1;
             currentPage = 0;
@@ -229,7 +229,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("ShowFriends")]
         private void ShowFriends()
         {
-            if (displayType == LeaderboardDisplayType.Friends)
+            if (displayType == LeaderboardDisplayType.Friends || currentHash is null)
                 return;
             page = 1;
             currentPage = 0;
@@ -343,7 +343,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (sldvc is not null)
             {
 #if NEW_VERSION
-                void Handler1(StandardLevelDetailViewController controller) => TryUpdateCurrentMap();
+                void Handler1(StandardLevelDetailViewController controller)
+                {
+                    TryUpdateCurrentMap();
+                }
 #else
                 void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
                 {
@@ -353,7 +356,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #endif
                 void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
                 {
-                    if (contentType != StandardLevelDetailViewController.ContentType.Inactive)
+                    if (contentType > StandardLevelDetailViewController.ContentType.Loading && contentType < StandardLevelDetailViewController.ContentType.Error)
                         TryUpdateCurrentMap();
                 }
 
@@ -368,7 +371,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void TryUpdateCurrentMap()
         {
 #if NEW_VERSION
-            if (sldvc is not null)
+            if (sldvc is not null && sldvc.beatmapLevel is not null && sldvc.beatmapKey != default)
                 UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
 #else
             if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
@@ -382,7 +385,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
         private void UpdateDiff(IDifficultyBeatmap beatmap)
         {
-#endif
+#endif      
             //Plugin.Log.Info("Update called.");
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
 #if NEW_VERSION
@@ -395,7 +398,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 hash = levelId.Split('_')[2];
             else
                 hash = levelId; // fallback for official levels
-
 
 #if NEW_VERSION
             if (hash.Equals(currentHash) && key.difficulty.Equals(currentDifficulty))
@@ -419,7 +421,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
         private async Task ForceRefresh()
         {
-            difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty.ToString());
+            difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty);
 
             if (difficultyId is null)
             {
