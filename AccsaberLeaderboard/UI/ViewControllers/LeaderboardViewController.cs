@@ -26,13 +26,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
     internal class LeaderboardViewController : BSMLAutomaticViewController
     {
 #pragma warning disable IDE0044, IDE0051
+        #region Static Variables & Properties
+
+        private static event Action RefreshRequested;
+
+        #endregion
 
         #region Instance Variables & Fields
 
         private readonly List<AccsaberScoreData> _scores = scoreDatas;
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
-        private int page;
+        private int page, currentPage = -1;
         private AsyncLock loadLeaderboardLock = new();
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
@@ -109,10 +114,24 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
+            // Subscribe to refresh event from other controllers
+            RefreshRequested += () =>
+            {
+                currentPage = -1; // reset current page to force reload
+                Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+            };
             // Subscribe to map selection event
             TrySubscribeToMapSelection();
             // Optionally, load leaderboard for the current map if available
             TryUpdateCurrentMap();
+        }
+
+        [UIAction("OnPageTop")]
+        private void OnPageTop()
+        {
+            if (page == 1) return; // Already on the first page
+            page = 1;
+            Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
         }
 
         [UIAction("OnPageUp")]
@@ -145,6 +164,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
 
         #endregion
+        #region Public Methods
+
+        public static void ForceUpdate() => RefreshRequested?.Invoke();
+
+        #endregion
+        #region Private Methods
         private void Awake()
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
@@ -263,6 +288,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             else
                 hash = levelId; // fallback for official levels
 
+            if (currentHash.Equals(hash))
+                return; // same map, no need to update
+
             currentHash = hash;
 #if NEW_VERSION
             currentDifficulty = key.difficulty;
@@ -277,12 +305,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
+            if (page == currentPage) return; // already on this page, no need to reload
             AsyncLock.Releaser? theLock = await loadLeaderboardLock.TryLockAsync();
             if (theLock is null) return;
             using (theLock.Value)
             {
                 try
                 {
+                    currentPage = page;
                     IEnumerator ShowLoading()
                     {
                         yield return new WaitForEndOfFrame();
@@ -330,6 +360,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (scoreInfo is null) return -1; // Player has no score on this map
             return (int)Math.Ceiling(AccsaberAPI.GetRank(scoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
         }
+        #endregion
 
         // DataSource for TableView
         /*private class AccsaberLeaderboardTableView(List<AccsaberScoreData> scores) : LeaderboardTableView

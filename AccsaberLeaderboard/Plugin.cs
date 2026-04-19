@@ -53,7 +53,6 @@ namespace AccsaberLeaderboard
             //new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
             Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
-            //BSEvents.menuSceneActive += () => Task.Run(LoadPlayerID);
         }
 
         [OnExit]

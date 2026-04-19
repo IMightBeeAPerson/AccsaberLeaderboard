@@ -50,7 +50,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)
         {
-            Task.Run(async () => { await Task.Delay(5000); await UpdatePlayer(); });
+            Task.Run(async () => {
+                await Task.Delay(5000);
+                await UpdatePlayer(); 
+                LeaderboardViewController.ForceUpdate();
+            });
         }
         private async Task UpdatePlayer()
         {
