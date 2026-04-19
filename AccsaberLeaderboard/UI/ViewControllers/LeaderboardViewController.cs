@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Zenject;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 
@@ -99,6 +100,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
 
+        [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
+        [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
+
         #endregion
 
         #region Modal UI Components
@@ -141,6 +145,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void PostParse()
         {
             displayType = LeaderboardDisplayType.Global;
+            UpdateSelectors();
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
             // Subscribe to refresh event from other controllers
@@ -212,6 +217,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             cache.Clear();
             previousPages.Clear();
             displayType = LeaderboardDisplayType.Global;
+            UpdateSelectors();
             FullyReloadLeaderboard();
         }
 
@@ -224,6 +230,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             currentPage = 0;
             cache.Clear();
             displayType = LeaderboardDisplayType.Friends;
+            UpdateSelectors();
             FullyReloadLeaderboard();
         }
 
@@ -240,6 +247,20 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Instance = this;
         }
 
+        private void UpdateSelectors()
+        {
+            switch (displayType)
+            {
+                case LeaderboardDisplayType.Global:
+                    globalSelector.DefaultColor = globalSelector.HighlightColor;
+                    friendsSelector.DefaultColor = Color.white;
+                    break;
+                case LeaderboardDisplayType.Friends:
+                    globalSelector.DefaultColor = Color.white;
+                    friendsSelector.DefaultColor = friendsSelector.HighlightColor;
+                    break;
+            }
+        }
         private void FullyReloadLeaderboard()
         {
             Task.Run(async () =>
