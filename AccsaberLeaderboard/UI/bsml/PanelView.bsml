@@ -1,15 +1,73 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <horizontal id='panelContainer' pref-width='100' pref-height='20' bg='panel-top' child-alignment='MiddleLeft'>
-    <clickable-image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='20' on-click='OpenReloaded' default-color='#FFFF' highlight-color='#FFFF'/>
+    <clickable-image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='15' pref-height='15' on-click='OpenReloaded' default-color='#FFFF' highlight-color='#FFFF'/>
 
-    <vertical pref-width='50' child-alignment='MiddleCenter'>
-      <text id='globalRankText' text='Global' font-size='4'/>
-      <text id='countryRankText' text='Country' font-size='4'/>
-      <text id='totalAPText' text='0ap' font-size='4'/>
+    <vertical pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+
+      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text text='Overall' align='Center' font-color='#FF0'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text text='Tech' align='Center' font-color='#F55'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text text='Standard' align='Center' font-color='#33F'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text text='True' align='Center' font-color='#090'/>
+        </vertical>
+      </horizontal>
+
+      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='totalAPText' text='0ap' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='techAPText' text='0ap' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='standardAPText' text='0ap' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='trueAPText' text='0ap' font-size='4' align='Center'/>
+        </vertical>
+      </horizontal>
+    
+      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='globalRankText' text='Global' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='techGlobalRankText' text='Global' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='standardGlobalRankText' text='Global' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='trueGlobalRankText' text='Global' font-size='4' align='Center'/>
+        </vertical>
+      </horizontal>
+    
+      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='countryRankText' text='Country' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='techCountryRankText' text='Country' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='standardCountryRankText' text='Country' font-size='4' align='Center'/>
+        </vertical>
+        <vertical pref-width='15' child-alignment='MiddleCenter'>
+          <text id='trueCountryRankText' text='Country' font-size='4' align='Center'/>
+        </vertical>
+      </horizontal>
+
     </vertical>
 
-    <vertical pref-width='18' pad-down='1' pad-up='1'>
-      <clickable-image id='profilePicture' preserve-aspect='true' pref-width='18' pref-height='18' on-click='OpenPlayerProfile' default-color='#FFFF' highlight-color='#FFFF'/>
+    <vertical pref-width='13' pad-down='1' pad-up='1'>
+      <clickable-image id='profilePicture' preserve-aspect='true' pref-width='13' pref-height='13' on-click='OpenPlayerProfile' default-color='#FFFF' highlight-color='#FFFF'/>
     </vertical>
     <vertical perf-width='10'/>
   </horizontal>

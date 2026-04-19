@@ -27,9 +27,23 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         internal static event Action OnPlayerPictureClicked;
 
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
+
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
-        [UIComponent("totalAPText")] private TextMeshProUGUI TotalAPText;
+        [UIComponent("totalAPText")] private TextMeshProUGUI totalAPText;
+
+        [UIComponent("techGlobalRankText")] private TextMeshProUGUI techGlobalRankText;
+        [UIComponent("techCountryRankText")] private TextMeshProUGUI techCountryRankText;
+        [UIComponent("techAPText")] private TextMeshProUGUI techAPText;
+
+        [UIComponent("standardGlobalRankText")] private TextMeshProUGUI standardGlobalRankText;
+        [UIComponent("standardCountryRankText")] private TextMeshProUGUI standardCountryRankText;
+        [UIComponent("standardAPText")] private TextMeshProUGUI standardAPText;
+
+        [UIComponent("trueGlobalRankText")] private TextMeshProUGUI trueGlobalRankText;
+        [UIComponent("trueCountryRankText")] private TextMeshProUGUI trueCountryRankText;
+        [UIComponent("trueAPText")] private TextMeshProUGUI trueAPText;
+
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
         [UIAction("OpenPlayerProfile")] private void OpenPlayerProfile() => OnPlayerPictureClicked?.Invoke();
@@ -41,11 +55,31 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Task.Run(UpdatePlayer);
         }
 
-        public void SetRanks(int globalRank, int countryRank, float totalAP)
+        public void SetTexts(JToken playerInfo)
         {
-            globalRankText.SetText($"<color=#AAA>Global Rank:</color> #{globalRank}");
-            countryRankText.SetText($"<color=#AAA>Country Rank:</color> #{countryRank}");
-            TotalAPText.SetText($"<color=#AAA>Total AP:</color> <color=#A0F>{totalAP:N2}ap</color>");
+            JToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
+
+            globalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            countryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            totalAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+
+            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
+
+            techGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            techCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            techAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+
+            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
+
+            standardGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            standardCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            standardAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+
+            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
+
+            trueGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            trueCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            trueAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
         }
 
         private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)
@@ -61,12 +95,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             try
             {
                 JToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
-                JToken overallPlayerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
                 IEnumerator WaitThenUpdate() 
                 {
                     yield return new WaitForEndOfFrame();
 
-                    SetRanks(AccsaberAPI.GetGlobalRank(overallPlayerStats), AccsaberAPI.GetCountryRank(overallPlayerStats), AccsaberAPI.GetAP(overallPlayerStats));
+                    SetTexts(playerInfo);
 #if NEW_VERSION
                     panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6'));
 #else
