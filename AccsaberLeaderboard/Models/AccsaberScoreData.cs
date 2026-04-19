@@ -21,7 +21,7 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(Score))] public string Score => $"<color=#AAA>{scoreData.score:N0}</color>";
 
-            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(15);
+            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(LeaderboardOnPlayerPage ? 15 : 20);
 
             [UIValue(nameof(Rank))] public string Rank => $"<color=#FA0>#{scoreData.rank}</color>";
 

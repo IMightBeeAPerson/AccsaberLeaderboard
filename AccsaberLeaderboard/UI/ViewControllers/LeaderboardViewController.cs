@@ -18,6 +18,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Zenject;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
+using static BeatSaberMarkupLanguage.Components.KEYBOARD;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -200,6 +201,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageDown")]
         private void OnPageDown()
         {
+            if (_scores.Count < AccsaberAPI.PAGE_LENGTH)
+                return;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
             page = nextPage;
@@ -342,7 +345,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
                 void Handler1(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap) => UpdateDiff(beatmap);
 #endif
-                void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType) => TryUpdateCurrentMap();
+                void Handler2(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
+                {
+                    if (contentType != StandardLevelDetailViewController.ContentType.Inactive)
+                        TryUpdateCurrentMap();
+                }
 
                 sldvc.didChangeDifficultyBeatmapEvent -= Handler1;
                 sldvc.didChangeContentEvent -= Handler2;
@@ -354,11 +361,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private void TryUpdateCurrentMap()
         {
+            if (sldvc is not null)
 #if NEW_VERSION
-            if (sldvc is not null && sldvc.beatmapLevel is not null)
                 UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
 #else
-            if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
                 UpdateDiff(sldvc.selectedDifficultyBeatmap);
 #endif
         }
@@ -369,9 +375,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
         private void UpdateDiff(IDifficultyBeatmap beatmap)
         {
-            if (beatmap is null || beatmap.level is null)
-                return;
 #endif
+            //Plugin.Log.Info("Update called.");
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
 #if NEW_VERSION
             string levelId = beatmap.levelID;
@@ -380,19 +385,21 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #endif
             string hash;
             if (levelId.StartsWith("custom_level_"))
-                hash = levelId.Substring("custom_level_".Length);
+                hash = levelId.Split('_')[2];
             else
                 hash = levelId; // fallback for official levels
 
-            if (hash.Equals(currentHash))
-                return; // same map, no need to update
 
-            currentHash = hash;
 #if NEW_VERSION
+            if (hash.Equals(currentHash) && currentDifficulty.Equals(key.difficulty))
+                return; // same map, no need to update
             currentDifficulty = key.difficulty;
 #else
+            if (hash.Equals(currentHash) && currentDifficulty.Equals(beatmap.difficulty))
+                return; // same map, no need to update
             currentDifficulty = beatmap.difficulty;
 #endif
+            currentHash = hash;
 
             page = 1; // reset to first page on map change
             currentPage = 0;
