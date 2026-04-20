@@ -117,6 +117,8 @@ namespace AccsaberLeaderboard.API
         public static JToken GetPlayerStats(JToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());
+            if (playerData is null) Plugin.Log.Warn("playerData is null.");
+            if (id is null) Plugin.Log.Warn("id is null.");
             return playerData["statistics"]?.Children().FirstOrDefault(token => id.Equals(token["categoryId"]?.ToString()));
         }
         public static int GetGlobalRank(JToken statsData) => (int)statsData["ranking"];

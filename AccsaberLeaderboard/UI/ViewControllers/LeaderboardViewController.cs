@@ -54,6 +54,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private LeaderboardDisplayType displayType;
         private Stack<int> previousPages = [];
         private string difficultyId;
+        private PlayerProfileModalViewController ppmvc;
 
         private Stack<(int page, int nextPage, IEnumerable<AccsaberScoreData> pageData)> cache = [];
         private bool cachePage;
@@ -70,9 +71,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #endregion
 
         #region Loading UI objects
-
-        [UIObject("modal_loading")] private GameObject modalLoader;
-        [UIObject("modal_container")] private GameObject modalContainer;
 
         [UIObject("leaderboard_loading")] private GameObject leaderboardLoader;
         [UIObject("leaderboard_container")] private GameObject leaderboardContainer;
@@ -102,6 +100,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
         [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
+        [UIValue("colorGrey")] private string grey = GREY;
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 
@@ -111,53 +110,21 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #endregion
 
-        #region Modal UI Components
-
-        [UIObject("PlayerInfoWindow")] private GameObject playerInfoWindow;
-
-        [UIComponent("modal_playerImage")] private ImageView modalPlayerImage;
-
-        [UIComponent("modal_playerName")] private TextMeshProUGUI modalPlayerName;
-
-        [UIComponent("modal_levelRank")] private TextMeshProUGUI modalLevelRank;
-        [UIComponent("modal_level")] private TextMeshProUGUI modalLevel;
-
-        [UIComponent("modal_levelProgress")] private LayoutElement modalLevelProgress;
-        [UIComponent("modal_levelProgress")] private ImageView modalLevelProgress_image;
-        [UIComponent("modal_levelProgressInverse")] private LayoutElement modalLevelProgressInverse;
-        [UIComponent("modal_levelProgressInverse")] private ImageView modalLevelProgressInverse_image;
-        [UIComponent("modal_levelProgressNumber")] private TextMeshProUGUI modalLevelProgressNumber;
-
-        [UIComponent("modal_globalRank")] private TextMeshProUGUI modalGlobalRank;
-        [UIComponent("modal_countryRank")] private TextMeshProUGUI modalCountryRank;
-        [UIComponent("modal_overall")] private TextMeshProUGUI modalOverall;
-
-        [UIComponent("modal_tech")] private TextMeshProUGUI modalTech;
-        [UIComponent("modal_true")] private TextMeshProUGUI modalTrue;
-        [UIComponent("modal_standard")] private TextMeshProUGUI modalStandard;
-        
-        [UIComponent("modal_tech_rank_global")] private TextMeshProUGUI modalTechGlobalRank;  
-        [UIComponent("modal_tech_rank_country")] private TextMeshProUGUI modalTechCountryRank;  
-        [UIComponent("modal_true_rank_global")] private TextMeshProUGUI modalTrueGlobalRank;  
-        [UIComponent("modal_true_rank_country")] private TextMeshProUGUI modalTrueCountryRank;  
-        [UIComponent("modal_standard_rank_global")] private TextMeshProUGUI modalStandardGlobalRank;  
-        [UIComponent("modal_standard_rank_country")] private TextMeshProUGUI modalStandardCountryRank;  
-        #endregion
-
         #region UI Actions
 
         [UIAction("OnCellSelected")]
         private void OnCellSelected(TableView _, AccsaberScoreDataInfo cell)
         {
-            ShowPlayer(cell.PlayerId);
+            ppmvc.ShowPlayer(cell.PlayerId, this);
         }
 
         [UIAction("#post-parse")]
         private void PostParse()
         {
             UpdateSelectors(LeaderboardDisplayType.Global);
+            ppmvc = new(leaderboardContainer);
             // Subscribe to player picture click event from PanelViewController
-            PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
+            PanelViewController.OnPlayerPictureClicked += () => ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             // Subscribe to refresh event from other controllers
             RefreshRequested += () =>
             {
@@ -290,82 +257,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             });
         }
         private void ReloadLeaderboard() => Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
-        private void ShowPlayer(string playerId)
-        {
-            parserParams.EmitEvent("ShowPlayerInfo");
-            IEnumerator WaitThenUpdate()
-            {
-                yield return new WaitForEndOfFrame();
-
-                (playerInfoWindow.transform as RectTransform).sizeDelta = new Vector2(70, 80);
-                modalLoader.SetActive(true);
-                modalContainer.SetActive(false);
-            }
-            StartCoroutine(WaitThenUpdate());
-            Task.Run(() => SetupModal(playerId));
-        }
-        private async Task SetupModal(string playerId)
-        {
-            JToken playerInfo = await AccsaberAPI.GetPlayerInfo(playerId, true);
-            string rank = AccsaberAPI.GetPlayerTitle(playerInfo);
-            JToken stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
-
-            IEnumerator SetTexts()
-            {
-                yield return new WaitForEndOfFrame();
-
-                modalPlayerName.SetText(AccsaberAPI.GetPlayerName(playerInfo));
-
-                modalLevelRank.SetText($"<color={MiscUtils.GetColorForTitle(rank)}>{rank}</color>");
-                modalLevel.SetText($"<color={LEVEL}>Level {AccsaberAPI.GetPlayerLevel(playerInfo)}</color>");
-
-                float xpPercent = AccsaberAPI.GetPlayerXPPercent(playerInfo);
-                modalLevelProgressNumber.SetText($"<color={GREY}>{xpPercent:N2}%</color>");
-                xpPercent /= 100f;
-
-                const float barLen = 50f;
-
-                modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
-                modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
-
-                modalLevelProgress_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle((LevelTitle)Enum.Parse(typeof(LevelTitle), rank) + 1));
-                modalLevelProgressInverse_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(rank));
-
-                modalGlobalRank.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalOverall.SetText($"<color={OVERALL}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalCountryRank.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
-
-                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
-
-                modalTech.SetText($"<color={TECH}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTechGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalTechCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
-
-                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
-                modalTrue.SetText($"<color={TRUE}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTrueGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalTrueCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
-
-                stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
-                modalStandard.SetText($"<color={STANDARD}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalStandardGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");  
-                modalStandardCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
-
-                //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-                modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
-#if NEW_VERSION
-                modalPlayerImage.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
-#else
-                modalPlayerImage.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
-#endif
-                yield return new WaitForFixedUpdate();
-
-                modalLoader.SetActive(false);
-                modalContainer.SetActive(true);
-            }
-            StartCoroutine(SetTexts());
-
-        }
+        
         private void TrySubscribeToMapSelection()
         {
             if (sldvc is not null)

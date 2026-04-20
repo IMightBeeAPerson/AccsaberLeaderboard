@@ -1,0 +1,60 @@
+<modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
+    <loading id='loader' preserve-aspect='true'/>
+    <vertical id='container' pref-width='70' pref-height='80' bg='round-rect-panel'>
+      <text id='playerName' align='Center' font-size='7'/>
+      <horizontal pad-left='17' pad-right='17'>
+        <text id='levelRank' align='Left'/>
+        <text id='level' align='Right'/>
+      </horizontal>
+
+      <horizontal pref-height='1' child-expand-width='false' child-control-width='false'>
+        <vertical pref-width='10'/>
+        <image id='levelProgress' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#FFD700' pref-width='30' pref-height='1'/>
+        <image id='levelProgressInverse' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#CCC' pref-width='40' pref-height='1'/>
+      </horizontal>
+
+      <text id='levelProgressNumber' align='Center' font-size='3.5'/>
+
+      <img id='playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
+      <horizontal pad-left='5' pad-right='5'>
+        <vertical>
+          <text text='Global' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='globalRank' align='Center'/>
+        </vertical>
+        <vertical>
+          <text text='Overall' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='overall' align='Center'/>
+        </vertical>
+        <vertical>
+          <text text='Country' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='countryRank' align='Center'/>
+        </vertical>
+      </horizontal>
+      <horizontal pad-left='5' pad-right='5'>
+        <vertical>
+          <text text='True' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='true' align='Center'/>
+          <horizontal>
+            <text id='true_rank_global' font-size='3' align='Left'/>
+            <text id='true_rank_country' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+        <vertical>
+          <text text='Standard' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='standard' align='Right'/>
+          <horizontal>
+            <text id='standard_rank_global' font-size='3' align='Left'/>
+            <text id='standard_rank_country' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+        <vertical>
+          <text text='Tech' font-color='~colorGrey' font-size='2.5' align='Center'/>
+          <text id='tech' align='Center'/>
+          <horizontal>
+            <text id='tech_rank_global' font-size='3' align='Left'/>
+            <text id='tech_rank_country' font-size='3' align='Right'/>
+          </horizontal>
+        </vertical>
+      </horizontal>
+    </vertical>
+  </modal>

@@ -109,9 +109,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     SetTexts(playerInfo);
 #if NEW_VERSION
-                    panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6'));
+                    panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.ChangeAlpha(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)), "6")));
 #else
-                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)) + '6');
+                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.ChangeAlpha(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)), "6"));
 #endif
 
                     //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
