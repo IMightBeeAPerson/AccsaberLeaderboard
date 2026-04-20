@@ -187,7 +187,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
 
         [UIAction("ShowGlobal")]
-        private void ShowGlobal() => ChangeFilter(LeaderboardDisplayType.Friends);
+        private void ShowGlobal() => ChangeFilter(LeaderboardDisplayType.Global);
 
         [UIAction("ShowFriends")]
         private void ShowFriends() => ChangeFilter(LeaderboardDisplayType.Friends);
@@ -432,9 +432,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             break;
                         case LeaderboardDisplayType.Country:
                             string country = AccsaberAPI.GetCountry(currentPlayerScoreInfo);
-                            scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, token => country.Equals(AccsaberAPI.GetCountry(token)), 5);
-                            scores = scoreData.scores;
-                            nextPage = scoreData.truePage;
+                            scores = await AccsaberAPI.GetScoreData(page, difficultyId, country);
+                            nextPage = page + 1;
                             break;
                         default:
                             scores = null;

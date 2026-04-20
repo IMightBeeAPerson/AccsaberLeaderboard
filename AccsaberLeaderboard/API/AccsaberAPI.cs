@@ -20,11 +20,12 @@ namespace AccsaberLeaderboard.API
         {
             return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff));
         }
-        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string diffId)
+        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string diffId, string country = null)
         {
             try
             {
-                IEnumerable<JToken> scores = await GetLeaderboardScores(diffId, page - 1, PAGE_LENGTH).ConfigureAwait(false); 
+                IEnumerable<JToken> scores = await (country is null ? GetLeaderboardScores(diffId, page - 1, PAGE_LENGTH) :
+                    GetLeaderboardScores(diffId, country, page - 1, PAGE_LENGTH)).ConfigureAwait(false); 
                 if (scores is null) return null;
                 return [.. scores.Select(ConvertToScoreData)];
             }
@@ -164,6 +165,13 @@ namespace AccsaberLeaderboard.API
         public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string difficulty_id, int page = 0, int count = 10, CancellationToken ct = default)
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, difficulty_id, page, count), throttler, true, ct: ct).ConfigureAwait(false);
+            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
+
+            return JToken.Parse(dataStr)["content"].Children();
+        }
+        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string difficulty_id, string country, int page = 0, int count = 10, CancellationToken ct = default)
+        {
+            string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF_COUNTRY, difficulty_id, country, page, count), throttler, true, ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
 
             return JToken.Parse(dataStr)["content"].Children();

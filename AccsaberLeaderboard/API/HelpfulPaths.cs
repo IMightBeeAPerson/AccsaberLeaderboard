@@ -28,6 +28,7 @@ namespace AccsaberLeaderboard.API
         public static readonly string APAPI_HASH = APAPI + "maps/hash/{0}"; //hash
         public static readonly string APAPI_HASH_DIFF = APAPI + "maps/hash/{0}?difficulty={1}"; //hash, difficulty IN CAPS
         public static readonly string APAPI_LEADERBOARD_DIFF = APAPI + "maps/difficulties/{0}/scores?page={1}&size={2}"; //diff_id, page (zero indexed), count
+        public static readonly string APAPI_LEADERBOARD_DIFF_COUNTRY = APAPI + "maps/difficulties/{0}/scores?country={1}&page={2}&size={3}"; //diff_id, country, page (zero indexed), count
         public static readonly string APAPI_PLAYER_LEVEL = APAPI + "users/{0}/level"; //user_id
 
 
