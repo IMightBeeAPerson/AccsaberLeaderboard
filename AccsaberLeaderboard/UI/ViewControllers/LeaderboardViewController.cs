@@ -15,10 +15,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 using Zenject;
+
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
-using static BeatSaberMarkupLanguage.Components.KEYBOARD;
+using static AccsaberLeaderboard.Utils.ColorPalette;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -31,7 +33,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public static readonly float SMALL_CELL_SIZE = 5.1f;
         public static readonly float BIG_CELL_SIZE = 5.9f;
-        public static readonly string CELL_HIGHLIGHT_COLOR = "#0AA9";
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
@@ -81,7 +82,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
 #pragma warning disable IDE0052
         [UIValue("player_fontSize")] private float playerFontSize = AccsaberScoreDataInfo.SMALL_FONT_SIZE;
-        [UIValue("player_BGColor")] private string playerBGColor = CELL_HIGHLIGHT_COLOR;
+        [UIValue("player_BGColor")] private string playerBGColor = HIGHLIGHT;
 #pragma warning restore IDE0052
 
         [UIObject("player_container")] private GameObject playerContainer;
@@ -114,11 +115,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("modal_playerImage")] private ImageView modalPlayerImage;
 
-
         [UIComponent("modal_playerName")] private TextMeshProUGUI modalPlayerName;
 
         [UIComponent("modal_levelRank")] private TextMeshProUGUI modalLevelRank;
         [UIComponent("modal_level")] private TextMeshProUGUI modalLevel;
+
+        [UIComponent("modal_levelProgress")] private LayoutElement modalLevelProgress;
+        [UIComponent("modal_levelProgress")] private ImageView modalLevelProgress_image;
+        [UIComponent("modal_levelProgressInverse")] private LayoutElement modalLevelProgressInverse;
+        [UIComponent("modal_levelProgressInverse")] private ImageView modalLevelProgressInverse_image;
+        [UIComponent("modal_levelProgressNumber")] private TextMeshProUGUI modalLevelProgressNumber;
 
         [UIComponent("modal_globalRank")] private TextMeshProUGUI modalGlobalRank;
         [UIComponent("modal_countryRank")] private TextMeshProUGUI modalCountryRank;
@@ -302,27 +308,39 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 modalPlayerName.SetText(AccsaberAPI.GetPlayerName(playerInfo));
 
                 modalLevelRank.SetText($"<color={MiscUtils.GetColorForTitle(rank)}>{rank}</color>");
-                modalLevel.SetText($"<color=#0F0>Level {AccsaberAPI.GetPlayerLevel(playerInfo)}</color>");
+                modalLevel.SetText($"<color={LEVEL}>Level {AccsaberAPI.GetPlayerLevel(playerInfo)}</color>");
 
-                modalGlobalRank.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalOverall.SetText($"<color=#FF0>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalCountryRank.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                float xpPercent = AccsaberAPI.GetPlayerXPPercent(playerInfo);
+                modalLevelProgressNumber.SetText($"<color={GREY}>{xpPercent:N2}%</color>");
+                xpPercent /= 100f;
+
+                const float barLen = 50f;
+
+                modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
+                modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
+
+                modalLevelProgress_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(((LevelTitles)Enum.Parse(typeof(LevelTitles), rank) + 1).ToString()));
+                modalLevelProgressInverse_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(rank));
+
+                modalGlobalRank.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalOverall.SetText($"<color={OVERALL}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalCountryRank.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
 
-                modalTech.SetText($"<color=#F55>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTechGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalTechCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                modalTech.SetText($"<color={TECH}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalTechGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalTechCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
-                modalTrue.SetText($"<color=#090>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalTrueGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
-                modalTrueCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                modalTrue.SetText($"<color={TRUE}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalTrueGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
+                modalTrueCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 stats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
-                modalStandard.SetText($"<color=#33F>{AccsaberAPI.GetAP(stats):N2}ap</color>");
-                modalStandardGlobalRank.SetText($"<color=#0AA>#{AccsaberAPI.GetGlobalRank(stats)}</color>");  
-                modalStandardCountryRank.SetText($"<color=#A0A>#{AccsaberAPI.GetCountryRank(stats)}</color>");
+                modalStandard.SetText($"<color={STANDARD}>{AccsaberAPI.GetAP(stats):N2}ap</color>");
+                modalStandardGlobalRank.SetText($"<color={GLOBAL_DIM}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");  
+                modalStandardCountryRank.SetText($"<color={COUNTRY_DIM}>#{AccsaberAPI.GetCountryRank(stats)}</color>");
 
                 //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
                 modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
@@ -331,6 +349,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
                 modalPlayerImage.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #endif
+                yield return new WaitForFixedUpdate();
 
                 modalLoader.SetActive(false);
                 modalContainer.SetActive(true);

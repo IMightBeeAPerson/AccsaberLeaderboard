@@ -1,7 +1,7 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
   <vertical id='leaderboard_container' pref-width='80' pref-height='80' spacing='-55' anchor-pos-y='-5'>
     <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='~leaderboard-cellSize' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false' pref-width='80' visable-cells='10'>
-      <horizontal pref-width='80' pref-height='~ContainerHeight' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
+      <horizontal pref-width='80' pref-height='~ContainerHeight' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
         <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
           <text text='~Rank' align='Left' font-size='~FontSize'/>
         </vertical>
@@ -19,11 +19,11 @@
         </vertical>
       </horizontal>
     </custom-list>
-    <vertical id='player_container' spacing='2' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-force-expand-width='true' child-expand-height='false' active='false'>
+    <vertical id='player_container' spacing='2' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-expand-height='false' active='false'>
       <vertical child-expand-height='false'>
         <text text='...' align='Left' font-size='3'/>
       </vertical>
-      <horizontal pref-width='80' pref-height='~leaderboard-cellSize' child-force-expand-width='true' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~player_BGColor'>
+      <horizontal pref-width='80' pref-height='~leaderboard-cellSize' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~player_BGColor'>
         <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
           <text id='player_rankText' text='Rank' align='Left' font-size='~player_fontSize'/>
         </vertical>
@@ -59,6 +59,15 @@
         <text id='modal_levelRank' text='Level Rank' align='Left'/>
         <text id='modal_level' text='Level' align='Right'/>
       </horizontal>
+
+      <horizontal pref-height='1' child-expand-width='false' child-control-width='false'>
+        <vertical pref-width='10'/>
+        <image id='modal_levelProgress' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#FFD700' pref-width='30' pref-height='1'/>
+        <image id='modal_levelProgressInverse' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#CCC' pref-width='40' pref-height='1'/>
+      </horizontal>
+
+      <text id='modal_levelProgressNumber' text='50%' align='Center' font-size='3.5'/>
+
       <img id='modal_playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
       <horizontal pad-left='5' pad-right='5'>
         <vertical>
@@ -75,7 +84,6 @@
         </vertical>
       </horizontal>
       <horizontal pad-left='5' pad-right='5'>
-
         <vertical>
           <text text='True' font-color='#AAA' font-size='2.5' align='Center'/>
           <text id='modal_true' text='True' align='Center'/>
@@ -104,14 +112,14 @@
     </vertical>
   </modal>
 
-  <vertical anchor-pos-x='50' anchor-pos-y='-10' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
+  <vertical anchor-pos-x='50' anchor-pos-y='-10' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='AccsaberLeaderboard.Resources.topArrow.png' pref-width='5' pref-height='5' on-click='OnPageTop'/>
     <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
-    <clickable-image src='AccsaberLeaderboard.Resources.you.png' pref-width='5' pref-height='5' on-click='OnYouClicked'/>
+    <clickable-image src='AccsaberLeaderboard.Resources.you.png' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked'/>
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
   </vertical>
 
-  <vertical anchor-pos-x='50' anchor-pos-y='25' child-force-expand-height='false' vertical-fit='PreferredSize' pref-height='15' pref-width='8' bg='round-rect-panel'>
+  <vertical anchor-pos-x='50' anchor-pos-y='25' vertical-fit='PreferredSize' pref-height='15' pref-width='8' bg='round-rect-panel'>
     <clickable-image id='GlobalSelector' src='AccsaberLeaderboard.Resources.global.png' pref-width='5' pref-height='5' on-click='ShowGlobal'/>
     <clickable-image id='FriendsSelector' src='AccsaberLeaderboard.Resources.friends.png' pref-width='5' pref-height='5' on-click='ShowFriends'/>
   </vertical>

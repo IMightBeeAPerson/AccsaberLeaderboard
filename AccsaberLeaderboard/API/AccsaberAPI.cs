@@ -109,6 +109,7 @@ namespace AccsaberLeaderboard.API
         public static string GetPlayerTitle(JToken playerData) => playerData["levelTitle"]?.ToString();
         public static int GetPlayerLevel(JToken playerData) => (int)playerData["level"];
         public static string GetPlayerName(JToken playerData) => playerData["name"].ToString();
+        public static float GetPlayerXPPercent(JToken playerData) => (float)playerData["progressPercent"];
         public static JToken GetPlayerStats(JToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());
@@ -173,7 +174,14 @@ namespace AccsaberLeaderboard.API
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_PLAYERID, userId, stats.ToString().ToLower()), throttler, false, ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
-            return JToken.Parse(dataStr);
+            JObject outp = JObject.Parse(dataStr);
+
+            dataStr = await CallAPI_String(string.Format(APAPI_PLAYER_LEVEL, userId), throttler, false, ct: ct).ConfigureAwait(false);
+            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
+
+            outp.Property("level").AddAfterSelf(JObject.Parse(dataStr).Property("progressPercent"));
+
+            return outp;
         }
     }
 }

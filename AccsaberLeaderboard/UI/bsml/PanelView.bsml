@@ -6,16 +6,16 @@
 
       <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
         <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Overall' align='Center' font-color='#FF0'/>
+          <text text='Overall' align='Center' font-color='~overallColor'/>
         </vertical>
         <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Tech' align='Center' font-color='#F55'/>
+          <text text='Tech' align='Center' font-color='~techColor'/>
         </vertical>
         <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Standard' align='Center' font-color='#33F'/>
+          <text text='Standard' align='Center' font-color='~standardColor'/>
         </vertical>
         <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='True' align='Center' font-color='#090'/>
+          <text text='True' align='Center' font-color='~trueColor'/>
         </vertical>
       </horizontal>
 

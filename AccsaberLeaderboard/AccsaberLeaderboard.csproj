@@ -169,6 +169,8 @@
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
     <Compile Include="Utils\AsyncLock.cs" />
+    <Compile Include="Utils\ColorPalette.cs" />
+    <Compile Include="Utils\LevelTitles.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -188,9 +190,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\you.png" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\accReloaded.png" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +200,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\global.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\you.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\1x1.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

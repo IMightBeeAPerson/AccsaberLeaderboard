@@ -16,17 +16,24 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
+using static AccsaberLeaderboard.Utils.ColorPalette;
+
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
     [ViewDefinition("AccsaberLeaderboard.UI.bsml.PanelView.bsml")]
     [HotReload(RelativePathToLayout = @"..\UI\bsml\PanelView.bsml")]
     internal class PanelViewController : BSMLAutomaticViewController
     {
-#pragma warning disable IDE0044, IDE0051
+#pragma warning disable IDE0044, IDE0051, IDE0052
 
         internal static event Action OnPlayerPictureClicked;
 
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
+
+        [UIValue("overallColor")] private string overallColor = OVERALL;
+        [UIValue("techColor")] private string techColor = TECH;
+        [UIValue("standardColor")] private string standardColor = STANDARD;
+        [UIValue("trueColor")] private string trueColor = TRUE;
 
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
@@ -57,29 +64,30 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public void SetTexts(JToken playerInfo)
         {
+
             JToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
 
-            globalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            countryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            totalAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+            globalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            countryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            totalAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
 
             playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
 
-            techGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            techCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            techAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+            techGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            techCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            techAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
 
             playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
 
-            standardGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            standardCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            standardAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+            standardGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            standardCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            standardAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
 
             playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
 
-            trueGlobalRankText.SetText($"<color=#0FF>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            trueCountryRankText.SetText($"<color=#F0F>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            trueAPText.SetText($"<color=#A0F>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+            trueGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            trueCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            trueAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
         }
 
         private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)

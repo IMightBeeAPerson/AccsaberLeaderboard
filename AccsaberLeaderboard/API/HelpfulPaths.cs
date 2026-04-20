@@ -27,6 +27,7 @@ namespace AccsaberLeaderboard.API
         public static readonly string APAPI_HASH = "https://api.accsaberreloaded.com/v1/maps/hash/{0}"; //hash
         public static readonly string APAPI_HASH_DIFF = "https://api.accsaberreloaded.com/v1/maps/hash/{0}?difficulty={1}"; //hash, difficulty IN CAPS
         public static readonly string APAPI_LEADERBOARD_DIFF = "https://api.accsaberreloaded.com/v1/maps/difficulties/{0}/scores?page={1}&size={2}"; //diff_id, page (zero indexed), count
+        public static readonly string APAPI_PLAYER_LEVEL = "https://api.accsaberreloaded.com/v1/users/{0}/level"; //user_id
 
 
         public static string DiffNumToReloadedDiff(int diffNum) => diffNum switch
