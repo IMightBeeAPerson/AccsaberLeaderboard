@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.UI.ViewControllers;
 using HMUI;
 using LeaderboardCore.Managers;
@@ -16,9 +18,9 @@ namespace AccsaberLeaderboard.UI
 #pragma warning disable IDE0290
         public MainLeaderboardController(CustomLeaderboardManager customLeaderboardManager, PanelViewController panelViewController, ViewControllers.LeaderboardViewController leaderboardViewController)
         {
-                _customLeaderboardManager = customLeaderboardManager;
-                _panelViewController = panelViewController;
-                _leaderboardViewController = leaderboardViewController;
+            _customLeaderboardManager = customLeaderboardManager;
+            _panelViewController = panelViewController;
+            _leaderboardViewController = leaderboardViewController;
         }
 
         protected override ViewController panelViewController => _panelViewController;
@@ -30,7 +32,7 @@ namespace AccsaberLeaderboard.UI
         public override bool ShowForLevel(IPreviewBeatmapLevel selectedLevel)
 #endif
         {
-            return true;// _leaderboardViewController.ValidMapSelected;
+            return Plugin.isAPIServiceWorking;// _leaderboardViewController.ValidMapSelected;
         }
         public void Initialize()
         {

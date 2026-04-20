@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using AccsaberLeaderboard.Models;
 using UnityEngine;
 
 namespace AccsaberLeaderboard.Utils
@@ -10,6 +10,7 @@ namespace AccsaberLeaderboard.Utils
             if (str.Length < maxLength) return str;
             return $"{str.Substring(0, maxLength)}{suffix}";
         }
+        public static string GetColorForTitle(LevelTitle title) => GetColorForTitle(title.ToString());
         public static string GetColorForTitle(string title)
         { //Newcomer, Apprentice, Adept, Skilled, Expert, Master, Grandmaster, Legend, Transcendent, Mythic, Ascendant
             return title switch
@@ -43,6 +44,18 @@ namespace AccsaberLeaderboard.Utils
             if (hasHashtag) hex = hex.Substring(1);
             int baseNum = int.Parse(new string('1', hex.Length), System.Globalization.NumberStyles.HexNumber);
             return (hasHashtag ? "#" : "") + (int.Parse(hex, System.Globalization.NumberStyles.HexNumber) - (baseNum * dimAmount)).ToString("X");
+        }
+        public static string ChangeAlpha(string hex, string alpha)
+        {
+            bool hasHashtag = hex[0] == '#';
+            if (hasHashtag) hex = hex.Substring(1);
+
+            int hexNum = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+            if (hex.Length % 3 == 0)
+                hexNum <<= 8;
+            hexNum += int.Parse(alpha.Length == 1 ? alpha + alpha : alpha, System.Globalization.NumberStyles.HexNumber);
+
+            return (hasHashtag ? "#" : "") + hexNum.ToString("X");
         }
     }
 }

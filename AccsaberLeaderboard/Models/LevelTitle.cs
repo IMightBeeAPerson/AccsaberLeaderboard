@@ -1,6 +1,6 @@
-﻿namespace AccsaberLeaderboard.Utils
+﻿namespace AccsaberLeaderboard.Models
 {
-    public enum LevelTitles
+    public enum LevelTitle
     {
         Newcomer, Apprentice, Adept, Skilled, Expert, Master, Grandmaster, Legend, Transcendent, Mythic, Ascendant
     }

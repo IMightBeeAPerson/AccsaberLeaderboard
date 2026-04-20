@@ -48,8 +48,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
         private int page, nextPage, currentPage = -1, currentPlayerPage;
+        private JToken currentPlayerScoreInfo;
         private AccsaberScoreDataInfo currentPlayerScore;
-        private AsyncLock loadLeaderboardLock = new();
+        private AsyncLock loadLeaderboardLock = new(), forceRefreshLock = new();
         private LeaderboardDisplayType displayType;
         private Stack<int> previousPages = [];
         private string difficultyId;
@@ -106,6 +107,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
+        [UIComponent("CountrySelector")] private ClickableImage countrySelector;
 
         #endregion
 
@@ -153,8 +155,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("#post-parse")]
         private void PostParse()
         {
-            displayType = LeaderboardDisplayType.Global;
-            UpdateSelectors();
+            UpdateSelectors(LeaderboardDisplayType.Global);
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ShowPlayer(Plugin.Instance.PlayerID);
             // Subscribe to refresh event from other controllers
@@ -219,31 +220,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
 
         [UIAction("ShowGlobal")]
-        private void ShowGlobal()
-        {
-            if (displayType == LeaderboardDisplayType.Global || currentHash is null)
-                return;
-            page = 1;
-            currentPage = 0;
-            cache.Clear();
-            previousPages.Clear();
-            displayType = LeaderboardDisplayType.Global;
-            UpdateSelectors();
-            FullyReloadLeaderboard();
-        }
+        private void ShowGlobal() => ChangeFilter(LeaderboardDisplayType.Friends);
 
         [UIAction("ShowFriends")]
-        private void ShowFriends()
-        {
-            if (displayType == LeaderboardDisplayType.Friends || currentHash is null)
-                return;
-            page = 1;
-            currentPage = 0;
-            cache.Clear();
-            displayType = LeaderboardDisplayType.Friends;
-            UpdateSelectors();
-            FullyReloadLeaderboard();
-        }
+        private void ShowFriends() => ChangeFilter(LeaderboardDisplayType.Friends);
+        [UIAction("ShowCountry")]
+        private void ShowCountry() => ChangeFilter(LeaderboardDisplayType.Country);
 
         #endregion
         #region Public Methods
@@ -258,25 +240,52 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Instance = this;
         }
 
-        private void UpdateSelectors()
+        private void ChangeFilter(LeaderboardDisplayType type)
+        {
+            if (displayType == type || currentHash is null)
+                return;
+            page = 1;
+            currentPage = 0;
+            cache.Clear();
+            UpdateSelectors(type);
+            FullyReloadLeaderboard();
+        }
+        private void UpdateSelectors(LeaderboardDisplayType newDisplayType)
         {
             switch (displayType)
             {
                 case LeaderboardDisplayType.Global:
-                    globalSelector.DefaultColor = globalSelector.HighlightColor;
-                    friendsSelector.DefaultColor = Color.white;
+                    globalSelector.DefaultColor = Color.white;
                     break;
                 case LeaderboardDisplayType.Friends:
-                    globalSelector.DefaultColor = Color.white;
-                    friendsSelector.DefaultColor = friendsSelector.HighlightColor;
+                    friendsSelector.DefaultColor = Color.white;
+                    previousPages.Clear();
+                    break;
+                case LeaderboardDisplayType.Country:
+                    countrySelector.DefaultColor = Color.white;
                     break;
             }
+
+            switch (newDisplayType)
+            {
+                case LeaderboardDisplayType.Global:
+                    globalSelector.DefaultColor = globalSelector.HighlightColor;
+                    break;
+                case LeaderboardDisplayType.Friends:
+                    friendsSelector.DefaultColor = friendsSelector.HighlightColor;
+                    break;
+                case LeaderboardDisplayType.Country:
+                    countrySelector.DefaultColor = countrySelector.HighlightColor;
+                    break;
+            }
+
+            displayType = newDisplayType;
         }
         private void FullyReloadLeaderboard()
         {
             Task.Run(async () =>
             {
-                currentPlayerPage = await GetPlayerPage();
+                currentPlayerPage = await GetPlayerPage(false);
                 await LoadLeaderboardAsync(currentHash, currentDifficulty);
             });
         }
@@ -319,7 +328,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
                 modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
 
-                modalLevelProgress_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(((LevelTitles)Enum.Parse(typeof(LevelTitles), rank) + 1).ToString()));
+                modalLevelProgress_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle((LevelTitle)Enum.Parse(typeof(LevelTitle), rank) + 1));
                 modalLevelProgressInverse_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForTitle(rank));
 
                 modalGlobalRank.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(stats)}</color>");
@@ -413,7 +422,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             string levelId = beatmap.level.levelID;
 #endif
             string hash;
-            if (levelId.StartsWith("custom_level_"))
+            if (levelId.Contains('_'))
                 hash = levelId.Split('_')[2];
             else
                 hash = levelId; // fallback for official levels
@@ -440,32 +449,36 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
         private async Task ForceRefresh()
         {
-            difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty);
-
-            if (difficultyId is null)
+            AsyncLock.Releaser? theLock = await forceRefreshLock.LockAsync();
+            if (theLock is null) return;
+            using (theLock.Value)
             {
-                currentHash = null;
-                currentDifficulty = default;
-                IEnumerator ShowBad()
-                {
-                    yield return new WaitForEndOfFrame();
-                    leaderboardContainer.SetActive(false);
-                    badMapMessage.SetActive(true);
-                }
-                StartCoroutine(ShowBad());
-                return;
-            }
+                difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty);
 
-            JToken scoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
-            currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(scoreInfo));
-            currentPlayerPage = await GetPlayerPage(scoreInfo);
-            await LoadLeaderboardAsync(currentHash, currentDifficulty);
+                if (difficultyId is null)
+                {
+                    currentHash = null;
+                    currentDifficulty = default;
+                    IEnumerator ShowBad()
+                    {
+                        yield return new WaitForEndOfFrame();
+                        leaderboardContainer.SetActive(false);
+                        badMapMessage.SetActive(true);
+                    }
+                    StartCoroutine(ShowBad());
+                    return;
+                }
+
+                currentPlayerPage = await GetPlayerPage(true);
+                currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(currentPlayerScoreInfo));
+                await LoadLeaderboardAsync(currentHash, currentDifficulty);
+            }
         }
 
         private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
         {
             if (page == currentPage) return; // already on this page, no need to reload
-            AsyncLock.Releaser? theLock = await loadLeaderboardLock.TryLockAsync();
+            AsyncLock.Releaser? theLock = await loadLeaderboardLock.LockAsync();
             if (theLock is null) return;
             using (theLock.Value)
             {
@@ -480,7 +493,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     }
                     else toCache = default;
 
-                        currentPage = page;
+                    currentPage = page;
+
                     IEnumerator ShowLoading()
                     {
                         yield return new WaitForEndOfFrame();
@@ -512,6 +526,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     }
 
                     AccsaberScoreData[] scores;
+                    (AccsaberScoreData[] scores, int truePage) scoreData;
                     switch (displayType)
                     {
                         case LeaderboardDisplayType.Global:
@@ -519,7 +534,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             nextPage = page + 1;
                             break;
                         case LeaderboardDisplayType.Friends:
-                            var scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, Plugin.Instance.PlayerFriends);
+                            scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, token => Plugin.Instance.PlayerFriends.Contains(AccsaberAPI.GetPlayerId(token)));
+                            scores = scoreData.scores;
+                            nextPage = scoreData.truePage;
+                            break;
+                        case LeaderboardDisplayType.Country:
+                            string country = AccsaberAPI.GetCountry(currentPlayerScoreInfo);
+                            scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, token => country.Equals(AccsaberAPI.GetCountry(token)), 5);
                             scores = scoreData.scores;
                             nextPage = scoreData.truePage;
                             break;
@@ -551,7 +572,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             playerContainer.SetActive(true);
                         }
                         else playerContainer.SetActive(false);
-                        yield return new WaitForSeconds(0.05f); // small delay to ensure data is set before reloading
+                        yield return new WaitForFixedUpdate(); // small delay to ensure data is set before reloading
 
 #if NEW_VERSION
                         leaderboard.TableView.ReloadData();
@@ -577,11 +598,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             }
         }
 
-        private async Task<int> GetPlayerPage(JToken scoreInfo = null)
+        private async Task<int> GetPlayerPage(bool overrideLastScore)
         {
-            scoreInfo ??= await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
-            if (scoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling(AccsaberAPI.GetRank(scoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
+            if (overrideLastScore || currentPlayerScoreInfo is null)
+                currentPlayerScoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
+            if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
+            return (int)Math.Ceiling(AccsaberAPI.GetRank(currentPlayerScoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
         }
         #endregion
     }

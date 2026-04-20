@@ -13,9 +13,9 @@ namespace AccsaberLeaderboard.API
 {
     internal static class AccsaberAPI
     {
-        private static readonly Throttler throttler = new(400, 60);
-        public static readonly int PAGE_LENGTH = 10;
-        public static readonly int FRIEND_PAGE_MULT = 5;
+        internal static readonly Throttler throttler = new(400, 60);
+        public const int PAGE_LENGTH = 10;
+        public const int FILTER_PAGE_MULT = 10;
         public static async Task<AccsaberScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
         {
             return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff));
@@ -35,25 +35,20 @@ namespace AccsaberLeaderboard.API
                 return null;
             }
         }
-        public static AccsaberScoreData ConvertToScoreData(JToken scoreData)
-        {
-            return new AccsaberScoreData(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
-        }
-        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string hash, BeatmapDifficulty diff, HashSet<string> filteredUserIds)
-        {
-            return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff), filteredUserIds);
-        }
-        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, HashSet<string> filteredUserIds)
+        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<JToken, bool> filter, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10)
         {
             try
             {
                 List<AccsaberScoreData> outp = new(PAGE_LENGTH);
                 int scoresNeeded = PAGE_LENGTH, truePage = page;
-                page = (page - 1) / FRIEND_PAGE_MULT;
+                page = (page - 1) / pageMult;
+                if (maxCalls <= 0)
+                    throw new ArgumentException("Don't call a function then ask it to do nothing.");
+                int pageLength = PAGE_LENGTH * pageMult;
                 do
                 {
-                    string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page, PAGE_LENGTH * FRIEND_PAGE_MULT), throttler).ConfigureAwait(false);
-                    if (dataStr is null || dataStr.Equals(string.Empty))
+                    string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page, pageLength), throttler).ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(dataStr))
                         throw new ArgumentNullException("The leaderboard api is not returning any data.");
 
                     JToken response = JToken.Parse(dataStr);
@@ -64,26 +59,33 @@ namespace AccsaberLeaderboard.API
 
                     IEnumerable<JToken> tokens = response["content"].Children();
 
-                    IEnumerable<AccsaberScoreData> scores = tokens.Where(token => filteredUserIds.Contains(GetPlayerId(token))).Select(ConvertToScoreData);
+                    IEnumerable<AccsaberScoreData> scores = tokens.Where(filter).Select(ConvertToScoreData);
                     int scoreLen = scores.Count();
                     if (scoreLen >= scoresNeeded)
-                        outp.AddRange(scores.Take(scoresNeeded));
+                    {
+                        scores = scores.Take(scoresNeeded);
+                        pageMult = (int)Math.Ceiling(scores.Last().rank / (float)PAGE_LENGTH); // This is just to update truePage correctly.
+                        outp.AddRange(scores);
+                    }
                     else
                     {
                         outp.AddRange(scores);
                         scoresNeeded -= scoreLen;
                     }
-                    truePage += FRIEND_PAGE_MULT;
+                    truePage += pageMult;
                     page++;
-                } while (outp.Count < PAGE_LENGTH);
+                    maxCalls--;
+                } while (outp.Count < PAGE_LENGTH && maxCalls > 0);
                 return ([.. outp], truePage);
             }
             catch (Exception e)
             {
-                Plugin.Log.Error("Issue getting friend score data.\n" + e);
+                Plugin.Log.Error("Issue getting filtered score data.\n" + e);
                 return default;
             }
         }
+        public static AccsaberScoreData ConvertToScoreData(JToken scoreData) =>
+            new(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
         public static float GetComplexity(JToken diffData) => (float)(diffData["complexity"] ?? 0f);
         public static string GetSongName(JToken diffData) => diffData["songName"].ToString();
         public static string GetDiffName(JToken diffData) => diffData["difficulty"].ToString();
@@ -104,16 +106,18 @@ namespace AccsaberLeaderboard.API
         public static bool GetFullCombo(JToken scoreData) => GetMistakes(scoreData) == 0;
         public static float GetAP(JToken scoreData) => (float)scoreData["ap"];
         public static int GetScore(JToken scoreData) => (int)scoreData["score"];
-        public static string GetPlayerId(JToken scoreData) => scoreData["userId"].ToString();
+        public static string GetCountry(JToken scoreData) => scoreData["country"]?.ToString();
+        public static string GetPlayerId(JToken scoreData) => scoreData["userId"]?.ToString();
         public static string GetPlayerAvatar(JToken playerData) => playerData["avatarUrl"]?.ToString();
         public static string GetPlayerTitle(JToken playerData) => playerData["levelTitle"]?.ToString();
+        public static LevelTitle GetAndConvertPlayerTitle(JToken playerData) => (LevelTitle)Enum.Parse(typeof(LevelTitle), GetPlayerTitle(playerData));
         public static int GetPlayerLevel(JToken playerData) => (int)playerData["level"];
-        public static string GetPlayerName(JToken playerData) => playerData["name"].ToString();
+        public static string GetPlayerName(JToken playerData) => playerData["name"]?.ToString();
         public static float GetPlayerXPPercent(JToken playerData) => (float)playerData["progressPercent"];
         public static JToken GetPlayerStats(JToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());
-            return playerData["statistics"]?.Children().FirstOrDefault(token => token["categoryId"].ToString().Equals(id));
+            return playerData["statistics"]?.Children().FirstOrDefault(token => id.Equals(token["categoryId"]?.ToString()));
         }
         public static int GetGlobalRank(JToken statsData) => (int)statsData["ranking"];
         public static int GetCountryRank(JToken statsData) => (int)statsData["countryRanking"];
@@ -125,18 +129,10 @@ namespace AccsaberLeaderboard.API
         {
             string reloadedDiff = DiffNumToReloadedDiff(FromDiff(diff));
             string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), throttler, ct: ct).ConfigureAwait(false);
-            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
+            if (string.IsNullOrEmpty(dataStr)) return null;
             return JToken.Parse(dataStr);
         }
 
-        public static async Task<float> GetProfilePP(string userId)
-        {
-            return (float)JToken.Parse(await CallAPI_String(string.Format(APAPI_PLAYERID, userId), throttler).ConfigureAwait(false))?["ap"];
-        }
-        public static async Task<float> GetProfilePP(string userId, APCategory accSaberType)
-        {
-            return (float)JToken.Parse(await CallAPI_String(string.Format(APAPI_PLAYERID_CATEGORY, userId, accSaberType.ToString().ToLower() + "_acc"), throttler).ConfigureAwait(false))?["ap"];
-        }
         public static async Task<string> GetLeaderboardDifficultyId(string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
             if (ct.IsCancellationRequested) return null;
@@ -173,15 +169,8 @@ namespace AccsaberLeaderboard.API
         public static async Task<JToken> GetPlayerInfo(string userId, bool stats, CancellationToken ct = default)
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_PLAYERID, userId, stats.ToString().ToLower()), throttler, false, ct: ct).ConfigureAwait(false);
-            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
-            JObject outp = JObject.Parse(dataStr);
 
-            dataStr = await CallAPI_String(string.Format(APAPI_PLAYER_LEVEL, userId), throttler, false, ct: ct).ConfigureAwait(false);
-            if (dataStr is null || dataStr.Equals(string.Empty)) return null;
-
-            outp.Property("level").AddAfterSelf(JObject.Parse(dataStr).Property("progressPercent"));
-
-            return outp;
+            return string.IsNullOrEmpty(dataStr) ? null : JToken.Parse(dataStr);
         }
     }
 }

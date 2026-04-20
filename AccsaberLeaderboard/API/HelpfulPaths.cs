@@ -18,16 +18,17 @@ namespace AccsaberLeaderboard.API
         // Category ID: b0000000-0000-0000-0000-000000000003 for Tech, 2 = Standard, 1 = True, none for overall.
         // Score endpoint example: https://api.accsaberreloaded.com/v1/users/76561198306905129/scores/by-hash/2a579bb1a3efa58af7640f9663c972ee84fea44a?difficulty=EXPERT&characteristic=Standard
         // Diff endpoint example: https://api.accsaberreloaded.com/v1/maps/hash/2A579BB1A3EFA58AF7640F9663C972EE84FEA44A?difficulty=EXPERT
-        public static readonly string APAPI = "https://api.accsaberreloaded.com/";
-        public static readonly string APAPI_PLAYERID = "https://api.accsaberreloaded.com/v1/users/{0}?statistics={1}"; //user_id, true or false for whether to include statistics in the response
-        public static readonly string APAPI_PLAYERID_CATEGORY = "https://api.accsaberreloaded.com/v1/users/{0}/statistics?category={1}"; //user_id, category (overall, true_acc, standard_acc, tech_acc)
-        public static readonly string APAPI_SCORE = "https://api.accsaberreloaded.com/v1/users/{0}/scores/by-hash/{1}?difficulty={2}&characteristic=Standard"; //user_id, hash, difficulty IN CAPS
-        public static readonly string APAPI_SCORES = "https://api.accsaberreloaded.com/v1/users/{0}/scores?page={1}&size={2}"; //user_id, page (zero indexed), count
-        public static readonly string APAPI_CATEGORY_SCORES = "https://api.accsaberreloaded.com/v1/users/{0}/scores?categoryId={1}&page={2}&size={3}"; // user_id, category_id, page (zero indexed), count
-        public static readonly string APAPI_HASH = "https://api.accsaberreloaded.com/v1/maps/hash/{0}"; //hash
-        public static readonly string APAPI_HASH_DIFF = "https://api.accsaberreloaded.com/v1/maps/hash/{0}?difficulty={1}"; //hash, difficulty IN CAPS
-        public static readonly string APAPI_LEADERBOARD_DIFF = "https://api.accsaberreloaded.com/v1/maps/difficulties/{0}/scores?page={1}&size={2}"; //diff_id, page (zero indexed), count
-        public static readonly string APAPI_PLAYER_LEVEL = "https://api.accsaberreloaded.com/v1/users/{0}/level"; //user_id
+        public static readonly string APAPI = "https://api.accsaberreloaded.com/v1/";
+        public static readonly string APAPI_TEST = APAPI + "health/ping"; //no params
+        public static readonly string APAPI_PLAYERID = APAPI + "users/{0}?statistics={1}"; //user_id, true or false for whether to include statistics in the response
+        public static readonly string APAPI_PLAYERID_CATEGORY = APAPI + "users/{0}/statistics?category={1}"; //user_id, category (overall, true_acc, standard_acc, tech_acc)
+        public static readonly string APAPI_SCORE = APAPI + "users/{0}/scores/by-hash/{1}?difficulty={2}&characteristic=Standard"; //user_id, hash, difficulty IN CAPS
+        public static readonly string APAPI_SCORES = APAPI + "users/{0}/scores?page={1}&size={2}"; //user_id, page (zero indexed), count
+        public static readonly string APAPI_CATEGORY_SCORES = "users/{0}/scores?categoryId={1}&page={2}&size={3}"; // user_id, category_id, page (zero indexed), count
+        public static readonly string APAPI_HASH = APAPI + "maps/hash/{0}"; //hash
+        public static readonly string APAPI_HASH_DIFF = APAPI + "maps/hash/{0}?difficulty={1}"; //hash, difficulty IN CAPS
+        public static readonly string APAPI_LEADERBOARD_DIFF = APAPI + "maps/difficulties/{0}/scores?page={1}&size={2}"; //diff_id, page (zero indexed), count
+        public static readonly string APAPI_PLAYER_LEVEL = APAPI + "users/{0}/level"; //user_id
 
 
         public static string DiffNumToReloadedDiff(int diffNum) => diffNum switch
