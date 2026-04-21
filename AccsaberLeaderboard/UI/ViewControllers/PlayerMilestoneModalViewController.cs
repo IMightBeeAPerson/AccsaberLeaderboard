@@ -86,14 +86,21 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             listValues = [.. sortedMilestoneInfos.Cast<object>()];
 
+
+
+#if NEW_VERSION
+            list.Data = listValues;
+
+            yield return new WaitUntil(() => list.Data.Count > 0);
+            yield return new WaitForSeconds(0.1f);
+
+            list.TableView.ReloadData();
+#else
             list.data = listValues;
 
             yield return new WaitUntil(() => list.data.Count > 0);
             yield return new WaitForSeconds(0.1f);
 
-#if NEW_VERSION
-            list.TableView.ReloadData();
-#else
             list.tableView.ReloadData();
 #endif
 

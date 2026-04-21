@@ -158,6 +158,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             switch (displayType)
             {
                 case LeaderboardDisplayType.Global:
+                case LeaderboardDisplayType.Country:
                     page--;
                     break;
                 case LeaderboardDisplayType.Friends:
