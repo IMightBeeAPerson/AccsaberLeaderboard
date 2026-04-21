@@ -1,7 +1,6 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Models;
 using AccsaberLeaderboard.Utils;
-using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
@@ -15,8 +14,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
 using Zenject;
 
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
@@ -24,15 +21,15 @@ using static AccsaberLeaderboard.Utils.ColorPalette;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
-    [ViewDefinition("AccsaberLeaderboard.UI.bsml.LeaderboardView.bsml")]
+    [ViewDefinition(ResourcePaths.BSML_LEADERBOARD_VIEW)]
     [HotReload(RelativePathToLayout = @"..\UI\bsml\LeaderboardView.bsml")]
     internal class LeaderboardViewController : BSMLAutomaticViewController
     {
 #pragma warning disable IDE0044, IDE0051
         #region Static Variables & Properties
 
-        public static readonly float SMALL_CELL_SIZE = 5.3f;
-        public static readonly float BIG_CELL_SIZE = 5.9f;
+        public const float SMALL_CELL_SIZE = 5.3f;
+        public const float BIG_CELL_SIZE = 5.9f;
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
@@ -48,7 +45,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
         private int page, nextPage, currentPage = -1, currentPlayerPage;
-        private JToken currentPlayerScoreInfo;
+        private AccsaberAPI.ScoreInfoToken currentPlayerScoreInfo;
         private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new(), forceRefreshLock = new();
         private LeaderboardDisplayType displayType;
@@ -82,7 +79,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
 #pragma warning disable IDE0052
         [UIValue("player_fontSize")] private float playerFontSize = AccsaberScoreDataInfo.SMALL_FONT_SIZE;
-        [UIValue("player_BGColor")] private string playerBGColor = HIGHLIGHT;
+        [UIValue("player_BGColor")] private const string playerBGColor = HIGHLIGHT;
 #pragma warning restore IDE0052
 
         [UIObject("player_container")] private GameObject playerContainer;
@@ -97,11 +94,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #region UI Values & Components
 
+        [UIValue("topArrowPic")] private const string topArrowPic = ResourcePaths.RESOURCE_TOP_ARROW;
+        [UIValue("youPic")] private const string youPic = ResourcePaths.RESOURCE_YOU;
+        [UIValue("globalPic")] private const string globalPic = ResourcePaths.RESOURCE_GLOBAL;
+        [UIValue("friendsPic")] private const string friendsPic = ResourcePaths.RESOURCE_FRIENDS;
+        [UIValue("countryPic")] private const string countryPic = ResourcePaths.RESOURCE_COUNTRY;
+
+
         [UIParams] private BSMLParserParams parserParams;
         [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
         [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
-        [UIValue("colorGrey")] private string grey = GREY;
+        [UIValue("colorGrey")] private const string grey = GREY;
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 

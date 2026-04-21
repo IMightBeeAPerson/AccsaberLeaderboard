@@ -20,7 +20,7 @@ using static AccsaberLeaderboard.Utils.ColorPalette;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
-    [ViewDefinition("AccsaberLeaderboard.UI.bsml.PanelView.bsml")]
+    [ViewDefinition(ResourcePaths.BSML_PANEL_VIEW)]
     [HotReload(RelativePathToLayout = @"..\UI\bsml\PanelView.bsml")]
     internal class PanelViewController : BSMLAutomaticViewController
     {
@@ -29,11 +29,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         internal static event Action OnPlayerPictureClicked, OnLogoClicked;
 
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
-
-        [UIValue("overallColor")] private string overallColor = OVERALL;
-        [UIValue("techColor")] private string techColor = TECH;
-        [UIValue("standardColor")] private string standardColor = STANDARD;
-        [UIValue("trueColor")] private string trueColor = TRUE;
 
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
@@ -53,8 +48,43 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
+
+        [UIValue("overallColor")] public const string overallColor = OVERALL;
+        [UIValue("techColor")] public const string techColor = TECH;
+        [UIValue("standardColor")] public const string standardColor = STANDARD;
+        [UIValue("trueColor")] public const string trueColor = TRUE;
+
+        [UIValue("dimmer")] public const string dimmer = DIMMER;
+
+        [UIValue("containerWidth")] public const float containerWidth = 100f;
+        [UIValue("containerHeight")] public const float containerHeight = 20f;
+
+        [UIValue("containerPadding")] public const float containerPadding = 2.5f;
+        [UIValue("elementPadding")] public const float elementPadding = 2.5f;
+
+        [UIValue("logoPic")] public const string logoPic = ResourcePaths.RESOURCE_LOGO;
+
+        [UIValue("fontSizeCell")] public const float fontSizeCell = 4f;
+
+        [UIValue("cellSpacing")] public const float cellSpacing = 1f;
+
+        [UIValue("rowWidth")] public const float rowWidth = 60f;
+        [UIValue("cellWidth")] public const float cellWidth = rowWidth / 4f;
+
+        [UIValue("imageSize")] public const float imageSize = (containerWidth - rowWidth - containerPadding * 2f - elementPadding * 2f) / 2f;
+
+
         [UIAction("OpenPlayerProfile")] private void OpenPlayerProfile() => OnPlayerPictureClicked?.Invoke();
         [UIAction("OpenReloaded")] private void OpenReloaded() => OnLogoClicked?.Invoke();
+
+        [UIAction("#post-parse")] private void PostParse()
+        {
+            //Below lines taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
+            Material m = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+            profilePicture.material = m;
+            panelContainer.background.material = m;
+        }
+
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
@@ -62,10 +92,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Task.Run(UpdatePlayer);
         }
 
-        public void SetTexts(JToken playerInfo)
+        public void SetTexts(AccsaberAPI.PlayerInfoToken playerInfo)
         {
 
-            JToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
+            AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
 
             globalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
             countryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
@@ -102,7 +132,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             try
             {
-                JToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
+                AccsaberAPI.PlayerInfoToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
+                AccsaberAPI.LevelInfoToken levelInfo = AccsaberAPI.GetPlayerLevelData(playerInfo);
                 IEnumerator WaitThenUpdate() 
                 {
                     yield return new WaitForEndOfFrame();
@@ -110,15 +141,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     SetTexts(playerInfo);
 #if NEW_VERSION
                     panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.ChangeAlpha(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)), "6")));
-#else
-                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.ChangeAlpha(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)), "6"));
-#endif
-
-                    //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-                    profilePicture.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
-#if NEW_VERSION
                     profilePicture.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #else
+                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.ChangeAlpha(LevelMilestone.GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"));
                     profilePicture.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #endif
                 }

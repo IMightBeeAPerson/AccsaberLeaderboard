@@ -1,58 +1,64 @@
 <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
     <loading id='loader' preserve-aspect='true'/>
-    <vertical id='container' pref-width='70' pref-height='80' bg='round-rect-panel'>
-      <text id='playerName' align='Center' font-size='7'/>
-      <horizontal pad-left='17' pad-right='17'>
-        <text id='levelRank' align='Left'/>
-        <text id='level' align='Right'/>
+    <vertical id='container' pref-width='~containerWidth' pref-height='~containerHeight' bg='round-rect-panel' child-expand-width='false'>
+      <horizontal pref-width='~containerWidth'>
+        <text id='playerName' font-size='~titleFontSize' align='Center' size-delta-x='~containerWidth'/>
+      </horizontal>
+      <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
+        <text id='levelRank' font-size='~fontSizeBig' align='Left'/>
+        <text id='level' font-size='~fontSizeBig' align='Right'/>
       </horizontal>
 
-      <horizontal pref-height='1' child-expand-width='false' child-control-width='false'>
-        <vertical pref-width='10'/>
-        <image id='levelProgress' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#FFD700' pref-width='30' pref-height='1'/>
-        <image id='levelProgressInverse' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#CCC' pref-width='40' pref-height='1'/>
+      <horizontal pref-width='~containerWidth' pref-height='~barGirth' child-expand-width='false' child-control-width='false'>
+        <vertical pref-width='~barPadding'/>
+        <image id='levelProgress' src='~oneXonePic' pref-height='~barGirth'/>
+        <image id='levelProgressInverse' src='~oneXonePic' pref-height='~barGirth'/>
       </horizontal>
 
-      <text id='levelProgressNumber' align='Center' font-size='3.5'/>
+      <horizontal pref-width='~containerWidth'>
+        <text id='levelProgressNumber' font-size='~fontSizeMid' align='Center'/>
+      </horizontal>
 
-      <img id='playerImage' preserve-aspect='true' pref-width='20' pref-height='20'/>
-      <horizontal pad-left='5' pad-right='5'>
+      <horizontal pref-width='~containerWidth' pref-height='~profilePicSize'>
+        <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+      </horizontal>
+      <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
         <vertical>
-          <text text='Global' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='globalRank' align='Center'/>
+          <text text='Global' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='globalRank' font-size='~fontSizeBig' align='Center'/>
         </vertical>
         <vertical>
-          <text text='Overall' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='overall' align='Center'/>
+          <text text='Overall' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='overall' font-size='~fontSizeBig' align='Center'/>
         </vertical>
         <vertical>
-          <text text='Country' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='countryRank' align='Center'/>
+          <text text='Country' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='countryRank' font-size='~fontSizeBig' align='Center'/>
         </vertical>
       </horizontal>
-      <horizontal pad-left='5' pad-right='5'>
+      <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
         <vertical>
-          <text text='True' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='true' align='Center'/>
+          <text text='True' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='true' font-size='~fontSizeBig' align='Center'/>
           <horizontal>
-            <text id='true_rank_global' font-size='3' align='Left'/>
-            <text id='true_rank_country' font-size='3' align='Right'/>
+            <text id='true_rank_global' font-size='~fontSizeSmall' align='Left'/>
+            <text id='true_rank_country' font-size='~fontSizeSmall' align='Right'/>
           </horizontal>
         </vertical>
         <vertical>
-          <text text='Standard' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='standard' align='Right'/>
+          <text text='Standard' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='standard' font-size='~fontSizeBig' align='Right'/>
           <horizontal>
-            <text id='standard_rank_global' font-size='3' align='Left'/>
-            <text id='standard_rank_country' font-size='3' align='Right'/>
+            <text id='standard_rank_global' font-size='~fontSizeSmall' align='Left'/>
+            <text id='standard_rank_country' font-size='~fontSizeSmall' align='Right'/>
           </horizontal>
         </vertical>
         <vertical>
-          <text text='Tech' font-color='~colorGrey' font-size='2.5' align='Center'/>
-          <text id='tech' align='Center'/>
+          <text text='Tech' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+          <text id='tech' font-size='~fontSizeBig' align='Center'/>
           <horizontal>
-            <text id='tech_rank_global' font-size='3' align='Left'/>
-            <text id='tech_rank_country' font-size='3' align='Right'/>
+            <text id='tech_rank_global' font-size='~fontSizeSmall' align='Left'/>
+            <text id='tech_rank_country' font-size='~fontSizeSmall' align='Right'/>
           </horizontal>
         </vertical>
       </horizontal>

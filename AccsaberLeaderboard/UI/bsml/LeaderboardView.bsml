@@ -48,22 +48,22 @@
   </vertical>
 
   <vertical id='leaderboard_badMap' anchor-pos-y='-30' active='false'>
-    <text text='Map is Unranked.' font-size='10'/>
+    <text text='Map is Unranked.' font-size='15'/>
   </vertical>
 
   
 
   <vertical anchor-pos-x='50' anchor-pos-y='-13' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
-    <clickable-image src='AccsaberLeaderboard.Resources.topArrow.png' pref-width='5' pref-height='5' on-click='OnPageTop' default-color='~colorGrey'/>
+    <clickable-image src='~topArrowPic' pref-width='5' pref-height='5' on-click='OnPageTop' default-color='~colorGrey'/>
     <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
-    <clickable-image src='AccsaberLeaderboard.Resources.you.png' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked' default-color='~colorGrey'/>
+    <clickable-image src='~youPic' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked' default-color='~colorGrey'/>
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
   </vertical>
 
   <vertical anchor-pos-x='50' anchor-pos-y='27' vertical-fit='PreferredSize' pref-height='25' pref-width='8' bg='round-rect-panel'>
-    <clickable-image id='GlobalSelector' src='AccsaberLeaderboard.Resources.global.png' pref-width='5' pref-height='5' on-click='ShowGlobal'/>
-    <clickable-image id='FriendsSelector' src='AccsaberLeaderboard.Resources.friends.png' pref-width='5' pref-height='5' on-click='ShowFriends'/>
-    <clickable-image id='CountrySelector' src='AccsaberLeaderboard.Resources.country.png' pref-width='5' pref-height='5' on-click='ShowCountry'/>
+    <clickable-image id='GlobalSelector' src='~globalPic' pref-width='5' pref-height='5' on-click='ShowGlobal'/>
+    <clickable-image id='FriendsSelector' src='~friendsPic' pref-width='5' pref-height='5' on-click='ShowFriends'/>
+    <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry'/>
   </vertical>
 </bg>
 

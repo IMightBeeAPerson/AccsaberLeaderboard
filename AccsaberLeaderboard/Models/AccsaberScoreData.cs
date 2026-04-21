@@ -13,8 +13,8 @@ namespace AccsaberLeaderboard.Models
         public string PlayerId { get; private set; } = playerId;
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
-            public static readonly float BIG_FONT_SIZE = 3.5f;
-            public static readonly float SMALL_FONT_SIZE = 3f;
+            public const float BIG_FONT_SIZE = 3.5f;
+            public const float SMALL_FONT_SIZE = 3f;
 
             private readonly AccsaberScoreData scoreData = scoreData;
 

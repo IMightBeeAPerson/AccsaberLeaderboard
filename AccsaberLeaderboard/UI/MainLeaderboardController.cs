@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
-using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.UI.ViewControllers;
 using HMUI;
 using LeaderboardCore.Managers;

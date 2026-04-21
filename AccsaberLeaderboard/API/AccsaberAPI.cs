@@ -11,23 +11,24 @@ using static AccsaberLeaderboard.API.HelpfulPaths;
 
 namespace AccsaberLeaderboard.API
 {
+#nullable enable
     internal static class AccsaberAPI
     {
         internal static readonly Throttler throttler = new(400, 60);
         public const int PAGE_LENGTH = 10;
         public const int FILTER_PAGE_MULT = 10;
-        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string hash, BeatmapDifficulty diff)
+        public static async Task<AccsaberScoreData[]?> GetScoreData(int page, string hash, BeatmapDifficulty diff)
         {
             return await GetScoreData(page, await GetLeaderboardDifficultyId(hash, diff));
         }
-        public static async Task<AccsaberScoreData[]> GetScoreData(int page, string diffId, string country = null)
+        public static async Task<AccsaberScoreData[]?> GetScoreData(int page, string diffId, string? country = null)
         {
             try
             {
                 IEnumerable<JToken> scores = await (country is null ? GetLeaderboardScores(diffId, page - 1, PAGE_LENGTH) :
                     GetLeaderboardScores(diffId, country, page - 1, PAGE_LENGTH)).ConfigureAwait(false); 
                 if (scores is null) return null;
-                return [.. scores.Select(ConvertToScoreData)];
+                return [.. scores.Select(token => ConvertToScoreData(new((JObject)token)))];
             }
             catch (Exception e)
             {
@@ -36,7 +37,7 @@ namespace AccsaberLeaderboard.API
                 return null;
             }
         }
-        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<JToken, bool> filter, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10)
+        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<ScoreInfoToken, bool> filter, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10)
         {
             try
             {
@@ -58,7 +59,7 @@ namespace AccsaberLeaderboard.API
                     if (((int)response["numberOfElements"]) == 0)
                         continue;
 
-                    IEnumerable<JToken> tokens = response["content"].Children();
+                    IEnumerable<ScoreInfoToken> tokens = response["content"].Children().Select(token => new ScoreInfoToken((JObject)token));
 
                     IEnumerable<AccsaberScoreData> scores = tokens.Where(filter).Select(ConvertToScoreData);
                     int scoreLen = scores.Count();
@@ -85,12 +86,12 @@ namespace AccsaberLeaderboard.API
                 return default;
             }
         }
-        public static AccsaberScoreData ConvertToScoreData(JToken scoreData) =>
+        public static AccsaberScoreData ConvertToScoreData(ScoreInfoToken scoreData) =>
             new(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
-        public static async Task<List<JToken>> GetMilestoneData(string userId, Func<JToken, bool> filter, Comparison<JToken> comp, int pageMult = FILTER_PAGE_MULT)
+        public static async Task<List<MilestoneInfoToken>?> GetMilestoneData(string userId, Func<MilestoneInfoToken, bool>? filter = null, Comparison<MilestoneInfoToken>? sorter = null, int pageMult = FILTER_PAGE_MULT)
         {
             int page = 0;
-            List<JToken> outp = [];
+            List<MilestoneInfoToken> outp = [];
             int pageLen = PAGE_LENGTH * pageMult;
             while (true)
             {
@@ -99,62 +100,99 @@ namespace AccsaberLeaderboard.API
                 JToken response = JToken.Parse(dataStr);
                 if ((bool)response["last"])
                     break;
-                outp.AddRange(response["content"].Children().Where(filter));
+                IEnumerable<MilestoneInfoToken> data = response["content"].Children().Select(token => new MilestoneInfoToken((JObject)token));
+                if (filter is not null)
+                    data = data.Where(filter);
+                outp.AddRange(data);
                 ++page;
             }
-            outp.Sort(comp);
+            if (sorter is not null)
+                outp.Sort(sorter);
             return outp;
         }
-        public static float GetComplexity(JToken diffData) => (float)(diffData["complexity"] ?? 0f);
-        public static string GetSongName(JToken diffData) => diffData["songName"].ToString();
-        public static string GetDiffName(JToken diffData) => diffData["difficulty"].ToString();
-        public static string GetLeaderboardId(JToken diffData) => diffData["leaderboardId"].ToString();
-        public static string GetHash(JToken diffData) => diffData["songHash"].ToString();
-        public static bool MapIsUsable(JToken diffData) => diffData is not null && GetComplexity(diffData) > 0;
-        public static bool AreRatingsNull(JToken diffData) => diffData["complexity"] is null;
-        public static int GetMaxScore(JToken diffData) => (int)(diffData["maxScore"] ?? 0);
-        public static int GetRank(JToken scoreData) => (int)scoreData["rank"];
-        public static string GetUserName(JToken scoreData) => scoreData["userName"].ToString();
-        public static float GetAcc(JToken scoreData) => (float)scoreData["accuracy"];
-        public static int GetMistakes(JToken scoreData) {
+        public static async Task<List<MilestoneInfoToken>?> GetMilestoneData(string userId, bool completed, Func<MilestoneInfoToken, bool>? filter = null, Comparison<MilestoneInfoToken>? sorter = null)
+        {
+            string apapiFormat = completed ? APAPI_MILESTONE_COMPLETE : APAPI_MILESTONE_INCOMPLETE;
+
+            string dataStr = await CallAPI_String(string.Format(apapiFormat, userId)).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(dataStr)) 
+                return null;
+
+            JToken response = JToken.Parse(dataStr);
+            IEnumerable<MilestoneInfoToken>? data = response?.Children().Select(token => new MilestoneInfoToken((JObject)token));
+            if (data is null)
+                return null;
+
+            if (filter is not null)
+                data = data.Where(filter);
+
+            List<MilestoneInfoToken> outp = [.. data];
+            if (sorter is not null)
+                outp.Sort(sorter);
+
+            return outp;
+        }
+        public static float GetComplexity(DifficultyInfoToken diffData) => (float)(diffData["complexity"] ?? 0f);
+        public static string GetSongName(DifficultyInfoToken diffData) => diffData["songName"].ToString();
+        public static string GetDiffName(DifficultyInfoToken diffData) => diffData["difficulty"].ToString();
+        public static string GetLeaderboardId(DifficultyInfoToken diffData) => diffData["leaderboardId"].ToString();
+        public static string GetHash(DifficultyInfoToken diffData) => diffData["songHash"].ToString();
+        public static bool MapIsUsable(DifficultyInfoToken diffData) => diffData is not null && GetComplexity(diffData) > 0;
+        public static bool AreRatingsNull(DifficultyInfoToken diffData) => diffData["complexity"] is null;
+        public static int GetMaxScore(DifficultyInfoToken diffData) => (int)(diffData["maxScore"] ?? 0);
+        public static int GetRank(ScoreInfoToken scoreData) => (int)scoreData["rank"];
+        public static string GetUserName(ScoreInfoToken scoreData) => scoreData["userName"].ToString();
+        public static float GetAcc(ScoreInfoToken scoreData) => (float)scoreData["accuracy"];
+        public static int GetMistakes(ScoreInfoToken scoreData) {
             int outp = (int)scoreData["misses"] + (int)scoreData["badCuts"];
             if (scoreData["bombCuts"] is not null) outp += (int)scoreData["bombCuts"];
             if (scoreData["wallHits"] is not null) outp += (int)scoreData["wallHits"];
             return outp;
         }
-        public static bool GetFullCombo(JToken scoreData) => GetMistakes(scoreData) == 0;
-        public static float GetAP(JToken scoreData) => (float)scoreData["ap"];
-        public static int GetScore(JToken scoreData) => (int)scoreData["score"];
-        public static string GetCountry(JToken scoreData) => scoreData["country"]?.ToString();
-        public static string GetPlayerId(JToken scoreData) => scoreData["userId"]?.ToString();
-        public static string GetPlayerAvatar(JToken playerData) => playerData["avatarUrl"]?.ToString();
-        public static string GetPlayerTitle(JToken playerData) => playerData["levelData"]["title"]?.ToString();
-        public static LevelTitle GetAndConvertPlayerTitle(JToken playerData) => (LevelTitle)Enum.Parse(typeof(LevelTitle), GetPlayerTitle(playerData));
-        public static int GetPlayerLevel(JToken playerData) => (int)playerData["levelData"]["level"];
-        public static string GetPlayerName(JToken playerData) => playerData["name"]?.ToString();
-        public static float GetPlayerXPPercent(JToken playerData) => (float)playerData["levelData"]["progressPercent"];
-        public static JToken GetPlayerStats(JToken playerData, APCategory category)
+        public static bool GetFullCombo(ScoreInfoToken scoreData) => GetMistakes(scoreData) == 0;
+        public static float GetAP(ScoreInfoToken scoreData) => (float)scoreData["ap"];
+        public static int GetScore(ScoreInfoToken scoreData) => (int)scoreData["score"];
+        public static string? GetCountry(ScoreInfoToken scoreData) => scoreData["country"]?.ToString();
+        public static string? GetPlayerId(ScoreInfoToken scoreData) => scoreData["userId"]?.ToString();
+        public static string? GetPlayerAvatar(PlayerInfoToken playerData) => playerData["avatarUrl"]?.ToString();
+        public static LevelInfoToken GetPlayerLevelData(PlayerInfoToken playerData) => new((JObject)playerData["levelData"]);
+        public static string? GetPlayerName(PlayerInfoToken playerData) => playerData["name"]?.ToString();
+        public static StatsInfoToken? GetPlayerStats(PlayerInfoToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());
-            if (playerData is null) Plugin.Log.Warn("playerData is null.");
-            if (id is null) Plugin.Log.Warn("id is null.");
-            return playerData["statistics"]?.Children().FirstOrDefault(token => id.Equals(token["categoryId"]?.ToString()));
+            JObject? obj = playerData["statistics"]?.Children().FirstOrDefault(token => id.Equals(token["categoryId"]?.ToString())) as JObject;
+            return obj is null ? null : new(obj);
         }
-        public static int GetGlobalRank(JToken statsData) => (int)statsData["ranking"];
-        public static int GetCountryRank(JToken statsData) => (int)statsData["countryRanking"];
+        public static int GetLevel(LevelInfoToken levelData) => (int)levelData["level"];
+        public static string? GetTitle(LevelInfoToken levelData) => levelData["title"]?.ToString();
+        public static float GetCurrentLevelXp(LevelInfoToken levelData) => (float)levelData["xpForCurrentLevel"];
+        public static float GetNextLevelXp(LevelInfoToken levelData) => (float)levelData["xpForNextLevel"];
+        public static float GetProgress(LevelInfoToken levelData) => (float)levelData["progressPercent"];
+        public static float GetAP(StatsInfoToken statsData) => (float)statsData["ap"];
+        public static int GetGlobalRank(StatsInfoToken statsData) => (int)statsData["ranking"];
+        public static int GetCountryRank(StatsInfoToken statsData) => (int)statsData["countryRanking"];
+        public static float GetProgress(MilestoneInfoToken milestoneData) => (float)milestoneData["normalizedProgress"];
+        public static float GetTarget(MilestoneInfoToken milestoneData) => (float)milestoneData["targetValue"];
+        public static float GetProgessValue(MilestoneInfoToken milestoneData) => (float)milestoneData["progress"];
+        public static string? GetTier(MilestoneInfoToken milestoneData) => milestoneData["tier"]?.ToString();
+        public static string? GetTitle(MilestoneInfoToken milestoneData) => milestoneData["title"]?.ToString();
+        public static string? GetDescription(MilestoneInfoToken milestoneData) => milestoneData["description"]?.ToString();
+        public static string? GetId(MilestoneInfoToken milestoneData) => milestoneData["milestoneId"]?.ToString();
+        public static AccsaberMilestoneData WrapData(MilestoneInfoToken milestoneData) => new(GetTarget(milestoneData), GetProgessValue(milestoneData),
+            GetTier(milestoneData), GetTitle(milestoneData), GetDescription(milestoneData), GetId(milestoneData));
         public static async Task<int> GetMaxScore(string hash, int diffNum) =>
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<JToken> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
+        public static async Task<ScoreInfoToken?> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
             string reloadedDiff = DiffNumToReloadedDiff(FromDiff(diff));
             string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), throttler, ct: ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(dataStr)) return null;
-            return JToken.Parse(dataStr);
+            return new(JObject.Parse(dataStr));
         }
 
-        public static async Task<string> GetLeaderboardDifficultyId(string hash, BeatmapDifficulty diff, CancellationToken ct = default)
+        public static async Task<string?> GetLeaderboardDifficultyId(string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
             if (ct.IsCancellationRequested) return null;
             string diffStr = DiffNumToReloadedDiff(FromDiff(diff));
@@ -176,29 +214,33 @@ namespace AccsaberLeaderboard.API
             }
 
         } 
-        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string hash, BeatmapDifficulty diff, int page = 0, int count = 10, CancellationToken ct = default)
-        {
-            return await GetLeaderboardDifficultyId(hash, diff, ct).ContinueWith(task => GetLeaderboardScores(task.Result, page, count, ct).GetAwaiter().GetResult());
-        }
-        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string difficulty_id, int page = 0, int count = 10, CancellationToken ct = default)
+        public static async Task<IEnumerable<ScoreInfoToken>?> GetLeaderboardScores(string difficulty_id, int page = 0, int count = 10, CancellationToken ct = default)
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, difficulty_id, page, count), throttler, true, ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
 
-            return JToken.Parse(dataStr)["content"].Children();
+            return JToken.Parse(dataStr)["content"].Children().Select(token => new ScoreInfoToken((JObject)token));
         }
-        public static async Task<IEnumerable<JToken>> GetLeaderboardScores(string difficulty_id, string country, int page = 0, int count = 10, CancellationToken ct = default)
+        public static async Task<IEnumerable<ScoreInfoToken>?> GetLeaderboardScores(string difficulty_id, string country, int page = 0, int count = 10, CancellationToken ct = default)
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF_COUNTRY, difficulty_id, country, page, count), throttler, true, ct: ct).ConfigureAwait(false);
             if (dataStr is null || dataStr.Equals(string.Empty)) return null;
 
-            return JToken.Parse(dataStr)["content"].Children();
+            return JToken.Parse(dataStr)["content"].Children().Select(token => new ScoreInfoToken((JObject)token));
         }
-        public static async Task<JToken> GetPlayerInfo(string userId, bool stats, CancellationToken ct = default)
+        public static async Task<PlayerInfoToken?> GetPlayerInfo(string userId, bool stats, CancellationToken ct = default)
         {
             string dataStr = await CallAPI_String(string.Format(APAPI_PLAYERID, userId, stats.ToString().ToLower()), throttler, false, ct: ct).ConfigureAwait(false);
 
-            return string.IsNullOrEmpty(dataStr) ? null : JToken.Parse(dataStr);
+            return string.IsNullOrEmpty(dataStr) ? null : new(JObject.Parse(dataStr));
         }
+
+
+        public class DifficultyInfoToken(JObject obj) : JObject(obj) { }
+        public class ScoreInfoToken(JObject obj) : JObject(obj) { }
+        public class PlayerInfoToken(JObject obj) : JObject(obj) { }
+        public class LevelInfoToken(JObject obj) : JObject(obj) { }
+        public class StatsInfoToken(JObject obj) : JObject(obj) { }
+        public class MilestoneInfoToken(JObject obj) : JObject(obj) { }
     }
 }

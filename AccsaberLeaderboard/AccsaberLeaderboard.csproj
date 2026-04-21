@@ -158,9 +158,11 @@
     <Compile Include="Harmony\LoadPatch.cs" />
     <Compile Include="Installers\InstallerHelper.cs" />
     <Compile Include="Installers\MainUIInstaller.cs" />
+    <Compile Include="Models\AccsaberMilestoneData.cs" />
     <Compile Include="Models\AccsaberScoreData.cs" />
     <Compile Include="Models\APCategory.cs" />
     <Compile Include="Models\LeaderboardDisplayType.cs" />
+    <Compile Include="Models\LevelMilestone.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\PluginConfig.cs" />
     <Compile Include="AccsaberLeaderboardController.cs" />
@@ -172,8 +174,9 @@
     <Compile Include="UI\ViewControllers\PlayerProfileModalViewController.cs" />
     <Compile Include="Utils\AsyncLock.cs" />
     <Compile Include="Utils\ColorPalette.cs" />
-    <Compile Include="Models\LevelTitle.cs" />
+    <Compile Include="Utils\DataUtils.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
+    <Compile Include="Utils\ResourcePaths.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />

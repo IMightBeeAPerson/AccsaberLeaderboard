@@ -1,74 +1,83 @@
-﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <horizontal id='panelContainer' pref-width='100' pref-height='20' bg='panel-top' child-alignment='MiddleLeft'>
-    <clickable-image src='AccsaberLeaderboard.Resources.accReloaded.png' preserve-aspect='true' pref-width='15' pref-height='15' on-click='OpenReloaded' default-color='#FFFF' highlight-color='#FFFF'/>
+﻿<vertical child-expand-width='false' child-expand-height='false'>
+  <horizontal id='panelContainer' pref-width='~containerWidth' pref-height='~containerHeight' bg='panel-top' child-expand-width='false' child-expand-height='false'>
 
-    <vertical pref-width='60' child-alignment='MiddleCenter' spacing='1'>
+    <vertical pref-width='~containerPadding'/>
 
-      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Overall' align='Center' font-color='~overallColor'/>
+    <vertical pref-width='~imageSize'>
+      <clickable-image src='~logoPic' preserve-aspect='true' pref-width='~imageSize' pref-height='~imageSize' on-click='OpenReloaded' default-color='#FFFF' highlight-color='#FFFF'/>
+    </vertical>
+
+    <vertical pref-width='~elementPadding'/>
+
+    <vertical pref-width='~rowWidth' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+
+      <horizontal pref-width='~rowWidth' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text text='Overall' font-size='~fontSizeCell' font-color='~overallColor' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Tech' align='Center' font-color='~techColor'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text text='Tech' font-size='~fontSizeCell' font-color='~techColor' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='Standard' align='Center' font-color='~standardColor'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text text='Standard' font-size='~fontSizeCell' font-color='~standardColor' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text text='True' align='Center' font-color='~trueColor'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text text='True' font-size='~fontSizeCell' font-color='~trueColor' align='Center'/>
         </vertical>
       </horizontal>
 
-      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='totalAPText' text='0ap' font-size='4' align='Center'/>
+      <horizontal pref-width='~rowWidth' child-alignment='MiddleCenter' spacing='~cellSpacing' bg='panel-top' bg-color='~dimmer'>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='totalAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='techAPText' text='0ap' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='techAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='standardAPText' text='0ap' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='standardAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='trueAPText' text='0ap' font-size='4' align='Center'/>
-        </vertical>
-      </horizontal>
-    
-      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='globalRankText' text='Global' font-size='4' align='Center'/>
-        </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='techGlobalRankText' text='Global' font-size='4' align='Center'/>
-        </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='standardGlobalRankText' text='Global' font-size='4' align='Center'/>
-        </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='trueGlobalRankText' text='Global' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='trueAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
       </horizontal>
     
-      <horizontal pref-width='60' child-alignment='MiddleCenter' spacing='1'>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='countryRankText' text='Country' font-size='4' align='Center'/>
+      <horizontal pref-width='~rowWidth' child-alignment='MiddleCenter' spacing='~cellSpacing' bg='panel-top' bg-color='~dimmer'>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='globalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='techCountryRankText' text='Country' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='techGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='standardCountryRankText' text='Country' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='standardGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='15' child-alignment='MiddleCenter'>
-          <text id='trueCountryRankText' text='Country' font-size='4' align='Center'/>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='trueGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
+        </vertical>
+      </horizontal>
+    
+      <horizontal pref-width='~rowWidth' child-alignment='MiddleCenter' spacing='~cellSpacing' bg='panel-top' bg-color='~dimmer'>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='countryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
+        </vertical>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='techCountryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
+        </vertical>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='standardCountryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
+        </vertical>
+        <vertical pref-width='~cellWidth' child-alignment='MiddleCenter'>
+          <text id='trueCountryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
         </vertical>
       </horizontal>
 
     </vertical>
+    
+    <vertical pref-width='~elementPadding'/>
 
-    <vertical pref-width='13' pad-down='1' pad-up='1'>
-      <clickable-image id='profilePicture' preserve-aspect='true' pref-width='13' pref-height='13' on-click='OpenPlayerProfile' default-color='#FFFF' highlight-color='#FFFF'/>
+    <vertical pref-width='~imageSize' pad-down='1' pad-up='1'>
+      <clickable-image id='profilePicture' preserve-aspect='true' pref-width='~imageSize' pref-height='~imageSize' on-click='OpenPlayerProfile' default-color='#FFFF' highlight-color='#FFFF'/>
     </vertical>
-    <vertical perf-width='10'/>
+    <vertical pref-width='~containerPadding'/>
   </horizontal>
-</bg>
+</vertical>

@@ -1,5 +1,7 @@
 ﻿using AccsaberLeaderboard.Models;
 using BeatSaberMarkupLanguage;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -11,38 +13,6 @@ namespace AccsaberLeaderboard.Utils
         {
             if (str.Length < maxLength) return str;
             return $"{str.Substring(0, maxLength)}{suffix}";
-        }
-        public static string GetColorForTitle(LevelTitle title) => GetColorForTitle(title.ToString());
-        public static string GetColorForTitle(string title)
-        { //Newcomer, Apprentice, Adept, Skilled, Expert, Master, Grandmaster, Legend, Transcendent, Mythic, Ascendant
-            return title switch
-            { // Made up colors for now, later get them through the API if possible
-                "Newcomer" => "#6b7280",
-                "Apprentice" => "#3b82f6",
-                "Adept" => "#10b981",
-                "Skilled" => "#cd7f32",
-                "Expert" => "#c0c0d0",
-                "Master" => "#fbbf24",
-                "Grandmaster" => "#8b5cf6",
-                "Legend" => "#f97316",
-                "Transcendent" => "#22d3ee",
-                "Mythic" => "#ef4444",
-                "Ascendant" => "#f472b6",
-                _ => "#FFF"
-            };
-            /*
-              --tier-newcomer: #6b7280;
-              --tier-apprentice: #3b82f6;
-              --tier-adept: #10b981;
-              --tier-skilled: #cd7f32;
-              --tier-expert: #c0c0d0;
-              --tier-master: #fbbf24;
-              --tier-grandmaster: #8b5cf6;
-              --tier-legend: #f97316;
-              --tier-transcendent: #22d3ee;
-              --tier-mythic: #ef4444;
-              --tier-ascendant: #f472b6;
-             */
         }
         public static string GetColorForMilestoneRank(string rank) => rank switch
         {
@@ -57,6 +27,7 @@ namespace AccsaberLeaderboard.Utils
         public static Color ConvertHex(string hex)
         {
             if (hex[0] == '#') hex = hex.Substring(1);
+            if (hex.Length <= 2) return ConvertHexShort(hex);
             bool longHex = hex.Length >= 6;
             int repeatNum = longHex ? 1 : 2;
             int[] vals = longHex ? new int[hex.Length / 2] : new int[hex.Length];
@@ -69,6 +40,20 @@ namespace AccsaberLeaderboard.Utils
                 vals[i / valsDiv] = val;
             }
             return new Color(vals[0] / 255f, vals[1] / 255f, vals[2] / 255f, vals.Length >= 4 ? vals[3] / 255f : 1f);
+        }
+        /*
+         public readonly struct Color(float r, float g, float b, float a) {
+            public readonly float r = r, g = g, b = b, a = a;
+            public override string ToString() => $"[{r},{g},{b},{a}]";
+         }
+         */
+        private static Color ConvertHexShort(string hex)
+        {
+            int color, alpha;
+            if (hex.Length > 1) alpha = int.Parse(new string(hex[1], 2), System.Globalization.NumberStyles.HexNumber);
+            else alpha = 255;
+            color = int.Parse(new string(hex[0], 2), System.Globalization.NumberStyles.HexNumber);
+            return new Color(color / 255f, color / 255f, color / 255f, alpha / 255f);
         }
         public static string DimHex(string hex, int dimAmount)
         {
@@ -90,7 +75,7 @@ namespace AccsaberLeaderboard.Utils
 
             int hexNum = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
             if (hex.Length % 3 == 0)
-                hexNum <<= 8;
+                hexNum <<= 4 * (hex.Length / 3);
             hexNum += int.Parse(alpha.Length == 1 ? alpha + alpha : alpha, System.Globalization.NumberStyles.HexNumber);
 
             return (hasHashtag ? "#" : "") + hexNum.ToString("X");
@@ -103,5 +88,25 @@ namespace AccsaberLeaderboard.Utils
             BSMLParser.instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
 #endif
         }
+        #region Debug Functions
+
+        public static string Print<T>(this IEnumerable<T> arr)
+        {
+            if (arr.Count() == 0) return "[]";
+            string outp = "";
+            foreach (T item in arr)
+                outp += ", " + item;
+            return $"[{outp.Substring(2)}]";
+        }
+        public static string Print(this IEnumerable<string> arr)
+        {
+            if (arr.Count() == 0) return "[]";
+            string outp = "";
+            foreach (string item in arr)
+                outp += ", \"" + item + '"';
+            return $"[{outp.Substring(2)}]";
+        }
+
+        #endregion
     }
 }
