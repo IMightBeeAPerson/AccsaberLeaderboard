@@ -24,7 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NEW_VERSION</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -168,6 +168,7 @@
     <Compile Include="UI\MainLeaderboardController.cs" />
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
+    <Compile Include="UI\ViewControllers\PlayerMilestoneModalViewController.cs" />
     <Compile Include="UI\ViewControllers\PlayerProfileModalViewController.cs" />
     <Compile Include="Utils\AsyncLock.cs" />
     <Compile Include="Utils\ColorPalette.cs" />
@@ -183,7 +184,7 @@
     <EmbeddedResource Include="UI\bsml\LeaderboardView.bsml" />
     <EmbeddedResource Include="UI\bsml\PanelView.bsml" />
     <EmbeddedResource Include="UI\bsml\PlayerProfile.bsml" />
-    <EmbeddedResource Include="UI\bsml\LeaderboardCell.bsml" />
+    <EmbeddedResource Include="UI\bsml\MilestoneModal.bsml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">

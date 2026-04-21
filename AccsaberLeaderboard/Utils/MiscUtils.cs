@@ -1,4 +1,6 @@
 ﻿using AccsaberLeaderboard.Models;
+using BeatSaberMarkupLanguage;
+using System.Reflection;
 using UnityEngine;
 
 namespace AccsaberLeaderboard.Utils
@@ -42,6 +44,16 @@ namespace AccsaberLeaderboard.Utils
               --tier-ascendant: #f472b6;
              */
         }
+        public static string GetColorForMilestoneRank(string rank) => rank switch
+        {
+            "bronze" => "#cd7f32",
+            "silver" => "#c0c0c0",
+            "gold" => "#ffd700",
+            "platinum" => "#36cfb0",
+            "diamond" => "#b9f2ff",
+            "apex" => "#a855f7",
+            _ => "#FFF"
+        };
         public static Color ConvertHex(string hex)
         {
             if (hex[0] == '#') hex = hex.Substring(1);
@@ -62,8 +74,14 @@ namespace AccsaberLeaderboard.Utils
         {
             bool hasHashtag = hex[0] == '#';
             if (hasHashtag) hex = hex.Substring(1);
-            int baseNum = int.Parse(new string('1', hex.Length), System.Globalization.NumberStyles.HexNumber);
-            return (hasHashtag ? "#" : "") + (int.Parse(hex, System.Globalization.NumberStyles.HexNumber) - (baseNum * dimAmount)).ToString("X");
+            int leadingZeros = 0;
+            while (hex[leadingZeros] == '0')
+                leadingZeros++;
+            string baseNumStr = "";
+            foreach (char c in hex) baseNumStr += c == '0' ? '0' : '1';
+            int baseNum = int.Parse(baseNumStr, System.Globalization.NumberStyles.HexNumber);
+            int givenNum = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+            return (hasHashtag ? "#" : "") + new string('0', leadingZeros) + (givenNum - (baseNum * dimAmount)).ToString("X");
         }
         public static string ChangeAlpha(string hex, string alpha)
         {
@@ -76,6 +94,14 @@ namespace AccsaberLeaderboard.Utils
             hexNum += int.Parse(alpha.Length == 1 ? alpha + alpha : alpha, System.Globalization.NumberStyles.HexNumber);
 
             return (hasHashtag ? "#" : "") + hexNum.ToString("X");
+        }
+        public static void Parse(string resourcePath, Transform parent, object controller)
+        {
+#if NEW_VERSION
+            BSMLParser.Instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+#else
+            BSMLParser.instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+#endif
         }
     }
 }

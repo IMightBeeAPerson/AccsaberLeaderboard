@@ -1,0 +1,27 @@
+<modal id='modal' show-event='ShowModalInfo' hide-event='HideModalInfo' click-off-closes='true' move-to-center='true'>
+	<loading id='loader' preserve-aspect='true'/>
+  <vertical id='container' pref-width='100' pref-height='80' bg='round-rect-panel' child-expand-width='false'>
+    <custom-list id='list' contents='listValues' cell-size='15' clickable-cells='false' show-scrollbar='true' pref-width='90' pref-height='80' child-expand-width='false' horizontal-fit='PreferredSize'>
+      <vertical pref-height='15' pref-width='90' horizontal-fit='PreferredSize' child-expand-width='false' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~dimGrey' pad-left='2' pad-right='2' pad-down='1'>
+        <horizontal>
+          <text text='~Title' align='Left' font-size='~FontSize' word-wrapping='false' overflow-mode='Ellipsis'/>
+          <text text='~Tier' align='Right' font-size='~FontSize' word-wrapping='false'/>
+        </horizontal>
+        <horizontal>
+          <horizontal pref-width='~barLen' child-expand-width='false' child-control-width='false'>
+            <image id='PercentBarTop' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#FFD700' pref-width='20' pref-height='1'/>
+            <image id='PercentBarBottom' src='AccsaberLeaderboard.Resources.1x1.png' image-color='#CCC' pref-width='20' pref-height='1'/>
+          </horizontal>
+          <horizontal pref-width='5'/>
+          <horizontal pref-width='10' child-alignment='MiddleCenter'>
+            <text text='~Progress' align='Left' font-size='~FontSize' word-wrapping='false' overflow-mode='Ellipsis'/>
+          </horizontal>
+          <horizontal pref-width='~progLen'>
+            <text text='~ExactProgress' align='Right' font-size='~FontSize' word-wrapping='false' overflow-mode='Ellipsis'/>
+          </horizontal>
+        </horizontal>
+        <text text='~Description' align='Left' font-size='~FontSize' word-wrapping='false' overflow-mode='Ellipsis'/>
+      </vertical>
+    </custom-list>
+  </vertical>
+</modal>

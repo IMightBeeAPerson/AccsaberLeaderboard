@@ -87,6 +87,24 @@ namespace AccsaberLeaderboard.API
         }
         public static AccsaberScoreData ConvertToScoreData(JToken scoreData) =>
             new(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
+        public static async Task<List<JToken>> GetMilestoneData(string userId, Func<JToken, bool> filter, Comparison<JToken> comp, int pageMult = FILTER_PAGE_MULT)
+        {
+            int page = 0;
+            List<JToken> outp = [];
+            int pageLen = PAGE_LENGTH * pageMult;
+            while (true)
+            {
+                string dataStr = await CallAPI_String(string.Format(APAPI_MILESTONE, userId, page, pageLen)).ConfigureAwait(false);
+                if (string.IsNullOrEmpty(dataStr)) return null;
+                JToken response = JToken.Parse(dataStr);
+                if ((bool)response["last"])
+                    break;
+                outp.AddRange(response["content"].Children().Where(filter));
+                ++page;
+            }
+            outp.Sort(comp);
+            return outp;
+        }
         public static float GetComplexity(JToken diffData) => (float)(diffData["complexity"] ?? 0f);
         public static string GetSongName(JToken diffData) => diffData["songName"].ToString();
         public static string GetDiffName(JToken diffData) => diffData["difficulty"].ToString();
@@ -110,11 +128,11 @@ namespace AccsaberLeaderboard.API
         public static string GetCountry(JToken scoreData) => scoreData["country"]?.ToString();
         public static string GetPlayerId(JToken scoreData) => scoreData["userId"]?.ToString();
         public static string GetPlayerAvatar(JToken playerData) => playerData["avatarUrl"]?.ToString();
-        public static string GetPlayerTitle(JToken playerData) => playerData["levelTitle"]?.ToString();
+        public static string GetPlayerTitle(JToken playerData) => playerData["levelData"]["title"]?.ToString();
         public static LevelTitle GetAndConvertPlayerTitle(JToken playerData) => (LevelTitle)Enum.Parse(typeof(LevelTitle), GetPlayerTitle(playerData));
-        public static int GetPlayerLevel(JToken playerData) => (int)playerData["level"];
+        public static int GetPlayerLevel(JToken playerData) => (int)playerData["levelData"]["level"];
         public static string GetPlayerName(JToken playerData) => playerData["name"]?.ToString();
-        public static float GetPlayerXPPercent(JToken playerData) => (float)playerData["progressPercent"];
+        public static float GetPlayerXPPercent(JToken playerData) => (float)playerData["levelData"]["progressPercent"];
         public static JToken GetPlayerStats(JToken playerData, APCategory category)
         {
             string id = CategoryIdToReloadedCategory(category.ToString());

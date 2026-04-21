@@ -14,7 +14,7 @@ namespace AccsaberLeaderboard.Models
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
             public static readonly float BIG_FONT_SIZE = 3.5f;
-            public static readonly float SMALL_FONT_SIZE = 2.8f;
+            public static readonly float SMALL_FONT_SIZE = 3f;
 
             private readonly AccsaberScoreData scoreData = scoreData;
 

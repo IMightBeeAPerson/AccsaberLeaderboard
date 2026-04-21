@@ -67,15 +67,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public PlayerProfileModalViewController(GameObject parent)
         {
-            Parse(parent.transform);
-        }
-        private void Parse(Transform parent)
-        {
-#if NEW_VERSION
-            BSMLParser.Instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), "AccsaberLeaderboard.UI.bsml.PlayerProfile.bsml"), parent.gameObject, this);
-#else
-            BSMLParser.instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), "AccsaberLeaderboard.UI.bsml.PlayerProfile.bsml"), parent.gameObject, this);
-#endif
+            MiscUtils.Parse("AccsaberLeaderboard.UI.bsml.PlayerProfile.bsml", parent.transform, this);
             modal.transform.SetParent(parent.transform);
         }
         private IEnumerator ShowPlayerStart()

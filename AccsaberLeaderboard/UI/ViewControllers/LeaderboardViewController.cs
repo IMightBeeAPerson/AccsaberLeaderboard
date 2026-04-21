@@ -31,7 +31,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #pragma warning disable IDE0044, IDE0051
         #region Static Variables & Properties
 
-        public static readonly float SMALL_CELL_SIZE = 5.1f;
+        public static readonly float SMALL_CELL_SIZE = 5.3f;
         public static readonly float BIG_CELL_SIZE = 5.9f;
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
@@ -55,6 +55,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private Stack<int> previousPages = [];
         private string difficultyId;
         private PlayerProfileModalViewController ppmvc;
+        private PlayerMilestoneModalViewController pmmvc;
 
         private Stack<(int page, int nextPage, IEnumerable<AccsaberScoreData> pageData)> cache = [];
         private bool cachePage;
@@ -123,8 +124,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             UpdateSelectors(LeaderboardDisplayType.Global);
             ppmvc = new(leaderboardContainer);
+            pmmvc = new(leaderboardContainer);
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
+            PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
             // Subscribe to refresh event from other controllers
             RefreshRequested += () =>
             {

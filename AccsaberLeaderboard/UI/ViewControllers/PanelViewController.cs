@@ -26,7 +26,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
     {
 #pragma warning disable IDE0044, IDE0051, IDE0052
 
-        internal static event Action OnPlayerPictureClicked;
+        internal static event Action OnPlayerPictureClicked, OnLogoClicked;
 
         [UIComponent("panelContainer")] private Backgroundable panelContainer;
 
@@ -54,7 +54,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
         [UIAction("OpenPlayerProfile")] private void OpenPlayerProfile() => OnPlayerPictureClicked?.Invoke();
-        [UIAction("OpenReloaded")] private void OpenReloaded() => Application.OpenURL($"https://accsaberreloaded.com/players/{Plugin.Instance.PlayerID}");
+        [UIAction("OpenReloaded")] private void OpenReloaded() => OnLogoClicked?.Invoke();
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
