@@ -1,14 +1,8 @@
 ﻿using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.UI.ViewControllers;
 using AccsaberLeaderboard.Utils;
-using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
-using BeatSaberMarkupLanguage.Components;
-using BeatSaberMarkupLanguage.TypeHandlers;
 using HMUI;
-using System.ComponentModel;
-using System.IO;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using static AccsaberLeaderboard.Utils.ColorPalette;
@@ -31,12 +25,16 @@ namespace AccsaberLeaderboard.Models
             private readonly bool flip;
             private readonly float progressPercent;
             private float DisplayableProgress => progressPercent * 100f;
+            private float Prog, Targ;
 
             public AccsaberMilestoneDataInfo(AccsaberMilestoneData milestoneData)
             {
                 data = milestoneData;
                 flip = milestoneData.Progress > milestoneData.Target;
-                progressPercent = (flip ? milestoneData.Target / milestoneData.Progress : milestoneData.Progress / milestoneData.Target);
+                Prog = flip ? data.Target : data.Progress;
+                Targ = flip ? data.Progress : data.Target;
+
+                progressPercent = CalcProgress(milestoneData.Target, milestoneData.Progress, flip);
             }
 
             [UIValue(nameof(Progress))] public string Progress => $"<color={LEVEL}>" + (DisplayableProgress >= 99.99f ? "99.99" : DisplayableProgress.ToString("N2")) + "%</color>";
@@ -45,16 +43,13 @@ namespace AccsaberLeaderboard.Models
             {
                 get
                 {
-                    float prog = flip ? data.Target : data.Progress;
-                    float targ = flip ? data.Progress : data.Target;
-
                     string middle;
                     if (data.Target >= 1000)
-                        middle = $"{prog:N0} / {targ:N0}";
+                        middle = $"{Prog:N0} / {Targ:N0}";
                     else if (data.Target < 1)
-                        middle = $"{prog * 100f:0.####}% / {targ * 100f:0.####}%";
+                        middle = $"{Prog * 100f:0.####}% / {Targ * 100f:0.####}%";
                     else
-                        middle = $"{prog:0.####} / {targ:0.####}";
+                        middle = $"{Prog:0.####} / {Targ:0.####}";
 
                     return $"<color={LEVEL_DIM}>(" + middle + ")</color>";
                 }
@@ -111,6 +106,32 @@ namespace AccsaberLeaderboard.Models
                 }
                 cellContainer.background.color = c;
                 
+            }
+
+            public static float CalcProgress(float target, float progress) =>
+                CalcProgress(target, progress, progress > target);
+            public static float CalcProgress(float target, float progress, bool swap)
+            {
+                const float shiftAmount = 0.97f; // Shift both values down to make it more meaningful to go from 97 to 98
+
+                bool isPercent = target < 1f;
+                bool needsShifting = target >= (shiftAmount + 0.01f);
+
+                if (swap)
+                    (progress, target) = (target, progress);
+                if (isPercent)
+                {
+                    const float baseNum = 2f;
+                    const float expMult = 3f;
+                    const float expMultSquared = expMult * expMult;
+
+                    float progPercent = needsShifting ? (progress - shiftAmount) / (target - shiftAmount) : progress / target;
+
+                    float exp = expMultSquared * progPercent - expMultSquared;
+
+                    return Mathf.Pow(baseNum, exp);
+                }
+                else return progress / target;
             }
         }
     }

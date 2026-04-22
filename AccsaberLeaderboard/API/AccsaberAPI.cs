@@ -172,13 +172,15 @@ namespace AccsaberLeaderboard.API
         public static int GetGlobalRank(StatsInfoToken statsData) => (int)statsData["ranking"];
         public static int GetCountryRank(StatsInfoToken statsData) => (int)statsData["countryRanking"];
         public static float GetProgress(MilestoneInfoToken milestoneData) => (float)milestoneData["normalizedProgress"];
+        public static float GetCalculatedProgress(MilestoneInfoToken milestoneData) => 
+            AccsaberMilestoneData.AccsaberMilestoneDataInfo.CalcProgress(GetTarget(milestoneData), GetProgressValue(milestoneData));
         public static float GetTarget(MilestoneInfoToken milestoneData) => (float)milestoneData["targetValue"];
-        public static float GetProgessValue(MilestoneInfoToken milestoneData) => (float)milestoneData["progress"];
+        public static float GetProgressValue(MilestoneInfoToken milestoneData) => (float)milestoneData["progress"];
         public static string? GetTier(MilestoneInfoToken milestoneData) => milestoneData["tier"]?.ToString();
         public static string? GetTitle(MilestoneInfoToken milestoneData) => milestoneData["title"]?.ToString();
         public static string? GetDescription(MilestoneInfoToken milestoneData) => milestoneData["description"]?.ToString();
         public static string? GetId(MilestoneInfoToken milestoneData) => milestoneData["milestoneId"]?.ToString();
-        public static AccsaberMilestoneData WrapData(MilestoneInfoToken milestoneData) => new(GetTarget(milestoneData), GetProgessValue(milestoneData),
+        public static AccsaberMilestoneData WrapData(MilestoneInfoToken milestoneData) => new(GetTarget(milestoneData), GetProgressValue(milestoneData),
             GetTier(milestoneData), GetTitle(milestoneData), GetDescription(milestoneData), GetId(milestoneData));
         public static async Task<int> GetMaxScore(string hash, int diffNum) =>
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];

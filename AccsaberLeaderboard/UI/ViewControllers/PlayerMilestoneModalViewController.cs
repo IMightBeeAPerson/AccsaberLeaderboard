@@ -68,7 +68,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             return GetMilestoneData(userId, completed: false, sorter: (a, b) =>
             {
-                float diff = GetProgress(b) - GetProgress(a);
+                float diff = GetCalculatedProgress(b) - GetCalculatedProgress(a);
                 return diff < 0 ? -1 : Mathf.Approximately(0f, diff) ? 0 : 1;
             });
         }
