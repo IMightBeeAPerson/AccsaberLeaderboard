@@ -1,5 +1,6 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Configuration;
+using AccsaberLeaderboard.UI.BSML_Addons;
 using IPA;
 using IPA.Config.Stores;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace AccsaberLeaderboard
         internal static Plugin Instance { get; private set; }
         internal static IPALogger Log { get; private set; }
         internal static HarmonyLib.Harmony Harmony { get; private set; }
-        internal static bool isAPIServiceWorking { get; private set; }
+        internal static bool IsAPIServiceWorking { get; private set; }
 
         public string PlayerID 
         { 
@@ -47,13 +48,14 @@ namespace AccsaberLeaderboard
             Instance = this;
             PluginConfig.Instance = conf.Generated<PluginConfig>();
             Log = logger;
-            isAPIServiceWorking = false;
+            IsAPIServiceWorking = false;
             Task.Run(async () =>
             {
                 var (Success, Content) = await APIHandler.CallAPI(HelpfulPaths.APAPI_TEST, AccsaberAPI.throttler, false).ConfigureAwait(false);
-                isAPIServiceWorking = Success;
-                if (!Success) Plugin.Log.Critical("The accsaber API is down! Turning off leaderboard.");
+                IsAPIServiceWorking = Success;
+                if (!Success) Log.Critical("The accsaber API is down! Turning off leaderboard.");
             });
+            AddonAdder.Load();
         }
 
         #region BSIPA Config

@@ -1,6 +1,7 @@
 ﻿using AccsaberLeaderboard.Models;
 using BeatSaberMarkupLanguage;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -24,38 +25,7 @@ namespace AccsaberLeaderboard.Utils
             "apex" => "#a855f7",
             _ => "#FFF"
         };
-        public static Color ConvertHex(string hex)
-        {
-            if (hex[0] == '#') hex = hex.Substring(1);
-            if (hex.Length <= 2) return ConvertHexShort(hex);
-            bool longHex = hex.Length >= 6;
-            int repeatNum = longHex ? 1 : 2;
-            int[] vals = longHex ? new int[hex.Length / 2] : new int[hex.Length];
-            for (int i = 0, valsDiv = longHex ? 2 : 1; i < hex.Length; i++)
-            {
-                int val = i % valsDiv == 0 ? 0 : vals[i / valsDiv];
-                if (val > 0) 
-                    val <<= 4;
-                val += int.Parse(new string(hex[i], repeatNum), System.Globalization.NumberStyles.HexNumber);
-                vals[i / valsDiv] = val;
-            }
-            return new Color(vals[0] / 255f, vals[1] / 255f, vals[2] / 255f, vals.Length >= 4 ? vals[3] / 255f : 1f);
-        }
-        /*
-         public readonly struct Color(float r, float g, float b, float a) {
-            public readonly float r = r, g = g, b = b, a = a;
-            public override string ToString() => $"[{r},{g},{b},{a}]";
-         }
-         */
-        private static Color ConvertHexShort(string hex)
-        {
-            int color, alpha;
-            if (hex.Length > 1) alpha = int.Parse(new string(hex[1], 2), System.Globalization.NumberStyles.HexNumber);
-            else alpha = 255;
-            color = int.Parse(new string(hex[0], 2), System.Globalization.NumberStyles.HexNumber);
-            return new Color(color / 255f, color / 255f, color / 255f, alpha / 255f);
-        }
-        public static string DimHex(string hex, int dimAmount)
+        public static string DimColor(string hex, int dimAmount)
         {
             bool hasHashtag = hex[0] == '#';
             if (hasHashtag) hex = hex.Substring(1);
@@ -67,6 +37,13 @@ namespace AccsaberLeaderboard.Utils
             int baseNum = int.Parse(baseNumStr, System.Globalization.NumberStyles.HexNumber);
             int givenNum = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
             return (hasHashtag ? "#" : "") + new string('0', leadingZeros) + (givenNum - (baseNum * dimAmount)).ToString("X");
+        }
+        public static string InvertColor(string hex)
+        {
+            bool hasHashtag = hex[0] == '#';
+            if (hasHashtag) hex = hex.Substring(1);
+            int invertNumber = int.Parse(new string('F', hex.Length), System.Globalization.NumberStyles.HexNumber);
+            return (hasHashtag ? "#" : "") + (invertNumber - int.Parse(hex, System.Globalization.NumberStyles.HexNumber)).ToString("X");
         }
         public static string ChangeAlpha(string hex, string alpha)
         {

@@ -13,8 +13,6 @@ namespace AccsaberLeaderboard.Models
         public string PlayerId { get; private set; } = playerId;
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
         {
-            public const float BIG_FONT_SIZE = 3.5f;
-            public const float SMALL_FONT_SIZE = 3f;
 
             private readonly AccsaberScoreData scoreData = scoreData;
 
@@ -35,6 +33,16 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(FontSize))] public readonly float FontSize = LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;
+            [UIValue(nameof(parentContainerWidth))] public const float parentContainerWidth = containerWidth;
+            [UIValue(nameof(containerPadding))] public const float containerPadding = 1f;
+            [UIValue(nameof(elementSpacing))] public const float elementSpacing = 0f;
+
+            [UIValue(nameof(rankWidth))] public const float rankWidth = 10f;
+            [UIValue(nameof(apWidth))] public const float apWidth = 14f + apPadding;
+            [UIValue(nameof(apPadding))] public const float apPadding = 5f;
+            [UIValue(nameof(accWidth))] public const float accWidth = 14f;
+            [UIValue(nameof(scoreWidth))] public const float scoreWidth = 12f;
+            [UIValue(nameof(nameWidth))] public const float nameWidth = containerWidth - rankWidth - apWidth - accWidth - scoreWidth - elementSpacing * 4f - containerPadding * 2f;
         }
     }
 }

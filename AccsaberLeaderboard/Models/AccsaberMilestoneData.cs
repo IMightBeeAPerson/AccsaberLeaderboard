@@ -1,10 +1,16 @@
-﻿using AccsaberLeaderboard.UI.ViewControllers;
+﻿using AccsaberLeaderboard.UI.Components;
+using AccsaberLeaderboard.UI.ViewControllers;
 using AccsaberLeaderboard.Utils;
+using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
+using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.TypeHandlers;
 using HMUI;
+using System.ComponentModel;
+using System.IO;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
-
 using static AccsaberLeaderboard.Utils.ColorPalette;
 
 namespace AccsaberLeaderboard.Models
@@ -18,14 +24,22 @@ namespace AccsaberLeaderboard.Models
         public string Title { get; private set; } = title;
         public string Description { get; private set; } = description;
         public string ID { get; private set; } = id;
-        public class AccsaberMilestoneDataInfo(AccsaberMilestoneData milestoneData)
+        public class AccsaberMilestoneDataInfo
         {
-            private readonly AccsaberMilestoneData data = milestoneData;
+            private readonly AccsaberMilestoneData data;
 
-            private readonly bool flip = milestoneData.Progress > milestoneData.Target;
-            private readonly float progressPercent = milestoneData.Progress > milestoneData.Target ? milestoneData.Target / milestoneData.Progress : milestoneData.Progress / milestoneData.Target;
+            private readonly bool flip;
+            private readonly float progressPercent;
+            private float DisplayableProgress => progressPercent * 100f;
 
-            [UIValue(nameof(Progress))] public string Progress => $"<color={LEVEL}>{progressPercent * 100f:N2}%</color>";
+            public AccsaberMilestoneDataInfo(AccsaberMilestoneData milestoneData)
+            {
+                data = milestoneData;
+                flip = milestoneData.Progress > milestoneData.Target;
+                progressPercent = (flip ? milestoneData.Target / milestoneData.Progress : milestoneData.Progress / milestoneData.Target);
+            }
+
+            [UIValue(nameof(Progress))] public string Progress => $"<color={LEVEL}>" + (DisplayableProgress >= 99.99f ? "99.99" : DisplayableProgress.ToString("N2")) + "%</color>";
             [UIValue(nameof(ExactProgress))]
             public string ExactProgress
             {
@@ -55,13 +69,15 @@ namespace AccsaberLeaderboard.Models
             [UIComponent(nameof(PercentBarBottom))] private LayoutElement PercentBarBottom;
             [UIComponent(nameof(PercentBarBottom))] private ImageView PercentBarBottom_image;
 
+            [UIComponent(nameof(cellContainer))] private CustomBackground cellContainer;
+
 
             [UIValue("oneXonePic")] public const string oneXonePic = ResourcePaths.RESOURCE_1X1;
+            [UIValue("bgPath")] public const string bgPath = ResourcePaths.RESOURCE_GRADIENT;
 
             [UIValue(nameof(listWidth))] public const float listWidth = PlayerMilestoneModalViewController.listWidth;
             [UIValue(nameof(cellSize))] public const float cellSize = PlayerMilestoneModalViewController.cellSize;
             [UIValue(nameof(FontSize))] public const float FontSize = 3f;
-            [UIValue(nameof(dimGrey))] public const string dimGrey = DIM_GREY;
             [UIValue(nameof(barSpacer))] public const float barSpacer = 5f;
             [UIValue(nameof(progLen))] public const float progLen = 10f;
             [UIValue(nameof(exactProgLen))] public const float exactProgLen = 25f;
@@ -73,8 +89,28 @@ namespace AccsaberLeaderboard.Models
                 PercentBarTop.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * progressPercent);
                 PercentBarBottom.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - progressPercent));
 
-                PercentBarTop_image.color = MiscUtils.ConvertHex(MiscUtils.GetColorForMilestoneRank(data.Tier));
-                PercentBarBottom_image.color = MiscUtils.ConvertHex(TECH);
+                string rankColor = MiscUtils.GetColorForMilestoneRank(data.Tier);
+
+                ColorUtility.TryParseHtmlString(rankColor, out Color c);
+                PercentBarTop_image.color = c;
+                ColorUtility.TryParseHtmlString(TECH, out c);
+                PercentBarBottom_image.color = c;
+
+
+                const float brightnessThreshold = 0.6f;
+
+                ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(rankColor, "7"), out c);
+                //float average = (c.r + c.g + c.b) / 3f;
+                float maxColor = c.maxColorComponent;
+                if (maxColor > brightnessThreshold)
+                {
+                    float curve = maxColor - brightnessThreshold;
+                    c.r -= curve;
+                    c.g -= curve;
+                    c.b -= curve;
+                }
+                cellContainer.background.color = c;
+                
             }
         }
     }

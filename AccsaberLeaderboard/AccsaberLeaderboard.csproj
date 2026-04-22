@@ -26,6 +26,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <LangVersion>preview</LangVersion>
+    <NoWarn>CS0649</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>true</Optimize>
@@ -167,6 +168,10 @@
     <Compile Include="Configuration\PluginConfig.cs" />
     <Compile Include="AccsaberLeaderboardController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UI\BSML Addons\AddonAdder.cs" />
+    <Compile Include="UI\BSML Addons\Tags\BetterVertical.cs" />
+    <Compile Include="UI\BSML Addons\Components\CustomBackground.cs" />
+    <Compile Include="UI\BSML Addons\TypeHandlers\CustomBackgroundHandler.cs" />
     <Compile Include="UI\MainLeaderboardController.cs" />
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
@@ -188,6 +193,7 @@
     <EmbeddedResource Include="UI\bsml\PanelView.bsml" />
     <EmbeddedResource Include="UI\bsml\PlayerProfile.bsml" />
     <EmbeddedResource Include="UI\bsml\MilestoneModal.bsml" />
+    <EmbeddedResource Include="UI\bsml\LeaderboardCell.bsml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">
@@ -216,6 +222,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\topArrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\gradient.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

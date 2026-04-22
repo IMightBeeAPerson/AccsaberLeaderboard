@@ -30,7 +30,7 @@ namespace AccsaberLeaderboard.UI
         public override bool ShowForLevel(IPreviewBeatmapLevel selectedLevel)
 #endif
         {
-            return Plugin.isAPIServiceWorking;// _leaderboardViewController.ValidMapSelected;
+            return Plugin.IsAPIServiceWorking;// _leaderboardViewController.ValidMapSelected;
         }
         public void Initialize()
         {

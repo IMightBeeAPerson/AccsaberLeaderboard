@@ -1,25 +1,25 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
-  <vertical id='leaderboard_container' pref-width='80' pref-height='80' spacing='-45' anchor-pos-y='-5'>
+  <vertical id='leaderboard_container' pref-width='~containerWidth' pref-height='~containerHeight' spacing='-45' anchor-pos-y='-5'>
     <custom-list id='leaderboard' contents='leaderboard-infos' cell-size='~leaderboard-cellSize' clickable-cells='true' select-cell='OnCellSelected' show-scrollbar='false' pref-width='80' visable-cells='10'>
-      <horizontal pref-width='80' pref-height='~ContainerHeight' spacing='0' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor'>
-        <vertical pref-width='10' child-alignment='MiddleCenter' pad-left='1'>
+      <horizontal pref-width='~parentContainerWidth' pref-height='~ContainerHeight' spacing='~elementSpacing' child-alignment='MiddleCenter' bg='panel-top' bg-color='~BGColor' child-expand-width='false'>
+        <vertical pref-width='~rankWidth' child-alignment='MiddleCenter' pad-left='~containerPadding'>
           <text text='~Rank' align='Left' font-size='~FontSize'/>
         </vertical>
-        <vertical pref-width='25' child-alignment='MiddleCenter'>
+        <vertical pref-width='~nameWidth' child-alignment='MiddleCenter'>
           <text text='~PlayerName' align='Left' font-size='~FontSize'/>
         </vertical>
-        <vertical pref-width='19' child-alignment='MiddleCenter' pad-right='5'>
+        <vertical pref-width='~apWidth' child-alignment='MiddleCenter' pad-right='~apPadding'>
           <text text='~AP' align='Right' font-size='~FontSize'/>
         </vertical>
-        <vertical pref-width='14' child-alignment='MiddleCenter'>
+        <vertical pref-width='~accWidth' child-alignment='MiddleCenter'>
           <text text='~Acc' align='Center' font-size='~FontSize'/>
         </vertical>
-        <vertical pref-width='12' child-alignment='MiddleCenter' pad-right='1'>
+        <vertical pref-width='~scoreWidth' child-alignment='MiddleCenter' pad-right='~containerPadding'>
           <text text='~Score' align='Right' font-size='~FontSize'/>
         </vertical>
       </horizontal>
     </custom-list>
-    <vertical id='player_container' spacing='2' vertical-fit='PreferredSize' pref-height='7' pref-width='80' child-expand-height='false' active='false'>
+    <vertical id='player_container' spacing='2' vertical-fit='PreferredSize' pref-height='7' pref-width='~containerWidth' child-expand-height='false' active='false'>
       <vertical child-expand-height='false'>
         <text text='...' align='Left' font-size='3'/>
       </vertical>

@@ -116,8 +116,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
             modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
 
-            modalLevelProgress_image.color = MiscUtils.ConvertHex(LevelMilestone.GetTitleColor(DataUtils.GetNextTitle(rank)));
-            modalLevelProgressInverse_image.color = MiscUtils.ConvertHex(LevelMilestone.GetTitleColor(rank));
+            ColorUtility.TryParseHtmlString(LevelMilestone.GetTitleColor(DataUtils.GetNextTitle(rank)), out Color c);
+            modalLevelProgress_image.color = c;
+            ColorUtility.TryParseHtmlString(LevelMilestone.GetTitleColor(rank), out c);
+            modalLevelProgressInverse_image.color = c;
 
             modalGlobalRank.SetText($"<color={GLOBAL}>#{GetGlobalRank(stats)}</color>");
             modalOverall.SetText($"<color={OVERALL}>{GetAP(stats):N2}ap</color>");

@@ -28,20 +28,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #pragma warning disable IDE0044, IDE0051
         #region Static Variables & Properties
 
-        public const float SMALL_CELL_SIZE = 5.3f;
         public const float BIG_CELL_SIZE = 5.9f;
+        public const float BIG_FONT_SIZE = 3.5f;
+
+        public const float SMALL_CELL_SIZE = 5.3f;
+        public const float SMALL_FONT_SIZE = 3f;
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
         private static event Action RefreshRequested;
-        private static readonly List<AccsaberScoreData> scoreDatas = [];
 
         private static LeaderboardViewController Instance;
         #endregion
 
         #region Instance Variables & Fields
 
-        private readonly List<AccsaberScoreData> _scores = scoreDatas;
+        private readonly List<AccsaberScoreData> scoreDatas = [];
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
         private int page, nextPage, currentPage = -1, currentPlayerPage;
@@ -58,7 +60,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private bool cachePage;
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
-        public bool OnPlayerPage => currentPage <= currentPlayerPage && nextPage > currentPlayerPage;
+        public bool OnPlayerPage {
+            get => displayType switch
+            {
+
+                LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
+                LeaderboardDisplayType.Country => scoreDatas.First().rank <= AccsaberAPI.GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= AccsaberAPI.GetRank(currentPlayerScoreInfo),
+                _ => false
+            };
+        }
 
         #endregion
 
@@ -78,7 +88,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region Player UI Values & Components
 
 #pragma warning disable IDE0052
-        [UIValue("player_fontSize")] private float playerFontSize = AccsaberScoreDataInfo.SMALL_FONT_SIZE;
+        [UIValue("player_fontSize")] private float playerFontSize = SMALL_FONT_SIZE;
         [UIValue("player_BGColor")] private const string playerBGColor = HIGHLIGHT;
 #pragma warning restore IDE0052
 
@@ -94,18 +104,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #region UI Values & Components
 
+        [UIValue("colorGrey")] private const string grey = GREY;
+
         [UIValue("topArrowPic")] private const string topArrowPic = ResourcePaths.RESOURCE_TOP_ARROW;
         [UIValue("youPic")] private const string youPic = ResourcePaths.RESOURCE_YOU;
         [UIValue("globalPic")] private const string globalPic = ResourcePaths.RESOURCE_GLOBAL;
         [UIValue("friendsPic")] private const string friendsPic = ResourcePaths.RESOURCE_FRIENDS;
         [UIValue("countryPic")] private const string countryPic = ResourcePaths.RESOURCE_COUNTRY;
 
+        [UIValue("containerWidth")] public const float containerWidth = 80f;
+        [UIValue("containerHeight")] public const float containerHeight = 80f;
+
 
         [UIParams] private BSMLParserParams parserParams;
         [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
         [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
-        [UIValue("colorGrey")] private const string grey = GREY;
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 
@@ -127,11 +141,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void PostParse()
         {
             UpdateSelectors(LeaderboardDisplayType.Global);
+
             ppmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
             // Subscribe to player picture click event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
+
+            //MiscUtils.Parse(ResourcePaths.BSML_LEADERBOARD_CELL, leaderboard.transform, );
+
             // Subscribe to refresh event from other controllers
             RefreshRequested += () =>
             {
@@ -185,7 +203,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageDown")]
         private void OnPageDown()
         {
-            if (_scores.Count < AccsaberAPI.PAGE_LENGTH || currentHash is null)
+            if (scoreDatas.Count < AccsaberAPI.PAGE_LENGTH || currentHash is null)
                 return;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
@@ -387,8 +405,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     (int, int, IEnumerable<AccsaberScoreData>) toCache;
                     if (cachePage)
                     {
-                        AccsaberScoreData[] copy = new AccsaberScoreData[_scores.Count];
-                        _scores.CopyTo(copy);
+                        AccsaberScoreData[] copy = new AccsaberScoreData[scoreDatas.Count];
+                        scoreDatas.CopyTo(copy);
                         toCache = (currentPage, nextPage, copy);
                     }
                     else toCache = default;
@@ -404,14 +422,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     }
                     StartCoroutine(ShowLoading());
 
-                    _scores.Clear();
+                    scoreDatas.Clear();
 
                     while (cache.Count > 0)
                     {
                         var item = cache.Pop();
                         if (item.page == page)
                         {
-                            _scores.AddRange(item.pageData);
+                            scoreDatas.AddRange(item.pageData);
                             nextPage = item.nextPage;
                             //Plugin.Log.Info($"Using cache for page #{item.page}.");
                             goto End;
@@ -448,7 +466,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             break;
                     }
                     if (scores is not null)
-                        _scores.AddRange(scores);
+                        scoreDatas.AddRange(scores);
 
                 End:
                     IEnumerator ReloadData()
@@ -461,7 +479,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         leaderboard.data = LeaderboardInfos;
                         leaderboard.cellSize = CellSize;
 #endif
-                        if (_scores.Count > 0 && !OnPlayerPage)
+                        if (scoreDatas.Count > 0 && !OnPlayerPage)
                         {
                             playerRankText.SetText(currentPlayerScore.Rank);
                             playerNameText.SetText(currentPlayerScore.PlayerName);
@@ -502,7 +520,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (overrideLastScore || currentPlayerScoreInfo is null)
                 currentPlayerScoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
             if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling(AccsaberAPI.GetRank(currentPlayerScoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
+            return (int)Math.Ceiling((AccsaberAPI.GetRank(currentPlayerScoreInfo) - 1) / (float)AccsaberAPI.PAGE_LENGTH);
         }
         #endregion
     }
