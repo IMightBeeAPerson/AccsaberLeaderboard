@@ -9,6 +9,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons
         public static void Load()
         {
             BSMLParser.instance.RegisterTag(new BetterVertical());
+            BSMLParser.instance.RegisterTag(new BetterHorizontal());
 
             BSMLParser.instance.RegisterTypeHandler(new CustomBackgroundHandler());
         }

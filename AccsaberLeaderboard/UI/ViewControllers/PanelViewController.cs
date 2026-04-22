@@ -1,5 +1,6 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Models;
+using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
@@ -28,7 +29,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         internal static event Action OnPlayerPictureClicked, OnLogoClicked;
 
-        [UIComponent("panelContainer")] private Backgroundable panelContainer;
+        [UIComponent("panelContainer")] private CustomBackground panelContainer;
 
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
@@ -57,11 +58,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("dimmer")] public const string dimmer = DIMMER;
 
         [UIValue("containerWidth")] public const float containerWidth = 100f;
-        [UIValue("containerHeight")] public const float containerHeight = 20f;
+        [UIValue("containerHeight")] public const float containerHeight = 18f;
 
         [UIValue("containerPadding")] public const float containerPadding = 2.5f;
         [UIValue("elementPadding")] public const float elementPadding = 2.5f;
 
+        [UIValue("containerBg")] public const string containerBg = ResourcePaths.RESOURCE_GRADIENT_PANEL;
         [UIValue("logoPic")] public const string logoPic = ResourcePaths.RESOURCE_LOGO;
 
         [UIValue("fontSizeCell")] public const float fontSizeCell = 4f;
@@ -70,6 +72,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIValue("rowWidth")] public const float rowWidth = 60f;
         [UIValue("cellWidth")] public const float cellWidth = rowWidth / 4f;
+        [UIValue("cellHeight")] public const float cellHeight = containerHeight / 4f - cellSpacing * 4f;
 
         [UIValue("imageSize")] public const float imageSize = (containerWidth - rowWidth - containerPadding * 2f - elementPadding * 2f) / 2f;
 
@@ -139,11 +142,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     yield return new WaitForEndOfFrame();
 
                     SetTexts(playerInfo);
+
+                    if (ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(LevelMilestone.GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"), out Color c))
+                        panelContainer.background.color = c;
 #if NEW_VERSION
-                    panelContainer.ApplyColor(MiscUtils.ConvertHex(MiscUtils.ChangeAlpha(MiscUtils.GetColorForTitle(AccsaberAPI.GetPlayerTitle(playerInfo)), "6")));
                     profilePicture.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #else
-                    BackgroundableHandler.TrySetBackgroundColor(panelContainer, MiscUtils.ChangeAlpha(LevelMilestone.GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"));
                     profilePicture.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #endif
                 }

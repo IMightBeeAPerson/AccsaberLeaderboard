@@ -47,8 +47,8 @@
     <loading preserve-aspect='true'/>
   </vertical>
 
-  <vertical id='leaderboard_badMap' anchor-pos-y='-30' active='false'>
-    <text text='Map is Unranked.' font-size='15'/>
+  <vertical id='leaderboard_badMap' anchor-pos-y='-23' active='false'>
+    <text text='Map is Unranked.' font-size='18'/>
   </vertical>
 
   

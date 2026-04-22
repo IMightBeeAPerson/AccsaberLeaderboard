@@ -169,6 +169,7 @@
     <Compile Include="AccsaberLeaderboardController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\BSML Addons\AddonAdder.cs" />
+    <Compile Include="UI\BSML Addons\Tags\BetterHorizontal.cs" />
     <Compile Include="UI\BSML Addons\Tags\BetterVertical.cs" />
     <Compile Include="UI\BSML Addons\Components\CustomBackground.cs" />
     <Compile Include="UI\BSML Addons\TypeHandlers\CustomBackgroundHandler.cs" />
@@ -225,6 +226,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\gradient.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\panelGradient.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

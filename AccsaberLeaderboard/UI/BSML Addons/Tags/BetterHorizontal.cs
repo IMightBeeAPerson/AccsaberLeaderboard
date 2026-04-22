@@ -5,16 +5,16 @@ using UnityEngine.UI;
 
 namespace AccsaberLeaderboard.UI.BSML_Addons.Tags
 {
-    public class BetterVertical : BSMLTag
+    public class BetterHorizontal : BSMLTag
     {
-        public override string[] Aliases => [ "my-vertical", "my-vert", "my-v" ];
+        public override string[] Aliases => ["my-horizontal", "my-hori", "my-h"];
 
         public override GameObject CreateObject(Transform parent)
         {
-            GameObject gameObject = new("BetterVerticalLayoutGroup");
+            GameObject gameObject = new("BetterHorizontalLayoutGroup");
 
             gameObject.transform.SetParent(parent, false);
-            gameObject.AddComponent<VerticalLayoutGroup>();
+            gameObject.AddComponent<HorizontalLayoutGroup>();
 
             ContentSizeFitter csf = gameObject.AddComponent<ContentSizeFitter>();
             csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
