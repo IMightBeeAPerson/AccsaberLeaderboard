@@ -24,6 +24,8 @@ namespace AccsaberLeaderboard.Models
 
             private readonly bool flip;
             private readonly float progressPercent;
+
+            private readonly Color bgColor, rankColor;
             private float DisplayableProgress => progressPercent * 100f;
             private float Prog, Targ;
 
@@ -35,6 +37,22 @@ namespace AccsaberLeaderboard.Models
                 Targ = flip ? data.Progress : data.Target;
 
                 progressPercent = CalcProgress(milestoneData.Target, milestoneData.Progress, flip);
+
+                ColorUtility.TryParseHtmlString(MiscUtils.GetColorForMilestoneRank(data.Tier), out rankColor);
+
+                const float brightnessThreshold = 0.6f;
+
+                Color c = rankColor.ColorWithAlpha(0.5f);
+                float maxColor = c.maxColorComponent;
+                if (maxColor > brightnessThreshold)
+                {
+                    float curve = maxColor - brightnessThreshold;
+                    c.r -= curve;
+                    c.g -= curve;
+                    c.b -= curve;
+                }
+                bgColor = c;
+
             }
 
             [UIValue(nameof(Progress))] public string Progress => $"<color={LEVEL}>" + (DisplayableProgress >= 99.99f ? "99.99" : DisplayableProgress.ToString("N2")) + "%</color>";
@@ -84,28 +102,11 @@ namespace AccsaberLeaderboard.Models
                 PercentBarTop.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * progressPercent);
                 PercentBarBottom.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - progressPercent));
 
-                string rankColor = MiscUtils.GetColorForMilestoneRank(data.Tier);
-
-                ColorUtility.TryParseHtmlString(rankColor, out Color c);
-                PercentBarTop_image.color = c;
-                ColorUtility.TryParseHtmlString(TECH, out c);
+                PercentBarTop_image.color = rankColor;
+                ColorUtility.TryParseHtmlString(TECH, out Color c);
                 PercentBarBottom_image.color = c;
 
-
-                const float brightnessThreshold = 0.6f;
-
-                ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(rankColor, "7"), out c);
-                //float average = (c.r + c.g + c.b) / 3f;
-                float maxColor = c.maxColorComponent;
-                if (maxColor > brightnessThreshold)
-                {
-                    float curve = maxColor - brightnessThreshold;
-                    c.r -= curve;
-                    c.g -= curve;
-                    c.b -= curve;
-                }
-                cellContainer.background.color = c;
-                
+                cellContainer.background.color = bgColor;
             }
 
             public static float CalcProgress(float target, float progress) =>
