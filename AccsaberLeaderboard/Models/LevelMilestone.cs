@@ -23,6 +23,16 @@ namespace AccsaberLeaderboard.Models
             "Ascendant" => "#f472b6",
             _ => DEFAULT_COLOR
         };
+        public static string GetMilestoneRankColor(string rank) => rank switch
+        {
+            "bronze" => "#cd7f32",
+            "silver" => "#c0c0c0",
+            "gold" => "#ffd700",
+            "platinum" => "#36cfb0",
+            "diamond" => "#b9f2ff",
+            "apex" => "#a855f7",
+            _ => "#FFF"
+        };
     }
 }
 

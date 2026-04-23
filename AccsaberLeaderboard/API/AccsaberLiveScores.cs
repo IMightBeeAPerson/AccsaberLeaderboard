@@ -12,6 +12,7 @@ namespace AccsaberLeaderboard.API
     internal static class AccsaberLiveScores
     {
         public static event Action<AccsaberAPI.ScoreInfoToken> OnScoreUpdated;
+        public static event Action<AccsaberAPI.ScoreInfoToken> OnPlayerScoreUpdated;
 
         internal static CancellationTokenSource WebsocketCanceller { get; private set; }
         internal const int RecieveBufferSize = 1024;
@@ -24,6 +25,12 @@ namespace AccsaberLeaderboard.API
         {
             WebsocketCanceller = new();
             Task.Run(() => StartWebsocket(WebsocketCanceller.Token));
+            OnScoreUpdated += token =>
+            {
+                string id = AccsaberAPI.GetPlayerId(token);
+                if (id is null || !id.Equals(Plugin.Instance.PlayerID)) return;
+                OnPlayerScoreUpdated?.Invoke(token);
+            };
         }
 
         public static async Task StartWebsocket(CancellationToken ct = default)

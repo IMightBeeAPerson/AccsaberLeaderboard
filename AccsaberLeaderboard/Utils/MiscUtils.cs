@@ -15,16 +15,6 @@ namespace AccsaberLeaderboard.Utils
             if (str.Length < maxLength) return str;
             return $"{str.Substring(0, maxLength)}{suffix}";
         }
-        public static string GetColorForMilestoneRank(string rank) => rank switch
-        {
-            "bronze" => "#cd7f32",
-            "silver" => "#c0c0c0",
-            "gold" => "#ffd700",
-            "platinum" => "#36cfb0",
-            "diamond" => "#b9f2ff",
-            "apex" => "#a855f7",
-            _ => "#FFF"
-        };
         public static string DimColor(string hex, int dimAmount)
         {
             bool hasHashtag = hex[0] == '#';

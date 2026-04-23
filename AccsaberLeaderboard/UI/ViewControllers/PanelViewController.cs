@@ -91,7 +91,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
-            AccsaberLiveScores.OnScoreUpdated += HandleNewScore;
+            AccsaberLiveScores.OnPlayerScoreUpdated += _ => Task.Run(UpdatePlayer);
             Task.Run(UpdatePlayer);
         }
 
@@ -123,17 +123,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             trueAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
         }
 
-        private void HandleNewScore(AccsaberAPI.ScoreInfoToken info)
-        {
-            string id = AccsaberAPI.GetPlayerId(info);
-            if (id is null || !id.Equals(Plugin.Instance.PlayerID))
-                return;
-            Task.Run(async () =>
-            {
-                await UpdatePlayer();
-                LeaderboardViewController.ForceUpdate();
-            });
-        }
         private async Task UpdatePlayer()
         {
             try

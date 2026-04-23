@@ -36,8 +36,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
-        private static event Action RefreshRequested;
-
         private static LeaderboardViewController Instance;
         #endregion
 
@@ -88,7 +86,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region Player UI Values & Components
 
 #pragma warning disable IDE0052
-        [UIValue("player_fontSize")] private float playerFontSize = SMALL_FONT_SIZE;
+        [UIValue("player_fontSize")] private const float playerFontSize = SMALL_FONT_SIZE;
         [UIValue("player_BGColor")] private const string playerBGColor = HIGHLIGHT;
 #pragma warning restore IDE0052
 
@@ -144,18 +142,21 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             ppmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
-            // Subscribe to player picture click event from PanelViewController
+
+            // Subscribe to player picture click event & logo clicked event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
 
+            // Subscribe to the websocket
+            AccsaberLiveScores.OnPlayerScoreUpdated += token =>
+            {
+                currentPlayerScoreInfo = token;
+                currentPage = 0;
+                Task.Run(() => ForceRefresh(false));
+            };
+
             //MiscUtils.Parse(ResourcePaths.BSML_LEADERBOARD_CELL, leaderboard.transform, );
 
-            // Subscribe to refresh event from other controllers
-            RefreshRequested += () =>
-            {
-                currentPage = 0; // reset current page to force reload
-                Task.Run(ForceRefresh);
-            };
             // Subscribe to map selection event
             TrySubscribeToMapSelection();
             // Optionally, load leaderboard for the current map if available
@@ -222,9 +223,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #endregion
         #region Public Methods
-
-        public static void ForceUpdate() => RefreshRequested?.Invoke();
-
         #endregion
         #region Private Methods
         private void Awake()
@@ -365,7 +363,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             // reload leaderboard for the new map
             Task.Run(ForceRefresh);
         }
-        private async Task ForceRefresh()
+        private async Task ForceRefresh() => await ForceRefresh(true);
+        private async Task ForceRefresh(bool overridePlayerScore)
         {
             AsyncLock.Releaser? theLock = await forceRefreshLock.LockAsync();
             if (theLock is null) return;
@@ -387,7 +386,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     return;
                 }
 
-                currentPlayerPage = await GetPlayerPage(true);
+                currentPlayerPage = await GetPlayerPage(overridePlayerScore);
                 currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(currentPlayerScoreInfo));
                 await LoadLeaderboardAsync(currentHash, currentDifficulty);
             }
