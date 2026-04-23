@@ -30,8 +30,6 @@ namespace AccsaberLeaderboard.UI.Components
             img.color = tint;
 
 
-            //gameObject.AddComponent<LayoutElement>();
-
             background = img;
         }
 

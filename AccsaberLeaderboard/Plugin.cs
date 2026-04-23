@@ -83,7 +83,7 @@ namespace AccsaberLeaderboard
         public void OnApplicationQuit()
         {
             //Log.Debug("OnApplicationQuit");
-
+            AccsaberLiveScores.WebsocketCanceller.Cancel();
         }
 
         private async Task LoadPlayerID()

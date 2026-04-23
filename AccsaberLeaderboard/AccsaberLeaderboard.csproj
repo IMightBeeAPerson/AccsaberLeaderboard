@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AccsaberAPI.cs" />
+    <Compile Include="API\AccsaberLiveScores.cs" />
     <Compile Include="API\APIHandler.cs" />
     <Compile Include="API\HelpfulPaths.cs" />
     <Compile Include="API\Throttler.cs" />

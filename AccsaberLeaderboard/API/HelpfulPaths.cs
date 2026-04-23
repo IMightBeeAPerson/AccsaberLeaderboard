@@ -35,6 +35,8 @@ namespace AccsaberLeaderboard.API
         public const string APAPI_MILESTONE_COMPLETE = APAPI + "users/{0}/milestones/completed"; //user_id
         public const string APAPI_MILESTONE_INCOMPLETE = APAPI + "users/{0}/milestones/uncompleted"; //user_id
 
+        public const string APAPI_WEBSOCKET = "wss://accsaberreloaded.com/ws/scores";
+
         public static string DiffNumToReloadedDiff(int diffNum) => diffNum switch
         {
             1 => "EASY",

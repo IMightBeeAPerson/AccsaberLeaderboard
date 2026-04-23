@@ -91,7 +91,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
-            BSEvents.levelCleared += SucceededMap;
+            AccsaberLiveScores.OnScoreUpdated += HandleNewScore;
             Task.Run(UpdatePlayer);
         }
 
@@ -123,11 +123,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             trueAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
         }
 
-        private void SucceededMap(StandardLevelScenesTransitionSetupDataSO transition, LevelCompletionResults results)
+        private void HandleNewScore(AccsaberAPI.ScoreInfoToken info)
         {
-            Task.Run(async () => {
-                await Task.Delay(5000);
-                await UpdatePlayer(); 
+            string id = AccsaberAPI.GetPlayerId(info);
+            if (id is null || !id.Equals(Plugin.Instance.PlayerID))
+                return;
+            Task.Run(async () =>
+            {
+                await UpdatePlayer();
                 LeaderboardViewController.ForceUpdate();
             });
         }
