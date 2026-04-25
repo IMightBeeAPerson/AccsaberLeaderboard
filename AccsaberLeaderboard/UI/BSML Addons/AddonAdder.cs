@@ -1,6 +1,9 @@
-﻿using AccsaberLeaderboard.UI.BSML_Addons.Tags;
+﻿using AccsaberLeaderboard.UI.BSML_Addons.Components;
+using AccsaberLeaderboard.UI.BSML_Addons.Tags;
 using AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers;
+using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
+using UnityEngine;
 
 namespace AccsaberLeaderboard.UI.BSML_Addons
 {
@@ -8,10 +11,14 @@ namespace AccsaberLeaderboard.UI.BSML_Addons
     {
         public static void Load()
         {
-            BSMLParser.instance.RegisterTag(new BetterVertical());
-            BSMLParser.instance.RegisterTag(new BetterHorizontal());
+            BSMLParser instance = MiscUtils.GetParser();
 
-            BSMLParser.instance.RegisterTypeHandler(new CustomBackgroundHandler());
+            instance.RegisterTag(new BetterVertical());
+            instance.RegisterTag(new BetterHorizontal());
+            instance.RegisterTag(new MyCustomList());
+
+            instance.RegisterTypeHandler(new CustomBackgroundHandler());
+            instance.RegisterTypeHandler(new MyCustomCellListTableDataHandler());
         }
     }
 }

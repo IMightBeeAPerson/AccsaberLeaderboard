@@ -47,14 +47,15 @@ namespace AccsaberLeaderboard.Utils
 
             return (hasHashtag ? "#" : "") + hexNum.ToString("X");
         }
-        public static void Parse(string resourcePath, Transform parent, object controller)
-        {
+        public static BSMLParser GetParser() =>
 #if NEW_VERSION
-            BSMLParser.Instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+            BSMLParser.Instance;
 #else
-            BSMLParser.instance.Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+            BSMLParser.instance;
 #endif
-        }
+        public static void Parse(string resourcePath, Transform parent, object controller) =>
+            GetParser().Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+
         #region Debug Functions
 
         public static string Print<T>(this IEnumerable<T> arr)

@@ -1,4 +1,5 @@
-﻿using AccsaberLeaderboard.Utils;
+﻿using AccsaberLeaderboard.UI.BSML_Addons.Components;
+using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 
 using static AccsaberLeaderboard.UI.ViewControllers.LeaderboardViewController;
@@ -11,8 +12,13 @@ namespace AccsaberLeaderboard.Models
         public float AP { get; private set; } = ap;
         public float Acc { get; private set; } = acc;
         public string PlayerId { get; private set; } = playerId;
-        public class AccsaberScoreDataInfo(AccsaberScoreData scoreData)
+        public class AccsaberScoreDataInfo(AccsaberScoreData scoreData) : ICellDataSource
         {
+            public string TemplatePath => ResourcePaths.BSML_LEADERBOARD_CELL;
+
+            public float CellSize => LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
+
+            public int TemplateId { get; set; }
 
             private readonly AccsaberScoreData scoreData = scoreData;
 
@@ -33,6 +39,7 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(FontSize))] public readonly float FontSize = LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;
+
             [UIValue(nameof(parentContainerWidth))] public const float parentContainerWidth = containerWidth;
             [UIValue(nameof(containerPadding))] public const float containerPadding = 1f;
             [UIValue(nameof(elementSpacing))] public const float elementSpacing = 0f;

@@ -69,6 +69,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\v29 Test\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
     </Reference>
+    <Reference Include="HMRendering, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMRendering.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="PlatformUserModel, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="SiraUtil, Version=3.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -141,6 +146,7 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.VRModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="VRUI, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="Zenject, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\BSManager\BSInstances\1.40.8\Beat Saber_Data\Managed\Zenject.dll</HintPath>
@@ -170,10 +176,14 @@
     <Compile Include="AccsaberLeaderboardController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\BSML Addons\AddonAdder.cs" />
+    <Compile Include="UI\BSML Addons\Components\MyCustomCellListTableData.cs" />
+    <Compile Include="UI\BSML Addons\Components\MyEventSystemListener.cs" />
     <Compile Include="UI\BSML Addons\Tags\BetterHorizontal.cs" />
     <Compile Include="UI\BSML Addons\Tags\BetterVertical.cs" />
     <Compile Include="UI\BSML Addons\Components\CustomBackground.cs" />
+    <Compile Include="UI\BSML Addons\Tags\MyCustomList.cs" />
     <Compile Include="UI\BSML Addons\TypeHandlers\CustomBackgroundHandler.cs" />
+    <Compile Include="UI\BSML Addons\TypeHandlers\MyCustomCellListTableDataHandler.cs" />
     <Compile Include="UI\MainLeaderboardController.cs" />
     <Compile Include="UI\ViewControllers\LeaderboardViewController.cs" />
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />

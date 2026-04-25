@@ -1,5 +1,6 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Models;
+using AccsaberLeaderboard.UI.BSML_Addons.Components;
 using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
@@ -83,23 +84,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         #endregion
 
-        #region Player UI Values & Components
-
-#pragma warning disable IDE0052
-        [UIValue("player_fontSize")] private const float playerFontSize = SMALL_FONT_SIZE;
-        [UIValue("player_BGColor")] private const string playerBGColor = HIGHLIGHT;
-#pragma warning restore IDE0052
-
-        [UIObject("player_container")] private GameObject playerContainer;
-
-        [UIComponent("player_rankText")] private TextMeshProUGUI playerRankText;
-        [UIComponent("player_nameText")] private TextMeshProUGUI playerNameText;
-        [UIComponent("player_apText")] private TextMeshProUGUI playerApText;
-        [UIComponent("player_accText")] private TextMeshProUGUI playerAccText;
-        [UIComponent("player_scoreText")] private TextMeshProUGUI playerScoreText;
-
-        #endregion
-
         #region UI Values & Components
 
         [UIValue("colorGrey")] private const string grey = GREY;
@@ -115,8 +99,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
 
         [UIParams] private BSMLParserParams parserParams;
-        [UIComponent("leaderboard")] private CustomCellListTableData leaderboard;
-        [UIValue("leaderboard-infos")] private List<object> LeaderboardInfos => [.. scoreDatas.Select(score => (object)new AccsaberScoreDataInfo(score))];
+        [UIComponent("leaderboard")] private MyCustomCellListTableData leaderboard;
+        [UIValue("leaderboard-infos")] private List<ICellDataSource> LeaderboardInfos 
+        {
+            get
+            {
+                IEnumerable<ICellDataSource> outp = scoreDatas.Select(score => (ICellDataSource)new AccsaberScoreDataInfo(score));
+                outp = outp.Append(new TextSpacer());
+                return [.. outp.Append(currentPlayerScore)];
+            }
+        }
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
@@ -471,30 +463,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     IEnumerator ReloadData()
                     {
                         yield return new WaitForEndOfFrame();
-#if NEW_VERSION
+
                         leaderboard.Data = LeaderboardInfos;
-                        leaderboard.CellSizeValue = CellSize;
-#else
-                        leaderboard.data = LeaderboardInfos;
-                        leaderboard.cellSize = CellSize;
-#endif
-                        if (scoreDatas.Count > 0 && !OnPlayerPage)
-                        {
-                            playerRankText.SetText(currentPlayerScore.Rank);
-                            playerNameText.SetText(currentPlayerScore.PlayerName);
-                            playerApText.SetText(currentPlayerScore.AP);
-                            playerAccText.SetText(currentPlayerScore.Acc);
-                            playerScoreText.SetText(currentPlayerScore.Score);
-                            playerContainer.SetActive(true);
-                        }
-                        else playerContainer.SetActive(false);
+
                         yield return new WaitForFixedUpdate(); // small delay to ensure data is set before reloading
 
-#if NEW_VERSION
-                        leaderboard.TableView.ReloadData();
-#else
-                        leaderboard.tableView.ReloadData();
-#endif
+                        //leaderboard.TableView.ReloadData();
+
                         leaderboardContainer.SetActive(true);
                         leaderboardLoader.SetActive(false);
                     }
@@ -522,5 +497,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             return (int)Math.Ceiling((AccsaberAPI.GetRank(currentPlayerScoreInfo) - 1) / (float)AccsaberAPI.PAGE_LENGTH);
         }
         #endregion
+
+        private class TextSpacer : ICellDataSource
+        {
+            public string TemplatePath => "<vertical child-expand-height='false'><text text='...' align='Left' font-size='3'/></vertical>";
+
+            public float CellSize => 1.5f;
+
+            public int TemplateId { get; set; }
+        }
     }
 }
