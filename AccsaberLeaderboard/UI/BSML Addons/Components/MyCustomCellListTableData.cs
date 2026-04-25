@@ -40,7 +40,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
             OnCellHighlighted += index => { dataSources[index].highlighted = true; dataSources[index].RefreshVisuals(); };
             OnCellUnhighlighted += index => { dataSources[index].highlighted = false; dataSources[index].RefreshVisuals(); };
 
-            gameObject.AddComponent<LayoutElement>();
+            //gameObject.AddComponent<LayoutElement>();
         }
 
         public int NumberOfCells() => data.Count;

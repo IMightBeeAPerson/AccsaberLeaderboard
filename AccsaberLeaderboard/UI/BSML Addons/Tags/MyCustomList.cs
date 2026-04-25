@@ -15,7 +15,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Tags
         {
             GameObject gameObject = new("MyCustomList");
             gameObject.transform.SetParent(parent, false);
-            gameObject.AddComponent<VerticalLayoutGroup>();
+            gameObject.AddComponent<VerticalLayoutGroup>().childForceExpandHeight = false;
 
             ContentSizeFitter csf = gameObject.AddComponent<ContentSizeFitter>();
             csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;

@@ -86,8 +86,11 @@ namespace AccsaberLeaderboard.API
                 return default;
             }
         }
-        public static AccsaberScoreData ConvertToScoreData(ScoreInfoToken scoreData) =>
-            new(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
+        public static AccsaberScoreData? ConvertToScoreData(ScoreInfoToken? scoreData)
+        {
+            if (scoreData is null) return null;
+            return new(GetScore(scoreData), GetUserName(scoreData), GetRank(scoreData), GetFullCombo(scoreData), GetAP(scoreData), GetAcc(scoreData), GetPlayerId(scoreData));
+        }
         public static async Task<List<MilestoneInfoToken>?> GetMilestoneData(string userId, Func<MilestoneInfoToken, bool>? filter = null, Comparison<MilestoneInfoToken>? sorter = null, int pageMult = FILTER_PAGE_MULT)
         {
             int page = 0;
@@ -189,7 +192,7 @@ namespace AccsaberLeaderboard.API
         public static async Task<ScoreInfoToken?> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
             string reloadedDiff = DiffNumToReloadedDiff(FromDiff(diff));
-            string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), throttler, ct: ct).ConfigureAwait(false);
+            string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), throttler, true, ct: ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(dataStr)) return null;
             return new(JObject.Parse(dataStr));
         }

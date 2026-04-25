@@ -60,13 +60,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
         public bool OnPlayerPage {
-            get => displayType switch
+            get
             {
+                if (currentPlayerPage == -1) return true;
+                return displayType switch
+                {
 
-                LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
-                LeaderboardDisplayType.Country => scoreDatas.First().rank <= AccsaberAPI.GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= AccsaberAPI.GetRank(currentPlayerScoreInfo),
-                _ => false
-            };
+                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
+                    LeaderboardDisplayType.Country => scoreDatas.First().rank <= AccsaberAPI.GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= AccsaberAPI.GetRank(currentPlayerScoreInfo),
+                    _ => false
+                };
+            }
         }
 
         #endregion
@@ -80,7 +84,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region Loading UI objects
 
         [UIObject("leaderboard_loading")] private GameObject leaderboardLoader;
-        [UIObject("leaderboard_container")] private GameObject leaderboardContainer;
+        [UIObject("leaderboard")] private GameObject leaderboardContainer;
 
         #endregion
 
@@ -96,6 +100,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
+
+        [UIValue("containerAnchor")] private float ContainerAnchor => 5f + (scoreDatas.Count >= 10 ? 0f : CellSize / 2f * (10 - scoreDatas.Count));
 
 
         [UIParams] private BSMLParserParams parserParams;
@@ -381,7 +387,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 }
 
                 currentPlayerPage = await GetPlayerPage(overridePlayerScore);
-                currentPlayerScore = new AccsaberScoreDataInfo(AccsaberAPI.ConvertToScoreData(currentPlayerScoreInfo));
+                AccsaberScoreData data = AccsaberAPI.ConvertToScoreData(currentPlayerScoreInfo);
+                currentPlayerScore = data is null ? null : new AccsaberScoreDataInfo(data);
                 await LoadLeaderboardAsync(currentHash, currentDifficulty);
             }
         }
@@ -464,7 +471,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 End:
                     IEnumerator ReloadData()
                     {
-                        yield return new WaitForFixedUpdate(); // small delay to ensure data is set before reloading
+                        yield return new WaitForEndOfFrame();
+
+                        RectTransform transform = leaderboardContainer.GetComponent<RectTransform>();
+                        Vector2 pos = transform.anchoredPosition;
+                        pos.y = ContainerAnchor;
+                        transform.anchoredPosition = pos;
+
+                        yield return new WaitForFixedUpdate();
 
                         leaderboard.Data = LeaderboardInfos;
 
