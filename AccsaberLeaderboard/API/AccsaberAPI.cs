@@ -178,7 +178,7 @@ namespace AccsaberLeaderboard.API
         public static float GetCalculatedProgress(MilestoneInfoToken milestoneData) => 
             AccsaberMilestoneData.AccsaberMilestoneDataInfo.CalcProgress(GetTarget(milestoneData), GetProgressValue(milestoneData));
         public static float GetTarget(MilestoneInfoToken milestoneData) => (float)milestoneData["targetValue"];
-        public static float GetProgressValue(MilestoneInfoToken milestoneData) => (float)milestoneData["progress"];
+        public static float GetProgressValue(MilestoneInfoToken milestoneData) => (float)(milestoneData["progress"] ?? 0f);
         public static string? GetTier(MilestoneInfoToken milestoneData) => milestoneData["tier"]?.ToString();
         public static string? GetTitle(MilestoneInfoToken milestoneData) => milestoneData["title"]?.ToString();
         public static string? GetDescription(MilestoneInfoToken milestoneData) => milestoneData["description"]?.ToString();

@@ -83,7 +83,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
         private IEnumerator ShowModal(List<MilestoneInfoToken> sortedMilestones)
         {
-            listValues = [.. sortedMilestones.Select(WrapData).Select(data => new AccsaberMilestoneDataInfo(data))];
+            try
+            {
+                listValues = [.. sortedMilestones.Select(WrapData).Select(data => new AccsaberMilestoneDataInfo(data))];
+
+                if (listValues.Count == 0)
+                {
+                    Plugin.Log.Warn("Found no uncompleted milestones!");
+                    yield break;
+                }
+            } catch (System.Exception e)
+            {
+                Plugin.Log.Error("There was an exception thrown while loading the milestones!\n" + e);
+            }
 
 #if NEW_VERSION
             list.Data = listValues;
