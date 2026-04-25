@@ -105,8 +105,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             get
             {
                 IEnumerable<ICellDataSource> outp = scoreDatas.Select(score => (ICellDataSource)new AccsaberScoreDataInfo(score));
-                outp = outp.Append(new TextSpacer());
-                return [.. outp.Append(currentPlayerScore)];
+                if (currentPlayerScore is not null && !OnPlayerPage)
+                    outp = outp.Append(new TextSpacer()).Append(currentPlayerScore);
+                return [.. outp];
             }
         }
         [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
@@ -122,9 +123,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Actions
 
         [UIAction("OnCellSelected")]
-        private void OnCellSelected(TableView _, AccsaberScoreDataInfo cell)
+        private void OnCellSelected(ICellDataSource cell)
         {
-            ppmvc.ShowPlayer(cell.PlayerId, this);
+            if (cell is AccsaberScoreDataInfo info)
+                ppmvc.ShowPlayer(info.PlayerId, this);
         }
 
         [UIAction("#post-parse")]
@@ -462,11 +464,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 End:
                     IEnumerator ReloadData()
                     {
-                        yield return new WaitForEndOfFrame();
+                        yield return new WaitForFixedUpdate(); // small delay to ensure data is set before reloading
 
                         leaderboard.Data = LeaderboardInfos;
-
-                        yield return new WaitForFixedUpdate(); // small delay to ensure data is set before reloading
 
                         //leaderboard.TableView.ReloadData();
 

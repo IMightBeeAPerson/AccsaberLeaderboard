@@ -12,7 +12,7 @@ namespace AccsaberLeaderboard.UI.Components
     {
         private static readonly Dictionary<string, Sprite> cachedSprites = [];
 
-        public Image background = null;
+        public ImageView background = null;
 
         public void Apply(string src, Color tint = default)
         {
@@ -22,13 +22,12 @@ namespace AccsaberLeaderboard.UI.Components
             if (background is not null) 
                 Destroy(background);
 
-            Image img = gameObject.AddComponent<ImageView>();
+            ImageView img = gameObject.AddComponent<ImageView>();
             img.material = Utilities.ImageResources.NoGlowMat;
             img.rectTransform.SetParent(transform, false);
             img.sprite = GetSprite(src);
             img.type = Image.Type.Simple;
             img.color = tint;
-
 
             background = img;
         }

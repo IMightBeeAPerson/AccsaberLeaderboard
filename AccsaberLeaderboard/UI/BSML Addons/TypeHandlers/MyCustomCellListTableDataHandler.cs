@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers
 {
-    [ComponentHandler(typeof(MyCustomCellListTableDataHandler))]
+    [ComponentHandler(typeof(MyCustomCellListTableData))]
     internal class MyCustomCellListTableDataHandler : TypeHandler
     {
         public override Dictionary<string, string[]> Props => new()
@@ -31,14 +31,13 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers
             ref Dictionary<string, string> data = ref componentType.data;
             ref Dictionary<string, BSMLValue> values = ref parserParams.values;
 #endif
-
+            
             MyCustomCellListTableData componentData = component as MyCustomCellListTableData;
 
             if (data.TryGetValue("selectCell", out string selectCell))
             {
                 componentData.OnCellClick += index =>
                 {
-                    Plugin.Log.Info("Click Detected!");
                     if (!parserParams.actions.TryGetValue(selectCell, out BSMLAction action))
                     {
                         throw new Exception("select-cell action '" + selectCell + "' not found");

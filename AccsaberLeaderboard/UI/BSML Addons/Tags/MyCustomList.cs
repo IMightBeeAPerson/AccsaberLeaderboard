@@ -29,7 +29,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Tags
 
             gameObject.AddComponent<LayoutElement>();
 
-            MyCustomCellListTableData mccltd = gameObject.AddComponent<MyCustomCellListTableData>();
+            gameObject.AddComponent<MyCustomCellListTableData>();
 
             return gameObject;
         }

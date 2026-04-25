@@ -15,7 +15,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
     {
         private readonly List<string> cellTemplates = [];
         private readonly List<float> cellSizes = [];
-        private readonly List<MyCustomCell> dataSource = [];
+        private readonly List<MyCustomCell> dataSources = [];
         private MyCustomCell previouslySelected = null;
         private List<ICellDataSource> data = [];
         private bool clickableCells = true;
@@ -37,8 +37,10 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         public MyCustomCellListTableData()
         {
             OnCellClick += UpdateSelected;
-            OnCellHighlighted += index => { dataSource[index].highlighted = true; dataSource[index].RefreshVisuals(); };
-            OnCellUnhighlighted += index => { dataSource[index].highlighted = false; dataSource[index].RefreshVisuals(); };
+            OnCellHighlighted += index => { dataSources[index].highlighted = true; dataSources[index].RefreshVisuals(); };
+            OnCellUnhighlighted += index => { dataSources[index].highlighted = false; dataSources[index].RefreshVisuals(); };
+
+            gameObject.AddComponent<LayoutElement>();
         }
 
         public int NumberOfCells() => data.Count;
@@ -76,12 +78,18 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         {
             cellTemplates.Clear();
             cellSizes.Clear();
-            dataSource.Clear();
+
+            foreach (MyCustomCell cell in dataSources)
+                Destroy(cell.gameObject);
+
+            dataSources.Clear();
 
             Dictionary<string, int> paths = [];
             Assembly current = Assembly.GetExecutingAssembly();
             int cellId = 0;
             float cellHeight = 0f;
+
+            data = [.. data.Where(cell => cell is not null)];
 
             foreach (ICellDataSource cell in data)
             {
@@ -101,7 +109,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
 
                 cellHeight += cellSizes[id];
 
-                dataSource.Add(customCell);
+                dataSources.Add(customCell);
             }
 
             LayoutElement le = gameObject.GetComponent<LayoutElement>();
@@ -114,7 +122,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         {
             previouslySelected?.selected = false;
 
-            previouslySelected = dataSource[index];
+            previouslySelected = dataSources[index];
             previouslySelected.selected = true;
 
             previouslySelected.RefreshVisuals();
