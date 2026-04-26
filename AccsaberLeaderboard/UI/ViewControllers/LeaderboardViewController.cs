@@ -38,6 +38,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
         private static LeaderboardViewController Instance;
+        private static TextSpacer Spacer = new();
         #endregion
 
         #region Instance Variables & Fields
@@ -68,6 +69,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
                     LeaderboardDisplayType.Country => scoreDatas.First().rank <= AccsaberAPI.GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= AccsaberAPI.GetRank(currentPlayerScoreInfo),
+                    _ => false
+                };
+            }
+        }
+        public bool BelowPlayerPage
+        {
+            get
+            {
+                if (currentPlayerPage == -1) return false;
+                return displayType switch
+                {
+                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage > currentPlayerPage,
+                    LeaderboardDisplayType.Country => scoreDatas.First().rank > AccsaberAPI.GetRank(currentPlayerScoreInfo),
                     _ => false
                 };
             }
@@ -112,7 +126,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 IEnumerable<ICellDataSource> outp = scoreDatas.Select(score => (ICellDataSource)new AccsaberScoreDataInfo(score));
                 if (currentPlayerScore is not null && !OnPlayerPage)
-                    outp = outp.Append(new TextSpacer()).Append(currentPlayerScore);
+                    return BelowPlayerPage ? [.. outp.Prepend(Spacer).Prepend(currentPlayerScore)] : [.. outp.Append(Spacer).Append(currentPlayerScore)];
                 return [.. outp];
             }
         }
@@ -508,13 +522,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (overrideLastScore || currentPlayerScoreInfo is null)
                 currentPlayerScoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
             if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling((AccsaberAPI.GetRank(currentPlayerScoreInfo) - 1) / (float)AccsaberAPI.PAGE_LENGTH);
+            return (int)Math.Ceiling(AccsaberAPI.GetRank(currentPlayerScoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
         }
         #endregion
 
         private class TextSpacer : ICellDataSource
         {
-            public string TemplatePath => "<vertical child-expand-height='false'><text text='...' align='Left' font-size='3'/></vertical>";
+            public string TemplatePath => "<vertical child-align='MiddleCenter'><text text='...' align='Center' font-size='3'/></vertical>";
 
             public float CellSize => 1.5f;
 

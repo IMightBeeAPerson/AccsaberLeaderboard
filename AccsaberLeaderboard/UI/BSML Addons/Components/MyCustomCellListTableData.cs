@@ -158,8 +158,11 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
             {
                 neitherTag.SetActive(!selected && !highlighted);
             }
-
+#if NEW_VERSION
+            if (ParserParams.Actions.TryGetValue("refresh-visuals", out var value))
+#else
             if (ParserParams.actions.TryGetValue("refresh-visuals", out var value))
+#endif
             {
                 value.Invoke(selected, highlighted);
             }

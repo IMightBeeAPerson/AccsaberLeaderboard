@@ -42,7 +42,8 @@ namespace AccsaberLeaderboard.Models
 
                 const float brightnessThreshold = 0.6f;
 
-                Color c = rankColor.ColorWithAlpha(0.5f);
+                Color c = rankColor;
+                c.a = 0.5f;
                 float maxColor = c.maxColorComponent;
                 if (maxColor > brightnessThreshold)
                 {

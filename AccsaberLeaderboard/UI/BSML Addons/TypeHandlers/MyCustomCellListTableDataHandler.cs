@@ -25,20 +25,22 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers
 #if NEW_VERSION
             ref Component component = ref componentType.Component;
             ref Dictionary<string, string> data = ref componentType.Data;
-            ref Dictionary<string, BSMLValue> values = ref parserParams.Values;
+            Dictionary<string, BSMLValue> values = parserParams.Values;
+            Dictionary<string, BSMLAction> action = parserParams.Actions;
 #else
             ref Component component = ref componentType.component;
             ref Dictionary<string, string> data = ref componentType.data;
             ref Dictionary<string, BSMLValue> values = ref parserParams.values;
+            Dictionary<string, BSMLAction> actions = parserParams.actions;
 #endif
-            
+
             MyCustomCellListTableData componentData = component as MyCustomCellListTableData;
 
             if (data.TryGetValue("selectCell", out string selectCell))
             {
                 componentData.OnCellClick += index =>
                 {
-                    if (!parserParams.actions.TryGetValue(selectCell, out BSMLAction action))
+                    if (!actions.TryGetValue(selectCell, out BSMLAction action))
                     {
                         throw new Exception("select-cell action '" + selectCell + "' not found");
                     }

@@ -1,6 +1,7 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Configuration;
 using AccsaberLeaderboard.UI.BSML_Addons;
+using BS_Utils.Utilities;
 using IPA;
 using IPA.Config.Stores;
 using System.Collections.Generic;
@@ -55,7 +56,6 @@ namespace AccsaberLeaderboard
                 IsAPIServiceWorking = Success;
                 if (!Success) Log.Critical("The accsaber API is down! Turning off leaderboard.");
             });
-            AddonAdder.Load();
         }
 
         #region BSIPA Config
@@ -77,6 +77,11 @@ namespace AccsaberLeaderboard
             //new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
             Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
+#if NEW_VERSION
+            BeatSaberMarkupLanguage.Util.MainMenuAwaiter.MainMenuInitializing += LoadBSML;
+#else
+            BSEvents.menuSceneActive += LoadBSML;
+#endif
         }
 
         [OnExit]
@@ -86,6 +91,7 @@ namespace AccsaberLeaderboard
             AccsaberLiveScores.WebsocketCanceller.Cancel();
         }
 
+        private void LoadBSML() => AddonAdder.Load();
         private async Task LoadPlayerID()
         {
             playerID = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;

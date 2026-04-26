@@ -37,7 +37,7 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(Acc))] public string Acc => $"<color={ACC}>{scoreData.Acc * 100f:N4}%</color>";
             [UIValue(nameof(BGColor))] public string BGColor => PlayerId.Equals(Plugin.Instance.PlayerID) ? HIGHLIGHT : "#0009";
 
-            [UIValue(nameof(FontSize))] public readonly float FontSize = LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
+            [UIValue(nameof(FontSize))] public float FontSize => LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;
 
             [UIValue(nameof(parentContainerWidth))] public const float parentContainerWidth = containerWidth;
