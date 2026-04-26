@@ -528,7 +528,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private class TextSpacer : ICellDataSource
         {
-            public string TemplatePath => "<vertical child-align='MiddleCenter'><text text='...' align='Center' font-size='3'/></vertical>";
+            public string TemplatePath => "<vertical anchor-pos-y='0.5'><text text='...' align='Center' font-size='3'/></vertical>";
 
             public float CellSize => 1.5f;
 
