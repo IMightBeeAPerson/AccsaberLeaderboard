@@ -17,6 +17,11 @@
         public const string TRUE = "#39DD85";
         public const string OVERALL = "#FFD23C";
 
+        public const string TECH_DIM = "#600000"; // dim by 8
+        public const string STANDARD_DIM = "#003077"; // dim by 8
+        public const string TRUE_DIM = "#015500"; // dim by 8
+        public const string OVERALL_DIM = "#775004"; // dim by 8
+
         public const string HIGHLIGHT = "#5643A499";
 
         public const string LEVEL = "#0F0";

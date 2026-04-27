@@ -1,4 +1,7 @@
-﻿namespace AccsaberLeaderboard.Utils
+﻿using System.Linq;
+using UnityEngine;
+
+namespace AccsaberLeaderboard.Utils
 {
     internal static class ResourcePaths
     {
@@ -20,5 +23,9 @@
         public const string RESOURCE_YOU = RESOURCE_PATH + ".you.png";
         public const string RESOURCE_GRADIENT = RESOURCE_PATH + ".gradient.png";
         public const string RESOURCE_GRADIENT_PANEL = RESOURCE_PATH + ".panelGradient.png";
+        public const string RESOURCE_GRADIENT_CORNER = RESOURCE_PATH + ".cornerGradient.png";
+
+        //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
+        public static readonly Material BORDER_MATERIAL = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
     }
 }

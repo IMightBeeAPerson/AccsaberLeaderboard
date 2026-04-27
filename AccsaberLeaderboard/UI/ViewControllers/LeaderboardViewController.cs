@@ -20,6 +20,7 @@ using Zenject;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
+using AccsaberLeaderboard.UI.Components;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -108,12 +109,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Values & Components
 
         [UIValue("colorGrey")] private const string grey = GREY;
+        [UIValue("mapStarColor")] private const string mapStarColor = OVERALL_DIM;
 
         [UIValue("topArrowPic")] private const string topArrowPic = ResourcePaths.RESOURCE_TOP_ARROW;
         [UIValue("youPic")] private const string youPic = ResourcePaths.RESOURCE_YOU;
         [UIValue("globalPic")] private const string globalPic = ResourcePaths.RESOURCE_GLOBAL;
         [UIValue("friendsPic")] private const string friendsPic = ResourcePaths.RESOURCE_FRIENDS;
         [UIValue("countryPic")] private const string countryPic = ResourcePaths.RESOURCE_COUNTRY;
+        [UIValue("complexityBG")] private const string complexityBG = ResourcePaths.RESOURCE_GRADIENT_CORNER;
 
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
@@ -143,6 +146,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
         [UIComponent("mapTypeText")] private TextMeshProUGUI mapTypeText;
 
+        [UIComponent("mapStarContainer")] private CustomBackground mapStarContainer;
+        [UIComponent("mapModeContainer")] private CustomBackground mapModeContainer;
+
         #endregion
 
         #region UI Actions
@@ -160,6 +166,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             psmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
+
+            mapStarContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+            mapModeContainer.background.material = ResourcePaths.BORDER_MATERIAL;
 
             // Subscribe to player picture click event & logo clicked event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
@@ -442,6 +451,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
                         string categoryId = GetCategoryId(difficultyInfo);
                         mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{HelpfulPaths.ReloadedCategoryToCategoryId(categoryId)}</color>");
+
+                        string color = MiscUtils.GetColorDim(categoryId);
+                        if (ColorUtility.TryParseHtmlString(color, out Color c))
+                            mapModeContainer.background.color = c;
                     }
                     StartCoroutine(StartLoading());
 

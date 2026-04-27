@@ -22,17 +22,17 @@
     <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry'/>
   </vertical>
 
-  <vertical anchor-pos-x='-22' anchor-pos-y='41' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='round-rect-panel'>
-    <horizontal vertical-fit='PreferredSize' pref-height='8' pref-width='15'>
+  <my-vertical id='mapStarContainer' anchor-pos-x='-22' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='~mapStarColor'>
+    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='15'>
       <text id='mapStarText' text='star' font-size='~complexityFontSize' align='Center'/>
     </horizontal>
-  </vertical>
+  </my-vertical>
 
-  <vertical anchor-pos-x='25' anchor-pos-y='41' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='round-rect-panel'>
-    <horizontal vertical-fit='PreferredSize' pref-height='8' pref-width='20'>
+  <my-vertical id='mapModeContainer' anchor-pos-x='25' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='#000'>
+    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='20'>
       <text id='mapTypeText' text='type' font-size='~complexityFontSize' align='Center'/>
     </horizontal>
-  </vertical>
+  </my-vertical>
 </bg>
 
 <!--A lot of this was inspired from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->

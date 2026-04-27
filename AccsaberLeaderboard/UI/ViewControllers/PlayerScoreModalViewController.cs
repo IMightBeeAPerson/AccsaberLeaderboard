@@ -74,8 +74,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIAction("#post-parse")] private void PostParse()
         {
-            //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-            playerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+            playerImage.material = ResourcePaths.BORDER_MATERIAL;
         }
         [UIAction("ShowProfile")] private void ShowProfile()
         {

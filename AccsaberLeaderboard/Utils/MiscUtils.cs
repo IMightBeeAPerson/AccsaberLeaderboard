@@ -15,6 +15,7 @@ namespace AccsaberLeaderboard.Utils
             if (str.Length < maxLength) return str;
             return $"{str.Substring(0, maxLength)}{suffix}";
         }
+        public static int ConvertCharFromHex(char c) => c > '9' ? char.ToUpper(c) - 'A' + 10 : c - '0';
         public static string DimColor(string hex, int dimAmount)
         {
             bool hasHashtag = hex[0] == '#';
@@ -22,11 +23,17 @@ namespace AccsaberLeaderboard.Utils
             int leadingZeros = 0;
             while (hex[leadingZeros] == '0')
                 leadingZeros++;
-            string baseNumStr = "";
-            foreach (char c in hex) baseNumStr += c == '0' ? '0' : '1';
-            int baseNum = int.Parse(baseNumStr, System.Globalization.NumberStyles.HexNumber);
+            int dimNum = 0;
+            for (int i = 0; i < hex.Length; i++)
+            {
+                dimNum <<= 4;
+                int val = ConvertCharFromHex(hex[i]);
+                dimNum += Math.Min(val, dimAmount);
+            }
             int givenNum = int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
-            return (hasHashtag ? "#" : "") + new string('0', leadingZeros) + (givenNum - (baseNum * dimAmount)).ToString("X");
+            string outp = new string('0', leadingZeros) + (givenNum - dimNum).ToString("X");
+            if (outp.Length < hex.Length) outp = new string('0', hex.Length - outp.Length) + outp;
+            return (hasHashtag ? "#" : "") + outp;
         }
         public static string InvertColor(string hex)
         {
@@ -80,6 +87,14 @@ namespace AccsaberLeaderboard.Utils
             '2' => ColorPalette.STANDARD,
             '3' => ColorPalette.TECH,
             '5' => ColorPalette.OVERALL,
+            _ => "#FFF"
+        };
+        public static string GetColorDim(string categoryId) => categoryId.Last() switch
+        {
+            '1' => ColorPalette.TRUE_DIM,
+            '2' => ColorPalette.STANDARD_DIM,
+            '3' => ColorPalette.TECH_DIM,
+            '5' => ColorPalette.OVERALL_DIM,
             _ => "#FFF"
         };
 

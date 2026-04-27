@@ -245,5 +245,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\panelGradient.png" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\cornerGradient.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
