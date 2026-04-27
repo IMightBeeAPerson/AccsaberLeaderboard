@@ -16,9 +16,13 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         private readonly List<string> cellTemplates = [];
         private readonly List<float> cellSizes = [];
         private readonly List<MyCustomCell> dataSources = [];
+
         private MyCustomCell previouslySelected = null;
         private List<ICellDataSource> data = [];
         private bool clickableCells = true;
+        private int prefNumberOfCells = 10;
+        private float mainCellSize = 8.5f;
+        private float initialAnchorY = -1f;
 
         public event Action<int> OnCellClick, OnCellHighlighted, OnCellUnhighlighted;
         public List<string> CellTemplates => cellTemplates;
@@ -33,18 +37,26 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
             get => clickableCells;
             set => clickableCells = value;
         }
+        public int PrefNumberOfCells
+        {
+            get => prefNumberOfCells;
+            set => prefNumberOfCells = value;
+        }
+        public float MainCellSize
+        {
+            get => mainCellSize;
+            set => mainCellSize = value;
+        }
 
         public MyCustomCellListTableData()
         {
             OnCellClick += UpdateSelected;
             OnCellHighlighted += index => { dataSources[index].highlighted = true; dataSources[index].RefreshVisuals(); };
             OnCellUnhighlighted += index => { dataSources[index].highlighted = false; dataSources[index].RefreshVisuals(); };
-
-            //gameObject.AddComponent<LayoutElement>();
         }
 
         public int NumberOfCells() => data.Count;
-        public float CellSize(int idx) => cellSizes.Count > 0 ? cellSizes[data[idx].TemplateId] : 8.5f;
+        public float CellSize(int idx) => cellSizes.Count > 0 ? cellSizes[data[idx].TemplateId] : mainCellSize;
         public MyCustomCell CellForIdx(int idx)
         {
             GameObject go = new("Cell", typeof(RectTransform));
@@ -76,6 +88,9 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         
         private void ReloadTemplates()
         {
+            if (initialAnchorY < 0)
+                initialAnchorY = gameObject.GetComponent<RectTransform>().anchoredPosition.y;
+
             cellTemplates.Clear();
             cellSizes.Clear();
 
@@ -115,6 +130,13 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
             LayoutElement le = gameObject.GetComponent<LayoutElement>();
             le.preferredHeight = cellHeight;
             le.minHeight = cellHeight;
+            
+            RectTransform rt = gameObject.GetComponent<RectTransform>();
+            Vector2 anchorPos = rt.anchoredPosition;
+            anchorPos.y = initialAnchorY;
+            if (data.Count < PrefNumberOfCells)
+                anchorPos.y += mainCellSize / 2f * (PrefNumberOfCells - data.Count);
+            rt.anchoredPosition = anchorPos;
 
             Canvas.ForceUpdateCanvases();
         }

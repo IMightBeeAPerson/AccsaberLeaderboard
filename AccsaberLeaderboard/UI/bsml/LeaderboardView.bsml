@@ -1,5 +1,5 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
-  <my-custom-list id='leaderboard' contents='leaderboard-infos' clickable-cells='true' select-cell='OnCellSelected' pref-width='~containerWidth' pref-height='~containerHeight' anchor-pos-y='~containerAnchor'/>
+  <my-custom-list id='leaderboard' contents='leaderboard-infos' clickable-cells='true' select-cell='OnCellSelected' pref-width='~containerWidth' pref-height='~containerHeight' anchor-pos-y='5'/>
 
   <vertical id='leaderboard_loading' anchor-pos-y='-30' anchor-pos-x='0' pref-width='20' pref-height='20' child-expand-width='false' child-expand-height='false' active='false'>
     <loading preserve-aspect='true'/>
@@ -8,8 +8,6 @@
   <vertical id='leaderboard_badMap' anchor-pos-y='-23' active='false'>
     <text text='Map is Unranked.' font-size='18'/>
   </vertical>
-
-  
 
   <vertical anchor-pos-x='50' anchor-pos-y='-13' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='~topArrowPic' pref-width='5' pref-height='5' on-click='OnPageTop' default-color='~colorGrey'/>

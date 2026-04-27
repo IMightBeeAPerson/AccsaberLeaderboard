@@ -57,10 +57,9 @@ namespace AccsaberLeaderboard.API
                         throw new ArgumentNullException("The leaderboard api is not returning any data.");
 
                     JToken response = JToken.Parse(dataStr);
-                    if ((bool)response["last"])
+                    if ((bool)response["empty"])
                         break;
-                    if (((int)response["numberOfElements"]) == 0)
-                        continue;
+
 
                     IEnumerable<ScoreInfoToken> tokens = response["content"].Children().Select(token => new ScoreInfoToken((JObject)token));
 
@@ -78,6 +77,10 @@ namespace AccsaberLeaderboard.API
                         scoresNeeded -= scoreLen;
                     }
                     truePage += pageMult;
+
+                    if ((bool)response["last"])
+                        break;
+
                     page++;
                     maxCalls--;
                 } while (outp.Count < PAGE_LENGTH && maxCalls > 0);

@@ -70,7 +70,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 return displayType switch
                 {
 
-                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
+                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && (nextPage > currentPlayerPage || currentPage == nextPage),
                     LeaderboardDisplayType.Country => scoreDatas.First().rank <= GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= GetRank(currentPlayerScoreInfo),
                     _ => false
                 };
@@ -118,9 +118,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
 
-        [UIValue("containerAnchor")] private float ContainerAnchor => 5f + (scoreDatas.Count >= 10 ? 0f : CellSize / 2f * (10 - scoreDatas.Count));
-
-
         [UIParams] private BSMLParserParams parserParams;
         [UIComponent("leaderboard")] private MyCustomCellListTableData leaderboard;
         [UIValue("leaderboard-infos")] private List<ICellDataSource> LeaderboardInfos 
@@ -133,7 +130,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 return [.. outp];
             }
         }
-        [UIValue("leaderboard-cellSize")] private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
+        private float CellSize => OnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 
@@ -487,18 +484,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 End:
                     IEnumerator ReloadData()
                     {
-                        yield return new WaitForEndOfFrame();
-
-                        RectTransform transform = leaderboardContainer.GetComponent<RectTransform>();
-                        Vector2 pos = transform.anchoredPosition;
-                        pos.y = ContainerAnchor;
-                        transform.anchoredPosition = pos;
-
                         yield return new WaitForFixedUpdate();
 
+                        leaderboard.PrefNumberOfCells = OnPlayerPage ? 10 : 12;
+                        leaderboard.MainCellSize = CellSize;
                         leaderboard.Data = LeaderboardInfos;
-
-                        //leaderboard.TableView.ReloadData();
 
                         leaderboardContainer.SetActive(true);
                         leaderboardLoader.SetActive(false);
