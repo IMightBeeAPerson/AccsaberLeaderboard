@@ -190,9 +190,11 @@
     <Compile Include="UI\ViewControllers\PanelViewController.cs" />
     <Compile Include="UI\ViewControllers\PlayerMilestoneModalViewController.cs" />
     <Compile Include="UI\ViewControllers\PlayerProfileModalViewController.cs" />
+    <Compile Include="UI\ViewControllers\PlayerScoreModalViewController.cs" />
     <Compile Include="Utils\AsyncLock.cs" />
     <Compile Include="Utils\ColorPalette.cs" />
     <Compile Include="Utils\DataUtils.cs" />
+    <Compile Include="Utils\LangExtensions.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
     <Compile Include="Utils\ResourcePaths.cs" />
   </ItemGroup>
@@ -207,6 +209,7 @@
     <EmbeddedResource Include="UI\bsml\PlayerProfile.bsml" />
     <EmbeddedResource Include="UI\bsml\MilestoneModal.bsml" />
     <EmbeddedResource Include="UI\bsml\LeaderboardCell.bsml" />
+    <EmbeddedResource Include="UI\bsml\PlayerScore.bsml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">

@@ -1,5 +1,6 @@
 ﻿using AccsaberLeaderboard.Models;
 using BeatSaberMarkupLanguage;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,6 +56,33 @@ namespace AccsaberLeaderboard.Utils
 #endif
         public static void Parse(string resourcePath, Transform parent, object controller) =>
             GetParser().Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
+
+        public static string ToRelativeTime(this DateTime dateTime)
+        {
+            var timeSpan = DateTime.UtcNow - dateTime.ToUniversalTime();
+
+            return timeSpan.TotalSeconds switch
+            {
+                < 2 => "1 second ago",
+                < 60 => $"{timeSpan.TotalSeconds} seconds ago",
+                < 120 => "1 minute ago",
+                < 3600 => $"{(int)timeSpan.TotalMinutes} minutes ago",
+                < 7200 => "1 hour ago",
+                < 86400 => $"{(int)timeSpan.TotalHours} hours ago",
+                < 172800 => "yesterday",
+                < 2592000 => $"{(int)timeSpan.TotalDays} days ago",
+                < 31536000 => $"{(int)(timeSpan.TotalDays / 30)} months ago",
+                _ => $"{(int)(timeSpan.TotalDays / 365)} years ago"
+            };
+        }
+        public static string GetColor(string categoryId) => categoryId.Last() switch
+        {
+            '1' => ColorPalette.TRUE,
+            '2' => ColorPalette.STANDARD,
+            '3' => ColorPalette.TECH,
+            '5' => ColorPalette.OVERALL,
+            _ => "#FFF"
+        };
 
         #region Debug Functions
 

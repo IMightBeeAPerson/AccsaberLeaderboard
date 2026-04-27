@@ -2,7 +2,7 @@
     <loading id='loader' preserve-aspect='true'/>
     <vertical id='container' pref-width='~containerWidth' pref-height='~containerHeight' bg='round-rect-panel' child-expand-width='false'>
       <horizontal pref-width='~containerWidth'>
-        <text id='playerName' font-size='~titleFontSize' align='Center' size-delta-x='~containerWidth'/>
+        <text id='playerName' font-size='~titleFontSize' align='Center'/>
       </horizontal>
       <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
         <text id='levelRank' font-size='~fontSizeBig' align='Left'/>

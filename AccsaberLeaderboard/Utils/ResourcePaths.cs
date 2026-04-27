@@ -8,6 +8,7 @@
         public const string BSML_MILESTONE_MODAL = BSML_PATH + ".MilestoneModal.bsml";
         public const string BSML_PANEL_VIEW = BSML_PATH + ".PanelView.bsml";
         public const string BSML_PLAYER_PROFILE = BSML_PATH + ".PlayerProfile.bsml";
+        public const string BSML_PLAYER_SCORE = BSML_PATH + ".PlayerScore.bsml";
 
         public const string RESOURCE_PATH = "AccsaberLeaderboard.Resources";
         public const string RESOURCE_1X1 = RESOURCE_PATH + ".1x1.png";

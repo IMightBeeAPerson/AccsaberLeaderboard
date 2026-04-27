@@ -26,7 +26,7 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers
             ref Component component = ref componentType.Component;
             ref Dictionary<string, string> data = ref componentType.Data;
             Dictionary<string, BSMLValue> values = parserParams.Values;
-            Dictionary<string, BSMLAction> action = parserParams.Actions;
+            Dictionary<string, BSMLAction> actions = parserParams.Actions;
 #else
             ref Component component = ref componentType.component;
             ref Dictionary<string, string> data = ref componentType.data;

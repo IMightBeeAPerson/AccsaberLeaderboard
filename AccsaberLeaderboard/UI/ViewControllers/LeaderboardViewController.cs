@@ -19,6 +19,7 @@ using Zenject;
 
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
+using static AccsaberLeaderboard.API.AccsaberAPI;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -47,17 +48,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private string currentHash;
         private BeatmapDifficulty currentDifficulty;
         private int page, nextPage, currentPage = -1, currentPlayerPage;
-        private AccsaberAPI.ScoreInfoToken currentPlayerScoreInfo;
+        private ScoreInfoToken currentPlayerScoreInfo;
         private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new(), forceRefreshLock = new();
         private LeaderboardDisplayType displayType;
         private Stack<int> previousPages = [];
-        private string difficultyId;
-        private PlayerProfileModalViewController ppmvc;
+        private DifficultyInfoToken difficultyInfo;
+        private PlayerScoreModalViewController psmvc;
         private PlayerMilestoneModalViewController pmmvc;
 
         private Stack<(int page, int nextPage, IEnumerable<AccsaberScoreData> pageData)> cache = [];
         private bool cachePage;
+
+        private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
         public bool OnPlayerPage {
@@ -68,7 +71,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 {
 
                     LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && nextPage > currentPlayerPage,
-                    LeaderboardDisplayType.Country => scoreDatas.First().rank <= AccsaberAPI.GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= AccsaberAPI.GetRank(currentPlayerScoreInfo),
+                    LeaderboardDisplayType.Country => scoreDatas.First().rank <= GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= GetRank(currentPlayerScoreInfo),
                     _ => false
                 };
             }
@@ -81,7 +84,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 return displayType switch
                 {
                     LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage > currentPlayerPage,
-                    LeaderboardDisplayType.Country => scoreDatas.First().rank > AccsaberAPI.GetRank(currentPlayerScoreInfo),
+                    LeaderboardDisplayType.Country => scoreDatas.First().rank > GetRank(currentPlayerScoreInfo),
                     _ => false
                 };
             }
@@ -143,10 +146,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Actions
 
         [UIAction("OnCellSelected")]
-        private void OnCellSelected(ICellDataSource cell)
+        private void OnCellSelected(AccsaberScoreDataInfo cell)
         {
-            if (cell is AccsaberScoreDataInfo info)
-                ppmvc.ShowPlayer(info.PlayerId, this);
+            psmvc.ShowModal(cell.ScoreInfo, difficultyInfo, this);
         }
 
         [UIAction("#post-parse")]
@@ -154,11 +156,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             UpdateSelectors(LeaderboardDisplayType.Global);
 
-            ppmvc = new(leaderboardContainer);
+            psmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
 
             // Subscribe to player picture click event & logo clicked event from PanelViewController
-            PanelViewController.OnPlayerPictureClicked += () => ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
+            PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
 
             // Subscribe to the websocket
@@ -166,7 +168,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 currentPlayerScoreInfo = token;
                 currentPage = 0;
-                Task.Run(() => ForceRefresh(false));
+                Task.Run(() => ForceRefresh(true));
             };
 
             //MiscUtils.Parse(ResourcePaths.BSML_LEADERBOARD_CELL, leaderboard.transform, );
@@ -218,7 +220,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnPageDown")]
         private void OnPageDown()
         {
-            if (scoreDatas.Count < AccsaberAPI.PAGE_LENGTH || currentHash is null)
+            if (scoreDatas.Count < PAGE_LENGTH || currentHash is null)
                 return;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
@@ -291,10 +293,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Task.Run(async () =>
             {
                 currentPlayerPage = await GetPlayerPage(false);
-                await LoadLeaderboardAsync(currentHash, currentDifficulty);
+                await LoadLeaderboardAsync();
             });
         }
-        private void ReloadLeaderboard() => Task.Run(() => LoadLeaderboardAsync(currentHash, currentDifficulty));
+        private void ReloadLeaderboard() => Task.Run(LoadLeaderboardAsync);
         
         private void TrySubscribeToMapSelection()
         {
@@ -384,9 +386,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (theLock is null) return;
             using (theLock.Value)
             {
-                difficultyId = await AccsaberAPI.GetLeaderboardDifficultyId(currentHash, currentDifficulty);
+                difficultyInfo = await GetLeaderboard(currentHash, currentDifficulty);
 
-                if (difficultyId is null)
+                if (DifficultyId is null)
                 {
                     currentHash = null;
                     currentDifficulty = default;
@@ -401,13 +403,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 }
 
                 currentPlayerPage = await GetPlayerPage(overridePlayerScore);
-                AccsaberScoreData data = AccsaberAPI.ConvertToScoreData(currentPlayerScoreInfo);
+                AccsaberScoreData data = ConvertToScoreData(currentPlayerScoreInfo);
                 currentPlayerScore = data is null ? null : new AccsaberScoreDataInfo(data);
-                await LoadLeaderboardAsync(currentHash, currentDifficulty);
+                await LoadLeaderboardAsync();
             }
         }
 
-        private async Task LoadLeaderboardAsync(string hash, BeatmapDifficulty diff)
+        private async Task LoadLeaderboardAsync()
         {
             if (page == currentPage) return; // already on this page, no need to reload
             AsyncLock.Releaser? theLock = await loadLeaderboardLock.LockAsync();
@@ -462,17 +464,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     switch (displayType)
                     {
                         case LeaderboardDisplayType.Global:
-                            scores = await AccsaberAPI.GetScoreData(page, difficultyId);
+                            scores = await GetScoreData(page, DifficultyId);
                             nextPage = page + 1;
                             break;
                         case LeaderboardDisplayType.Friends:
-                            scoreData = await AccsaberAPI.GetScoreData(page, difficultyId, token => Plugin.Instance.PlayerFriends.Contains(AccsaberAPI.GetPlayerId(token)));
+                            scoreData = await GetScoreData(page, DifficultyId, token => Plugin.Instance.PlayerFriends.Contains(GetPlayerId(token)));
                             scores = scoreData.scores;
                             nextPage = scoreData.truePage;
                             break;
                         case LeaderboardDisplayType.Country:
-                            string country = AccsaberAPI.GetCountry(currentPlayerScoreInfo);
-                            scores = await AccsaberAPI.GetScoreData(page, difficultyId, country);
+                            string country = GetCountry(currentPlayerScoreInfo);
+                            scores = await GetScoreData(page, DifficultyId, country);
                             nextPage = page + 1;
                             break;
                         default:
@@ -520,9 +522,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private async Task<int> GetPlayerPage(bool overrideLastScore)
         {
             if (overrideLastScore || currentPlayerScoreInfo is null)
-                currentPlayerScoreInfo = await AccsaberAPI.GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
+                currentPlayerScoreInfo = await GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
             if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling(AccsaberAPI.GetRank(currentPlayerScoreInfo) / (float)AccsaberAPI.PAGE_LENGTH);
+            return (int)Math.Ceiling(GetRank(currentPlayerScoreInfo) / (float)PAGE_LENGTH);
         }
         #endregion
 

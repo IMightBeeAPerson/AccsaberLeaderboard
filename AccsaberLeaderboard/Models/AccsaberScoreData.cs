@@ -4,25 +4,42 @@ using BeatSaberMarkupLanguage.Attributes;
 
 using static AccsaberLeaderboard.UI.ViewControllers.LeaderboardViewController;
 using static AccsaberLeaderboard.Utils.ColorPalette;
+using static AccsaberLeaderboard.API.AccsaberAPI;
 
 namespace AccsaberLeaderboard.Models
 {
-    internal class AccsaberScoreData(int score, string playerName, int rank, bool fullCombo, float ap, float acc, string playerId) : LeaderboardTableView.ScoreData(score, playerName, rank, fullCombo)
+    internal class AccsaberScoreData : LeaderboardTableView.ScoreData
     {
-        public float AP { get; private set; } = ap;
-        public float Acc { get; private set; } = acc;
-        public string PlayerId { get; private set; } = playerId;
+        public ScoreInfoToken ScoreInfo { get; private set; }
+        public float AP { get; private set; }
+        public float Acc { get; private set; }
+        public string PlayerId { get; private set; }
+        public AccsaberScoreData(int score, string playerName, int rank, bool fullCombo, float ap, float acc, string playerId) : base(score, playerName, rank,fullCombo)
+        {
+            ScoreInfo = null;
+            AP = ap;
+            Acc = acc;
+            PlayerId = playerId;
+        }
+        public AccsaberScoreData(ScoreInfoToken scoreInfo) : base(GetScore(scoreInfo), GetPlayerName(scoreInfo), GetRank(scoreInfo), GetFullCombo(scoreInfo))
+        {
+            ScoreInfo = scoreInfo;
+            AP = GetAP(scoreInfo);
+            Acc = GetAcc(scoreInfo);
+            PlayerId = GetPlayerId(scoreInfo);
+        }
+
+
+
         public class AccsaberScoreDataInfo(AccsaberScoreData scoreData) : ICellDataSource
         {
             public string TemplatePath => ResourcePaths.BSML_LEADERBOARD_CELL;
-
             public float CellSize => LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE;
-
             public int TemplateId { get; set; }
 
             private readonly AccsaberScoreData scoreData = scoreData;
 
-            public string PlayerId => scoreData.PlayerId;
+            public ScoreInfoToken ScoreInfo => scoreData.ScoreInfo;
 
             [UIValue(nameof(Score))] public string Score => $"<color={GREY}>{scoreData.score:N0}</color>";
 
@@ -35,7 +52,7 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(AP))] public string AP => $"<color={ColorPalette.AP}>{scoreData.AP:N2}ap</color>";
 
             [UIValue(nameof(Acc))] public string Acc => $"<color={ACC}>{scoreData.Acc * 100f:N4}%</color>";
-            [UIValue(nameof(BGColor))] public string BGColor => PlayerId.Equals(Plugin.Instance.PlayerID) ? HIGHLIGHT : "#0009";
+            [UIValue(nameof(BGColor))] public string BGColor => scoreData.PlayerId.Equals(Plugin.Instance.PlayerID) ? HIGHLIGHT : "#0009";
 
             [UIValue(nameof(FontSize))] public float FontSize => LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;

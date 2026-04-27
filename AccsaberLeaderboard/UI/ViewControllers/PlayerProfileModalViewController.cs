@@ -51,6 +51,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIObject("container")] private GameObject modalContainer;
 
         [UIObject("PlayerInfoWindow")] private GameObject modal;
+        [UIComponent("PlayerInfoWindow")] private ModalView modalView;
 
         [UIComponent("playerImage")] private ImageView modalPlayerImage;
 
@@ -80,6 +81,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("standard_rank_global")] private TextMeshProUGUI modalStandardGlobalRank;
         [UIComponent("standard_rank_country")] private TextMeshProUGUI modalStandardCountryRank;
         #endregion
+
+        [UIAction("#post-parse")] private void PostParse()
+        {
+            //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
+            modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+        }
 
         public PlayerProfileModalViewController(GameObject parent)
         {
@@ -141,8 +148,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalStandardGlobalRank.SetText($"<color={GLOBAL_DIM}>#{GetGlobalRank(stats)}</color>");
             modalStandardCountryRank.SetText($"<color={COUNTRY_DIM}>#{GetCountryRank(stats)}</color>");
 
-            //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-            modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
 #if NEW_VERSION
             modalPlayerImage.SetImageAsync(GetPlayerAvatar(playerInfo));
 #else
@@ -154,9 +159,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalLoader.SetActive(false);
             modalContainer.SetActive(true);
         }
-        public Task ShowPlayer(Task<PlayerInfoToken> playerInfoLoader, MonoBehaviour host)
+        public Task ShowPlayer(Task<PlayerInfoToken> playerInfoLoader, MonoBehaviour host, bool animated = true)
         {
-            parserParams.EmitEvent("ShowPlayerInfo");
+            modalView.Show(animated, true);
 
             host.StartCoroutine(ShowPlayerStart());
 
@@ -165,9 +170,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 host.StartCoroutine(ShowPlayerTexts(await playerInfoLoader));
             });
         }
-        public Task ShowPlayer(string playerId, MonoBehaviour host)
+        public Task ShowPlayer(string playerId, MonoBehaviour host, bool animated = true)
         {
-            return ShowPlayer(Task.Run(async () => await GetPlayerInfo(playerId, true)), host);
+            return ShowPlayer(Task.Run(async () => await GetPlayerInfo(playerId, true)), host, animated);
         }
     }
 }
