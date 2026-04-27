@@ -15,8 +15,9 @@
         <image id='levelProgressInverse' src='~oneXonePic' pref-height='~barGirth'/>
       </horizontal>
 
-      <horizontal pref-width='~containerWidth'>
-        <text id='levelProgressNumber' font-size='~fontSizeMid' align='Center'/>
+      <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
+        <text id='levelXpProgress' font-size='~fontSizeMid' align='Left'/>
+        <text id='levelProgressNumber' font-size='~fontSizeMid' align='Right'/>
       </horizontal>
 
       <horizontal pref-width='~containerWidth' pref-height='~profilePicSize'>

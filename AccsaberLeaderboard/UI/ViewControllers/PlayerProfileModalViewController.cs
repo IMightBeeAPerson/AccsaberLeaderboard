@@ -64,6 +64,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("levelProgress")] private ImageView modalLevelProgress_image;
         [UIComponent("levelProgressInverse")] private LayoutElement modalLevelProgressInverse;
         [UIComponent("levelProgressInverse")] private ImageView modalLevelProgressInverse_image;
+
+        [UIComponent("levelXpProgress")] private TextMeshProUGUI modalLevelXpProgress;
         [UIComponent("levelProgressNumber")] private TextMeshProUGUI modalLevelProgressNumber;
 
         [UIComponent("globalRank")] private TextMeshProUGUI modalGlobalRank;
@@ -113,6 +115,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             modalLevelRank.SetText($"<color={LevelMilestone.GetTitleColor(rank)}>{rank}</color>");
             modalLevel.SetText($"<color={LEVEL}>Level {GetLevel(levelInfo)}</color>");
+
+            modalLevelXpProgress.SetText($"<color={LEVEL_DIM}>({GetCurrentLevelXp(levelInfo):N0}xp / {GetNextLevelXp(levelInfo):N0}xp)</color>");
 
             float xpPercent = GetProgress(levelInfo);
             modalLevelProgressNumber.SetText($"<color={GREY}>{xpPercent:N2}%</color>");
