@@ -1,8 +1,6 @@
-﻿using AccsaberLeaderboard.Models;
-using BeatSaberMarkupLanguage;
+﻿using BeatSaberMarkupLanguage;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -11,6 +9,7 @@ namespace AccsaberLeaderboard.Utils
 {
     public static class MiscUtils
     {
+        public const char STAR = (char)9733;
         public static string ClampString(this string str, int maxLength, string suffix = "...")
         {
             if (str.Length < maxLength) return str;

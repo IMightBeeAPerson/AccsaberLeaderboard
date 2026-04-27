@@ -118,6 +118,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
 
+        [UIValue("complexityFontSize")] public const float complexityFontSize = 5f;
+
         [UIParams] private BSMLParserParams parserParams;
         [UIComponent("leaderboard")] private MyCustomCellListTableData leaderboard;
         [UIValue("leaderboard-infos")] private List<ICellDataSource> LeaderboardInfos 
@@ -137,6 +139,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
         [UIComponent("CountrySelector")] private ClickableImage countrySelector;
+
+        [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
+        [UIComponent("mapTypeText")] private TextMeshProUGUI mapTypeText;
 
         #endregion
 
@@ -426,14 +431,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     currentPage = page;
 
-                    IEnumerator ShowLoading()
+                    IEnumerator StartLoading()
                     {
                         yield return new WaitForEndOfFrame();
+
                         badMapMessage.SetActive(false);
                         leaderboardContainer.SetActive(false);
                         leaderboardLoader.SetActive(true);
+
+                        mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
+                        string categoryId = GetCategoryId(difficultyInfo);
+                        mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{HelpfulPaths.ReloadedCategoryToCategoryId(categoryId)}</color>");
                     }
-                    StartCoroutine(ShowLoading());
+                    StartCoroutine(StartLoading());
 
                     scoreDatas.Clear();
 

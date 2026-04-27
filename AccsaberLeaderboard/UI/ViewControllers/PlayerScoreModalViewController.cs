@@ -114,14 +114,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
         private IEnumerator ShowTexts(ScoreInfoToken scoreInfo, DifficultyInfoToken diffInfo)
         {
-            const char star = (char)9733;
             lastUserId = GetPlayerId(scoreInfo);
 
             yield return new WaitForEndOfFrame();
 
             playerNameText.SetText(GetPlayerName(scoreInfo));
 
-            complexityText.SetText($"<color={OVERALL}>{GetComplexity(diffInfo)} {star}</color>");
+            complexityText.SetText($"<color={OVERALL}>{GetComplexity(diffInfo)} {MiscUtils.STAR}</color>");
             timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
             string categoryId = GetCategoryId(diffInfo);
             accTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{HelpfulPaths.ReloadedCategoryToCategoryId(categoryId)}</color>");
