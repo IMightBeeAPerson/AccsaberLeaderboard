@@ -12,6 +12,8 @@ namespace AccsaberLeaderboard.UI
         private readonly PanelViewController _panelViewController;
         private readonly ViewControllers.LeaderboardViewController _leaderboardViewController;
         private readonly CustomLeaderboardManager _customLeaderboardManager;
+        protected override ViewController panelViewController => _panelViewController;
+        protected override ViewController leaderboardViewController => _leaderboardViewController;
 
 #pragma warning disable IDE0290
         public MainLeaderboardController(CustomLeaderboardManager customLeaderboardManager, PanelViewController panelViewController, ViewControllers.LeaderboardViewController leaderboardViewController)
@@ -21,8 +23,7 @@ namespace AccsaberLeaderboard.UI
             _leaderboardViewController = leaderboardViewController;
         }
 
-        protected override ViewController panelViewController => _panelViewController;
-        protected override ViewController leaderboardViewController => _leaderboardViewController;
+        
 
 #if NEW_VERSION
         public override bool ShowForLevel(BeatmapKey? beatmapKey)

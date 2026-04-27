@@ -450,11 +450,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                         mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
                         string categoryId = GetCategoryId(difficultyInfo);
-                        mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{HelpfulPaths.ReloadedCategoryToCategoryId(categoryId)}</color>");
+                        APCategory category = (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(categoryId));
+                        mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{category}</color>");
 
                         string color = MiscUtils.GetColorDim(categoryId);
                         if (ColorUtility.TryParseHtmlString(color, out Color c))
                             mapModeContainer.background.color = c;
+
+                        PanelViewController.Instance.SetCategoryTexts(category);
                     }
                     StartCoroutine(StartLoading());
 

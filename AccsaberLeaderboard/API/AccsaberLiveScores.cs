@@ -73,9 +73,13 @@ namespace AccsaberLeaderboard.API
                         ms.Position = 0;
                     }
                 }
-                catch (OperationCanceledException)
+                catch (WebSocketException)
                 {
                     Plugin.Log.Info("The remote party has very rudely left us hanging (closed connect without handshake).");
+                }
+                catch (OperationCanceledException)
+                {
+                    Plugin.Log.Info("The websocket has been TERMINATED (cancel token invoked).");
                 }
                 catch (Exception e)
                 {

@@ -26,8 +26,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
     internal class PanelViewController : BSMLAutomaticViewController
     {
 #pragma warning disable IDE0044, IDE0051, IDE0052
+        public static PanelViewController Instance { get; private set; }
 
         internal static event Action OnPlayerPictureClicked, OnLogoClicked;
+
+        private AccsaberAPI.PlayerInfoToken playerInfo = null;
+        private APCategory toUpdate = APCategory.None;
+        private object updateLock = new();
 
         [UIComponent("panelContainer")] private CustomBackground panelContainer;
 
@@ -35,17 +40,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("countryRankText")] private TextMeshProUGUI countryRankText;
         [UIComponent("totalAPText")] private TextMeshProUGUI totalAPText;
 
-        [UIComponent("techGlobalRankText")] private TextMeshProUGUI techGlobalRankText;
-        [UIComponent("techCountryRankText")] private TextMeshProUGUI techCountryRankText;
-        [UIComponent("techAPText")] private TextMeshProUGUI techAPText;
-
-        [UIComponent("standardGlobalRankText")] private TextMeshProUGUI standardGlobalRankText;
-        [UIComponent("standardCountryRankText")] private TextMeshProUGUI standardCountryRankText;
-        [UIComponent("standardAPText")] private TextMeshProUGUI standardAPText;
-
-        [UIComponent("trueGlobalRankText")] private TextMeshProUGUI trueGlobalRankText;
-        [UIComponent("trueCountryRankText")] private TextMeshProUGUI trueCountryRankText;
-        [UIComponent("trueAPText")] private TextMeshProUGUI trueAPText;
+        [UIComponent("selectedLabelText")] private TextMeshProUGUI selectedLabelText;
+        [UIComponent("selectedGlobalRankText")] private TextMeshProUGUI selectedGlobalRankText;
+        [UIComponent("selectedCountryRankText")] private TextMeshProUGUI selectedCountryRankText;
+        [UIComponent("selectedAPText")] private TextMeshProUGUI selectedAPText;
 
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
@@ -66,13 +64,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("containerBg")] public const string containerBg = ResourcePaths.RESOURCE_GRADIENT_PANEL;
         [UIValue("logoPic")] public const string logoPic = ResourcePaths.RESOURCE_LOGO;
 
-        [UIValue("fontSizeCell")] public const float fontSizeCell = 4f;
+        [UIValue("fontSizeCell")] public const float fontSizeCell = 5f;
 
-        [UIValue("cellSpacing")] public const float cellSpacing = 1f;
+        [UIValue("cellSpacing")] public const float cellSpacing = 0f;
 
         [UIValue("rowWidth")] public const float rowWidth = 60f;
-        [UIValue("cellWidth")] public const float cellWidth = rowWidth / 4f;
-        [UIValue("cellHeight")] public const float cellHeight = containerHeight / 4f - cellSpacing * 4f;
+        [UIValue("rowHeight")] public const float rowHeight = 14f;
+
+        [UIValue("cellWidthBig")] public const float cellWidthBig = rowWidth / 2f;
+        [UIValue("cellWidthSmall")] public const float cellWidthSmall = rowWidth / 4f;
+        [UIValue("cellHeight")] public const float cellHeight = containerHeight / 3f - cellSpacing * 2f;
 
         [UIValue("imageSize")] public const float imageSize = (containerWidth - rowWidth - containerPadding * 2f - elementPadding * 2f) / 2f;
 
@@ -91,49 +92,59 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void Awake()
         {
             Plugin.Log.Debug("PanelViewController Awake");
+            Instance = this;
             AccsaberLiveScores.OnPlayerScoreUpdated += _ => Task.Run(UpdatePlayer);
             Task.Run(UpdatePlayer);
         }
 
-        public void SetTexts(AccsaberAPI.PlayerInfoToken playerInfo)
+        public void SetOverallTexts(AccsaberAPI.PlayerInfoToken playerInfo)
         {
-
+            this.playerInfo = playerInfo;
+            SetOverallTexts();
+        }
+        public void SetOverallTexts()
+        {
             AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
 
             globalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
             countryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
             totalAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
+        }
+        public void SetCategoryTexts(AccsaberAPI.PlayerInfoToken playerInfo, APCategory category)
+        {
+            this.playerInfo = playerInfo;
+            UpdateCategoryTexts(category);
+        }
+        public void SetCategoryTexts(APCategory category)
+        {
+            lock (updateLock)
+            {
+                if (playerInfo is not null)
+                    UpdateCategoryTexts(category);
+                toUpdate = category;
+            }
+        }
+        public void UpdateCategoryTexts(APCategory category)
+        {
+            AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, category);
 
-            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Tech);
-
-            techGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            techCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            techAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
-
-            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Standard);
-
-            standardGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            standardCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            standardAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
-
-            playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.True);
-
-            trueGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            trueCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            trueAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
+            selectedLabelText.SetText($"<color={MiscUtils.GetColor(HelpfulPaths.CategoryIdToReloadedCategory(category.ToString()))}>{category}</color>");
+            selectedGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            selectedCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            selectedAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
         }
 
         private async Task UpdatePlayer()
         {
             try
             {
-                AccsaberAPI.PlayerInfoToken playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
+                playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
                 AccsaberAPI.LevelInfoToken levelInfo = AccsaberAPI.GetPlayerLevelData(playerInfo);
                 IEnumerator WaitThenUpdate() 
                 {
                     yield return new WaitForEndOfFrame();
 
-                    SetTexts(playerInfo);
+                    SetOverallTexts();
 
                     if (ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(LevelMilestone.GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"), out Color c))
                         panelContainer.background.color = c;
@@ -142,6 +153,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
                     profilePicture.SetImage(AccsaberAPI.GetPlayerAvatar(playerInfo));
 #endif
+                    lock (updateLock)
+                    {
+                        if (toUpdate != APCategory.None)
+                        {
+                            UpdateCategoryTexts(toUpdate);
+                            toUpdate = APCategory.None;
+                        }
+                    }
                 }
                 StartCoroutine(WaitThenUpdate());
             }
