@@ -17,6 +17,7 @@ namespace AccsaberLeaderboard.Utils
         }
         public void CacheItem(V item, K key, TimeSpan lifespan = default)
         {
+            CleanOutCache();
             cache[key] = item;
             if (lifespan == default)
                 lifespan = itemLifespan;
@@ -26,6 +27,7 @@ namespace AccsaberLeaderboard.Utils
         public void CacheItemPermanently(V item) => CacheItemPermanently(item, GetKey(item));
         public void CacheItemPermanently(V item, K key)
         {
+            CleanOutCache();
             cache[key] = item;
         }
 
