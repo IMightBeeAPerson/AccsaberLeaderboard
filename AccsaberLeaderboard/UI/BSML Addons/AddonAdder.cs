@@ -9,8 +9,12 @@ namespace AccsaberLeaderboard.UI.BSML_Addons
 {
     internal static class AddonAdder
     {
+        private static bool hasLoaded = false;
         public static void Load()
         {
+            if (hasLoaded) return;
+            hasLoaded = true;
+
             BSMLParser instance = MiscUtils.GetParser();
 
             instance.RegisterTag(new BetterVertical());
