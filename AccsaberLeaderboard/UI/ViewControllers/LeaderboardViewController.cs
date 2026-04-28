@@ -388,7 +388,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             yield return new WaitForEndOfFrame();
 
-            mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
+            mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo):N2} {MiscUtils.STAR}</color>");
             string categoryId = GetCategoryId(difficultyInfo);
             APCategory category = (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(categoryId));
             mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{category}</color>");

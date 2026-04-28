@@ -1,4 +1,5 @@
-﻿using AccsaberLeaderboard.Utils;
+﻿using AccsaberLeaderboard.API;
+using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
@@ -40,11 +41,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("cellSize")] public const float cellSize = 15f;
         [UIValue("listSpacerSize")] public const float listSpacerSize = (modalWidth - listWidth) / 2f;
 
+        private List<object> currentMilestones = null;
 
         public PlayerMilestoneModalViewController(GameObject parent)
         {
             MiscUtils.Parse(ResourcePaths.BSML_MILESTONE_MODAL, parent.transform, this);
             modal.transform.SetParent(parent.transform);
+
+            AccsaberLiveScores.OnPlayerScoreUpdated += token => currentMilestones = null;
         }
         
 
@@ -56,12 +60,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             return Task.Run(async () =>
             {
-                host.StartCoroutine(ShowModal(await milestoneInfoLoader));
+                host.StartCoroutine(ShowModal(ConvertData(await milestoneInfoLoader)));
             });
         }
         public Task ShowMilestoneModal(string playerId, MonoBehaviour host)
         {
-            return ShowMilestoneModal(Task.Run(() => ShowModalAsync(playerId)), host);
+            if (currentMilestones is null)
+                return ShowMilestoneModal(Task.Run(() => ShowModalAsync(playerId)), host);
+
+            parserParams.EmitEvent(showModalName);
+            host.StartCoroutine(ShowModal(currentMilestones));
+            return Task.CompletedTask;
         }
 
         private Task<List<MilestoneInfoToken>> ShowModalAsync(string userId)
@@ -81,11 +90,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             loader.SetActive(true);
             container.SetActive(false);
         }
-        private IEnumerator ShowModal(List<MilestoneInfoToken> sortedMilestones)
+        private List<object> ConvertData(List<MilestoneInfoToken> sortedMilestones) =>
+            [.. sortedMilestones.Select(WrapData).Select(data => new AccsaberMilestoneDataInfo(data))];
+        private IEnumerator ShowModal(List<object> sortedMilestones)
         {
             try
             {
-                listValues = [.. sortedMilestones.Select(WrapData).Select(data => new AccsaberMilestoneDataInfo(data))];
+                currentMilestones = sortedMilestones;
+                listValues = sortedMilestones;
 
                 if (listValues.Count == 0)
                 {
@@ -100,14 +112,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #if NEW_VERSION
             list.Data = listValues;
 
-            yield return new WaitUntil(() => list.Data.Count > 0);
             yield return new WaitForSeconds(0.1f);
 
             list.TableView.ReloadData();
 #else
             list.data = listValues;
 
-            yield return new WaitUntil(() => list.data.Count > 0);
             yield return new WaitForSeconds(0.1f);
 
             list.tableView.ReloadData();
