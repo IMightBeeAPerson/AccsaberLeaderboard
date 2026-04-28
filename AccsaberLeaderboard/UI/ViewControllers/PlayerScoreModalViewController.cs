@@ -67,7 +67,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region Normal Variables
 
         public readonly PlayerProfileModalViewController ppmvc;
-        private string lastUserId;
+        private PlayerInfoToken lastUser;
         private MonoBehaviour currentHost;
 
         #endregion
@@ -79,7 +79,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("ShowProfile")] private void ShowProfile()
         {
             modalView.Hide(false);
-            ppmvc.ShowPlayer(lastUserId, currentHost, false);
+            ppmvc.ShowPlayer(GetPlayerId(lastUser), currentHost, false);
         }
 
 
@@ -90,13 +90,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             ppmvc = new(parent);
         }
         
-        public Task ShowModal(ScoreInfoToken scoreInfo, DifficultyInfoToken diffInfo, MonoBehaviour host)
+        public Task ShowModal(MonoBehaviour host, ScoreInfoToken scoreInfo, PlayerInfoToken playerInfo = null)
         {
             ShowModalStart(host);
 
-            return Task.Run(() => host.StartCoroutine(ShowTexts(scoreInfo, diffInfo)));
+            return playerInfo is null ? Task.Run(() => ShowTextsAsync(host, scoreInfo)) : Task.Run(() => ShowTextsAsync(host, scoreInfo, playerInfo));
         }
-
+        private async Task ShowTextsAsync(MonoBehaviour host, ScoreInfoToken scoreInfo)
+        {
+            PlayerInfoToken playerInfo = await GetPlayerInfo(GetPlayerId(scoreInfo), true);
+            await ShowTextsAsync(host, scoreInfo, playerInfo);
+        }
+        private async Task ShowTextsAsync(MonoBehaviour host, ScoreInfoToken scoreInfo, PlayerInfoToken playerInfo) =>
+            await Task.Run(() => host.StartCoroutine(ShowTexts(scoreInfo, playerInfo)));
         private void ShowModalStart(MonoBehaviour host)
         {
             currentHost = host;
@@ -111,22 +117,20 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             loader.SetActive(true);
             container.SetActive(false);
         }
-        private IEnumerator ShowTexts(ScoreInfoToken scoreInfo, DifficultyInfoToken diffInfo)
+        private IEnumerator ShowTexts(ScoreInfoToken scoreInfo, PlayerInfoToken playerInfo)
         {
-            lastUserId = GetPlayerId(scoreInfo);
+            lastUser = playerInfo;
+            LevelInfoToken levelInfo = GetPlayerLevelData(playerInfo);
 
             yield return new WaitForEndOfFrame();
 
-            playerNameText.SetText(GetPlayerName(scoreInfo));
+            playerNameText.SetText($"<color={GetTitleColor(GetTitle(levelInfo))}>{GetPlayerName(scoreInfo)}</color>");
 
-            complexityText.SetText($"<color={OVERALL}>{GetComplexity(diffInfo)} {MiscUtils.STAR}</color>");
             timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
-            string categoryId = GetCategoryId(diffInfo);
-            accTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{HelpfulPaths.ReloadedCategoryToCategoryId(categoryId)}</color>");
 
-            rankText.SetText($"<color={RANK}>#{GetRank(scoreInfo)}</color>");
             apText.SetText($"<color={AP}>{GetAP(scoreInfo):N2}ap</color>");
             accText.SetText($"<color={ACC}>{GetAcc(scoreInfo) * 100f:N4}%</color>");
+            rankText.SetText($"<color={RANK}>#{GetRank(scoreInfo)}</color>");
 
             weightedText.SetText($"<color={AP}>{GetWeightedAP(scoreInfo):N2}ap</color>");
             xpText.SetText($"<color={LEVEL}>{GetXpGained(scoreInfo):N2}xp</color>");

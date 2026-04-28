@@ -97,31 +97,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Task.Run(UpdatePlayer);
         }
 
-        public void SetOverallTexts(AccsaberAPI.PlayerInfoToken playerInfo)
-        {
-            this.playerInfo = playerInfo;
-            SetOverallTexts();
-        }
-        public void SetOverallTexts()
-        {
-            AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
-
-            globalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
-            countryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            totalAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
-        }
-        public void SetCategoryTexts(AccsaberAPI.PlayerInfoToken playerInfo, APCategory category)
-        {
-            this.playerInfo = playerInfo;
-            UpdateCategoryTexts(category);
-        }
         public void SetCategoryTexts(APCategory category)
         {
             lock (updateLock)
             {
+                toUpdate = category;
                 if (playerInfo is not null)
                     UpdateCategoryTexts(category);
-                toUpdate = category;
             }
         }
         public void UpdateCategoryTexts(APCategory category)
@@ -131,7 +113,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             selectedLabelText.SetText($"<color={MiscUtils.GetColor(HelpfulPaths.CategoryIdToReloadedCategory(category.ToString()))}>{category}</color>");
             selectedGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
             selectedCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
-            selectedAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N1}ap</color>");
+            selectedAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+        }
+        private void SetOverallTexts()
+        {
+            AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, APCategory.Overall);
+
+            globalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
+            countryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
+            totalAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
         }
 
         private async Task UpdatePlayer()
@@ -146,7 +136,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     SetOverallTexts();
 
-                    if (ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(LevelMilestone.GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"), out Color c))
+                    if (ColorUtility.TryParseHtmlString(MiscUtils.ChangeAlpha(GetTitleColor(AccsaberAPI.GetTitle(levelInfo)), "6"), out Color c))
                         panelContainer.background.color = c;
 #if NEW_VERSION
                     profilePicture.SetImageAsync(AccsaberAPI.GetPlayerAvatar(playerInfo));
@@ -156,10 +146,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     lock (updateLock)
                     {
                         if (toUpdate != APCategory.None)
-                        {
                             UpdateCategoryTexts(toUpdate);
-                            toUpdate = APCategory.None;
-                        }
                     }
                 }
                 StartCoroutine(WaitThenUpdate());

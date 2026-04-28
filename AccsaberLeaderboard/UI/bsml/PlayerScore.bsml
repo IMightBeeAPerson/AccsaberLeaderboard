@@ -10,25 +10,13 @@
     <horizontal>
       <button text='View Profile' on-click='ShowProfile' align='Center'/>
     </horizontal>
-    <horizontal child-expand-width='false'>
-      <vertical pref-width='~valueWidth'>
-        <text text='Complexity' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
-        <text id='complexityText' text='complexity' font-size='~valueFontSize' align='Center'/>
-      </vertical>
+    <horizontal>
       <vertical pref-width='~valueWidth'>
         <text text='Time' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
         <text id='timeSetText' text='time set' font-size='~valueFontSize' align='Center'/>
       </vertical>
-      <vertical pref-width='~valueWidth'>
-        <text text='Type' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
-        <text id='accTypeText' text='acc type' font-size='~valueFontSize' align='Center'/>
-      </vertical>
     </horizontal>
     <horizontal child-expand-width='false'>
-      <vertical pref-width='~valueWidth'>
-        <text text='Rank' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
-        <text id='rankText' text='Rank' font-size='~valueFontSize' align='Center'/>
-      </vertical>
       <vertical pref-width='~valueWidth'>
         <text text='AP' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
         <text id='apText' text='AP' font-size='~valueFontSize' align='Center'/>
@@ -37,6 +25,10 @@
         <text text='Acc' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
         <text id='accText' text='acc' font-size='~valueFontSize' align='Center'/>
       </vertical>
+      <vertical pref-width='~valueWidth'>
+        <text text='Rank' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
+        <text id='rankText' text='Rank' font-size='~valueFontSize' align='Center'/>
+      </vertical>
     </horizontal>
     <horizontal child-expand-width='false'>
       <vertical pref-width='~valueWidth'>
@@ -44,7 +36,7 @@
         <text id='weightedText' text='Weighted AP' font-size='~valueFontSize' align='Center'/>
       </vertical>
       <vertical pref-width='~valueWidth'>
-        <text text='XP' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
+        <text text='XP Gained' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
         <text id='xpText' text='XP gained' font-size='~valueFontSize' align='Center'/>
       </vertical>
       <vertical pref-width='~valueWidth'>

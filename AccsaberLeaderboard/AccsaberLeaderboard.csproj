@@ -196,6 +196,7 @@
     <Compile Include="Utils\DataUtils.cs" />
     <Compile Include="Utils\LangExtensions.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
+    <Compile Include="Utils\ObjectCacher.cs" />
     <Compile Include="Utils\ResourcePaths.cs" />
   </ItemGroup>
   <ItemGroup>

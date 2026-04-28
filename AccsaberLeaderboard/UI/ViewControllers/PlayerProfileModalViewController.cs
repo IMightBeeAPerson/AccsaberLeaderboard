@@ -113,7 +113,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             modalPlayerName.SetText(GetPlayerName(playerInfo));
 
-            modalLevelRank.SetText($"<color={LevelMilestone.GetTitleColor(rank)}>{rank}</color>");
+            modalLevelRank.SetText($"<color={GetTitleColor(rank)}>{rank}</color>");
             modalLevel.SetText($"<color={LEVEL}>Level {GetLevel(levelInfo)}</color>");
 
             modalLevelXpProgress.SetText($"<color={LEVEL_DIM}>({GetCurrentLevelXp(levelInfo):N0}xp / {GetNextLevelXp(levelInfo):N0}xp)</color>");
@@ -127,9 +127,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
             modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
 
-            ColorUtility.TryParseHtmlString(LevelMilestone.GetTitleColor(DataUtils.GetNextTitle(rank)), out Color c);
+            ColorUtility.TryParseHtmlString(GetTitleColor(DataUtils.GetNextTitle(rank)), out Color c);
             modalLevelProgress_image.color = c;
-            ColorUtility.TryParseHtmlString(LevelMilestone.GetTitleColor(rank), out c);
+            ColorUtility.TryParseHtmlString(GetTitleColor(rank), out c);
             modalLevelProgressInverse_image.color = c;
 
             modalGlobalRank.SetText($"<color={GLOBAL}>#{GetGlobalRank(stats)}</color>");

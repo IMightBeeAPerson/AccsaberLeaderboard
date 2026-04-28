@@ -12,7 +12,7 @@ namespace AccsaberLeaderboard.Utils
     internal static class DataUtils
     {
         private static List<LevelMilestone>? milestones;
-        private static Task milestoneListTask;
+        private static readonly Task milestoneListTask;
 
         static DataUtils()
         {
@@ -24,7 +24,7 @@ namespace AccsaberLeaderboard.Utils
                 List<LevelMilestone> outp = [.. JToken.Parse(dataStr).Children().Select(token =>
                 {
                     string title = token["title"].ToString();
-                    return new LevelMilestone((int)token["level"], LevelMilestone.GetTitleColor(title), title);
+                    return new LevelMilestone((int)token["level"], ColorPalette.GetTitleColor(title), title);
                 })];
                 outp.Sort();
                 milestones = outp;
@@ -52,7 +52,7 @@ namespace AccsaberLeaderboard.Utils
             if (milestones is null)
                 WaitForMilestoneList();
             LevelMilestone? milestone = milestones!.FirstOrDefault(stone => stone.LevelTitle.Equals(title));
-            return GetNextMilestone(milestone)?.LevelTitle ?? LevelMilestone.DEFAULT_COLOR;
+            return GetNextMilestone(milestone)?.LevelTitle ?? ColorPalette.DEFAULT_COLOR;
         }
     }
 }

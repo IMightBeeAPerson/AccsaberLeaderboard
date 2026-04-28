@@ -58,8 +58,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private PlayerScoreModalViewController psmvc;
         private PlayerMilestoneModalViewController pmmvc;
 
-        private Stack<(int page, int nextPage, IEnumerable<AccsaberScoreData> pageData)> cache = [];
-        private bool cachePage;
+        private ObjectCacher<(int page, LeaderboardDisplayType displayType), (AccsaberScoreData[] pageData, int nextPage)> cache = new(TimeSpan.FromMinutes(2));
 
         private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
 
@@ -156,7 +155,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnCellSelected")]
         private void OnCellSelected(AccsaberScoreDataInfo cell)
         {
-            psmvc.ShowModal(cell.ScoreInfo, difficultyInfo, this);
+            psmvc.ShowModal(this, cell.ScoreInfo);
         }
 
         [UIAction("#post-parse")]
@@ -197,7 +196,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             page = 1;
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Clear();
-            cache.Clear();
             ReloadLeaderboard();
         }
 
@@ -215,7 +213,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     page = previousPages.Pop();
                     break;
             }
-            cachePage = true;
             ReloadLeaderboard();
         }
 
@@ -224,7 +221,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             if (page == 0 || displayType != LeaderboardDisplayType.Global || currentHash is null) return;
             page = currentPlayerPage;
-            cache.Clear();
             ReloadLeaderboard();
         }
 
@@ -236,7 +232,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (displayType == LeaderboardDisplayType.Friends)
                 previousPages.Push(page);
             page = nextPage;
-            cachePage = true;
             ReloadLeaderboard();
         }
 
@@ -264,7 +259,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 return;
             page = 1;
             currentPage = 0;
-            cache.Clear();
             UpdateSelectors(type);
             FullyReloadLeaderboard();
         }
@@ -384,11 +378,25 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             page = 1; // reset to first page on map change
             currentPage = 0;
             currentPlayerPage = 0;
-            cache.Clear();
-            cachePage = false;
+            cache.ClearCache();
 
             // reload leaderboard for the new map
             Task.Run(ForceRefresh);
+        }
+        private IEnumerator UpdateComplexity()
+        {
+            yield return new WaitForEndOfFrame();
+
+            mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
+            string categoryId = GetCategoryId(difficultyInfo);
+            APCategory category = (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(categoryId));
+            mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{category}</color>");
+
+            string color = MiscUtils.GetColorDim(categoryId);
+            if (ColorUtility.TryParseHtmlString(color, out Color c))
+                mapModeContainer.background.color = c;
+
+            PanelViewController.Instance.SetCategoryTexts(category);
         }
         private async Task ForceRefresh() => await ForceRefresh(true);
         private async Task ForceRefresh(bool overridePlayerScore)
@@ -399,7 +407,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 difficultyInfo = await GetLeaderboard(currentHash, currentDifficulty);
 
-                if (DifficultyId is null)
+                if (difficultyInfo is null)
                 {
                     currentHash = null;
                     currentDifficulty = default;
@@ -412,6 +420,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     StartCoroutine(ShowBad());
                     return;
                 }
+
+                StartCoroutine(UpdateComplexity());
 
                 currentPlayerPage = await GetPlayerPage(overridePlayerScore);
                 AccsaberScoreData data = ConvertToScoreData(currentPlayerScoreInfo);
@@ -429,16 +439,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 try
                 {
-                    (int, int, IEnumerable<AccsaberScoreData>) toCache;
-                    if (cachePage)
-                    {
-                        AccsaberScoreData[] copy = new AccsaberScoreData[scoreDatas.Count];
-                        scoreDatas.CopyTo(copy);
-                        toCache = (currentPage, nextPage, copy);
-                    }
-                    else toCache = default;
-
                     currentPage = page;
+
+                    bool gotCachedData = cache.TryGetCachedItem((page, displayType), out var data);
 
                     IEnumerator StartLoading()
                     {
@@ -447,39 +450,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         badMapMessage.SetActive(false);
                         leaderboardContainer.SetActive(false);
                         leaderboardLoader.SetActive(true);
-
-                        mapStarText.SetText($"<color={OVERALL}>{GetComplexity(difficultyInfo)} {MiscUtils.STAR}</color>");
-                        string categoryId = GetCategoryId(difficultyInfo);
-                        APCategory category = (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(categoryId));
-                        mapTypeText.SetText($"<color={MiscUtils.GetColor(categoryId)}>{category}</color>");
-
-                        string color = MiscUtils.GetColorDim(categoryId);
-                        if (ColorUtility.TryParseHtmlString(color, out Color c))
-                            mapModeContainer.background.color = c;
-
-                        PanelViewController.Instance.SetCategoryTexts(category);
                     }
-                    StartCoroutine(StartLoading());
+                    if (!gotCachedData)
+                        StartCoroutine(StartLoading());
 
                     scoreDatas.Clear();
 
-                    while (cache.Count > 0)
+                    
+                    if (gotCachedData)
                     {
-                        var item = cache.Pop();
-                        if (item.page == page)
-                        {
-                            scoreDatas.AddRange(item.pageData);
-                            nextPage = item.nextPage;
-                            //Plugin.Log.Info($"Using cache for page #{item.page}.");
-                            goto End;
-                        }
-                        if (item.page > page)
-                        {
-                            //Plugin.Log.Info($"Discarding cache on page #{item.page}.");
-                            continue;
-                        }
-                        cache.Push(item);
-                        break;
+                        scoreDatas.AddRange(data.pageData);
+                        nextPage = data.nextPage;
+                        goto End;
                     }
 
                     AccsaberScoreData[] scores;
@@ -507,7 +489,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         scoreDatas.AddRange(scores);
 
-                End:
+                    End:
                     IEnumerator ReloadData()
                     {
                         yield return new WaitForFixedUpdate();
@@ -519,14 +501,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         leaderboardContainer.SetActive(true);
                         leaderboardLoader.SetActive(false);
                     }
-
-                    if (cachePage)
-                    {
-                        cache.Push(toCache);
-                        cachePage = false;
-                        //Plugin.Log.Info($"Cached page #{cache.Peek().page}, stored {cache.Peek().pageData.Count()} scores.");
-                    }
                     StartCoroutine(ReloadData());
+
+                    if (scoreDatas.Count > 0 && !gotCachedData)
+                        cache.CacheItem((scoreDatas.ToArray(), nextPage), (currentPage, displayType));
                 }
                 catch (Exception ex)
                 {

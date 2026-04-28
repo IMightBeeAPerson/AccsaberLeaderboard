@@ -38,7 +38,7 @@ namespace AccsaberLeaderboard.Models
 
                 progressPercent = CalcProgress(milestoneData.Target, milestoneData.Progress, flip);
 
-                ColorUtility.TryParseHtmlString(LevelMilestone.GetMilestoneRankColor(data.Tier), out rankColor);
+                ColorUtility.TryParseHtmlString(GetMilestoneRankColor(data.Tier), out rankColor);
 
                 const float brightnessThreshold = 0.6f;
 
@@ -73,7 +73,7 @@ namespace AccsaberLeaderboard.Models
                     return $"<color={LEVEL_DIM}>(" + middle + ")</color>";
                 }
             }
-            [UIValue(nameof(Tier))] public string Tier => $"<color={LevelMilestone.GetMilestoneRankColor(data.Tier)}>{data.Tier}</color>";
+            [UIValue(nameof(Tier))] public string Tier => $"<color={GetMilestoneRankColor(data.Tier)}>{data.Tier}</color>";
             [UIValue(nameof(Title))] public string Title => $"{data.Title}";
             [UIValue(nameof(Description))] public string Description => $"<color={GREY}>{data.Description}</color>";
 
