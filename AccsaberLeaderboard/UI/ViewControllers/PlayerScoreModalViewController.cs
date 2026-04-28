@@ -1,11 +1,9 @@
-﻿using AccsaberLeaderboard.API;
-using AccsaberLeaderboard.Utils;
+﻿using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Parser;
 using HMUI;
 using System.Collections;
-using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -25,12 +23,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("modalShowName")] public const string modalShowName = "ShowContainer";
         [UIValue("modalHideName")] public const string modalHideName = "HideContainer";
 
+        [UIValue("playerImageBorder")] public const string playerImageBorder = ResourcePaths.RESOURCE_GRADIENT_CORNER;
+
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
 
         [UIValue("valueWidth")] public const float valueWidth = containerWidth / 3f;
 
         [UIValue("playerImageSize")] public const float playerImageSize = 20f;
+        public const float borderSize = 3f;
+        [UIValue("playerImageBGSize")] public const float playerImageBGSize = borderSize + playerImageSize;
+        [UIValue("playerImageAnchor")] public const float playerImageAnchor = borderSize / 2f;
 
         [UIValue("playerNameFontSize")] public const float playerNameFontSize = 7f;
         [UIValue("valueFontSize")] public const float valueFontSize = 4f;
@@ -50,6 +53,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("playerNameText")] private TextMeshProUGUI playerNameText;
 
         [UIComponent("playerImage")] private ImageView playerImage;
+        [UIComponent("playerImageBackground")] private ImageView playerImageBackground;
 
         [UIComponent("complexityText")] private TextMeshProUGUI complexityText;
         [UIComponent("timeSetText")] private TextMeshProUGUI timeSetText;
@@ -75,6 +79,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("#post-parse")] private void PostParse()
         {
             playerImage.material = ResourcePaths.BORDER_MATERIAL;
+            playerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
             playerNameText.enableVertexGradient = true;
         }
         [UIAction("ShowProfile")] private void ShowProfile()
@@ -125,8 +130,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             yield return new WaitForEndOfFrame();
 
-            playerNameText.colorGradient = MiscUtils.ColorToGradient(GetTitleColor(GetTitle(levelInfo)));
+            string titleColor = GetTitleColor(GetTitle(levelInfo));
+            playerNameText.colorGradient = MiscUtils.ColorToGradient(titleColor);
             playerNameText.SetText(GetPlayerName(scoreInfo));
+
+            if (ColorUtility.TryParseHtmlString(titleColor, out Color c))
+                playerImageBackground.color = c;
 
             timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
 

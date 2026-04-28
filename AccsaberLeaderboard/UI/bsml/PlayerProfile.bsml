@@ -20,9 +20,13 @@
         <text id='levelProgressNumber' font-size='~fontSizeMid' align='Right'/>
       </horizontal>
 
-      <horizontal pref-width='~containerWidth' pref-height='~profilePicSize'>
-        <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
-      </horizontal>
+      <stack pref-width='~profileBGPicSize' pref-height='~profileBGPicSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
+        <img id='playerImageBackground' src='~profileBGPic' pref-width='~profileBGPicSize' pref-height='~profileBGPicSize'/>
+        <vertical pref-width='~profilePicSize' pref-height='~profilePicSize' child-expand-width='false' child-expand-height='false'>
+          <vertical pref-height='~profilePicAnchor'/>
+          <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+        </vertical>
+      </stack>
       <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
         <vertical>
           <text text='Global' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>

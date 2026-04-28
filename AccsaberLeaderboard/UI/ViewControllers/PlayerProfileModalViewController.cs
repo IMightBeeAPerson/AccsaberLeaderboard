@@ -27,6 +27,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("colorGrey")] public const string grey = GREY;
 
         [UIValue("oneXonePic")] public const string oneXonePic = ResourcePaths.RESOURCE_1X1;
+        [UIValue("profileBGPic")] public const string profileBGPic = ResourcePaths.RESOURCE_GRADIENT_CORNER;
 
         [UIValue("titleFontSize")] public const float titleFontSize = 7f;
         [UIValue("fontSizeBig")] public const float fontSizeBig = 4f;
@@ -44,7 +45,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("barLen")] public const float barLen = containerWidth - barPadding * 2;
         [UIValue("barGirth")] public const float barGirth = 1f;
 
+        public const float profilePicBorderSize = 3f;
         [UIValue("profilePicSize")] public const float profilePicSize = 20f;
+        [UIValue("profileBGPicSize")] public const float profileBGPicSize = 20f + profilePicBorderSize;
+        [UIValue("profilePicAnchor")] public const float profilePicAnchor = profilePicBorderSize / 2f;
 
 
         [UIObject("loader")] private GameObject modalLoader;
@@ -54,6 +58,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("PlayerInfoWindow")] private ModalView modalView;
 
         [UIComponent("playerImage")] private ImageView modalPlayerImage;
+        [UIComponent("playerImageBackground")] private ImageView modalPlayerImageBackground;
 
         [UIComponent("playerName")] private TextMeshProUGUI modalPlayerName;
 
@@ -86,8 +91,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIAction("#post-parse")] private void PostParse()
         {
-            //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-            modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+            modalPlayerImage.material = ResourcePaths.BORDER_MATERIAL;
+            modalPlayerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
 
             modalPlayerName.enableVertexGradient = true;
         }
@@ -155,6 +160,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalStandard.SetText($"<color={STANDARD}>{GetAP(stats):N2}ap</color>");
             modalStandardGlobalRank.SetText($"<color={GLOBAL_DIM}>#{GetGlobalRank(stats)}</color>");
             modalStandardCountryRank.SetText($"<color={COUNTRY_DIM}>#{GetCountryRank(stats)}</color>");
+
+            modalPlayerImageBackground.color = c;
 
 #if NEW_VERSION
             modalPlayerImage.SetImageAsync(GetPlayerAvatar(playerInfo));

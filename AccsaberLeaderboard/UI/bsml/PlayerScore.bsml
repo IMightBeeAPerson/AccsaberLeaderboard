@@ -4,9 +4,13 @@
     <horizontal>
       <text id='playerNameText' text='PLAYER NAME' align='Center' font-size='~playerNameFontSize'/>
     </horizontal>
-    <horizontal pref-height='~playerImageSize'>
-      <img id='playerImage' preserve-aspect='true' pref-width='~playerImageSize' pref-height='~playerImageSize'/>
-    </horizontal>
+    <stack pref-width='~playerImageBGSize' pref-height='~playerImageBGSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
+      <img id='playerImageBackground' src='~playerImageBorder' pref-width='~playerImageBGSize' pref-height='~playerImageBGSize'/>
+      <vertical pref-width='~playerImageSize' pref-height='~playerImageSize' child-expand-width='false' child-expand-height='false'>
+        <vertical pref-height='~playerImageAnchor'/>
+        <img id='playerImage' preserve-aspect='true' pref-width='~playerImageSize' pref-height='~playerImageSize'/>
+      </vertical>
+    </stack>
     <horizontal>
       <button text='View Profile' on-click='ShowProfile' align='Center'/>
     </horizontal>
