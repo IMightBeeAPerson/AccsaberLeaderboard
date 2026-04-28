@@ -19,11 +19,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Values
 
         [UIValue("labelColor")] public const string labelColor = GREY;
+        [UIValue("dimColor")] public const string dimColor = DARK_BLUE;
 
         [UIValue("modalShowName")] public const string modalShowName = "ShowContainer";
         [UIValue("modalHideName")] public const string modalHideName = "HideContainer";
 
-        [UIValue("playerImageBorder")] public const string playerImageBorder = ResourcePaths.RESOURCE_GRADIENT_CORNER;
+        [UIValue("image1x1")] public const string image1x1 = ResourcePaths.RESOURCE_1X1;
+        [UIValue("playerImageBorder")] public const string playerImageBorderPath = ResourcePaths.RESOURCE_GRADIENT_CORNER;
 
         [UIValue("containerWidth")] public const float containerWidth = 80f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
@@ -33,7 +35,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("playerImageSize")] public const float playerImageSize = 20f;
         public const float borderSize = 3f;
         [UIValue("playerImageBGSize")] public const float playerImageBGSize = borderSize + playerImageSize;
-        [UIValue("playerImageAnchor")] public const float playerImageAnchor = borderSize / 2f;
 
         [UIValue("playerNameFontSize")] public const float playerNameFontSize = 7f;
         [UIValue("valueFontSize")] public const float valueFontSize = 4f;
@@ -54,6 +55,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("playerImage")] private ImageView playerImage;
         [UIComponent("playerImageBackground")] private ImageView playerImageBackground;
+        [UIComponent("playerImageBorder")] private ImageView playerImageBorder;
 
         [UIComponent("complexityText")] private TextMeshProUGUI complexityText;
         [UIComponent("timeSetText")] private TextMeshProUGUI timeSetText;
@@ -80,6 +82,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             playerImage.material = ResourcePaths.BORDER_MATERIAL;
             playerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
+            playerImageBorder.material = ResourcePaths.BORDER_MATERIAL;
             playerNameText.enableVertexGradient = true;
         }
         [UIAction("ShowProfile")] private void ShowProfile()
@@ -135,7 +138,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             playerNameText.SetText(GetPlayerName(scoreInfo));
 
             if (ColorUtility.TryParseHtmlString(titleColor, out Color c))
-                playerImageBackground.color = c;
+                playerImageBorder.color = c;
 
             timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
 

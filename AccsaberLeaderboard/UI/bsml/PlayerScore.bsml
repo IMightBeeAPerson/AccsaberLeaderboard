@@ -5,10 +5,12 @@
       <text id='playerNameText' text='PLAYER NAME' align='Center' font-size='~playerNameFontSize'/>
     </horizontal>
     <stack pref-width='~playerImageBGSize' pref-height='~playerImageBGSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
-      <img id='playerImageBackground' src='~playerImageBorder' pref-width='~playerImageBGSize' pref-height='~playerImageBGSize'/>
+      <img id='playerImageBorder' src='~playerImageBorder' pref-width='~playerImageBGSize' pref-height='~playerImageBGSize'/>
       <vertical pref-width='~playerImageSize' pref-height='~playerImageSize' child-expand-width='false' child-expand-height='false'>
-        <vertical pref-height='~playerImageAnchor'/>
-        <img id='playerImage' preserve-aspect='true' pref-width='~playerImageSize' pref-height='~playerImageSize'/>
+        <stack pref-width='~playerImageSize' pref-height='~playerImageSize'>
+          <img id='playerImageBackground' src='~image1x1' img-color='~dimColor' preserve-aspect='true' pref-width='~playerImageSize' pref-height='~playerImageSize'/>
+          <img id='playerImage' preserve-aspect='true' pref-width='~playerImageSize' pref-height='~playerImageSize'/>
+        </stack>
       </vertical>
     </stack>
     <horizontal>

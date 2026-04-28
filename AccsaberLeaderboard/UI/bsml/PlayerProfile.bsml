@@ -21,10 +21,12 @@
       </horizontal>
 
       <stack pref-width='~profileBGPicSize' pref-height='~profileBGPicSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
-        <img id='playerImageBackground' src='~profileBGPic' pref-width='~profileBGPicSize' pref-height='~profileBGPicSize'/>
+        <img id='playerImageBorder' src='~profileBGPic' pref-width='~profileBGPicSize' pref-height='~profileBGPicSize'/>
         <vertical pref-width='~profilePicSize' pref-height='~profilePicSize' child-expand-width='false' child-expand-height='false'>
-          <vertical pref-height='~profilePicAnchor'/>
-          <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+          <stack pref-width='~profilePicSize' pref-height='~profilePicSize'>
+            <img id='playerImageBackground' src='~oneXonePic' img-color='~colorDim' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+            <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+          </stack>
         </vertical>
       </stack>
       <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>

@@ -25,6 +25,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Components & Objects
 
         [UIValue("colorGrey")] public const string grey = GREY;
+        [UIValue("colorDim")] public const string dim = DARK_BLUE;
 
         [UIValue("oneXonePic")] public const string oneXonePic = ResourcePaths.RESOURCE_1X1;
         [UIValue("profileBGPic")] public const string profileBGPic = ResourcePaths.RESOURCE_GRADIENT_CORNER;
@@ -48,7 +49,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         public const float profilePicBorderSize = 3f;
         [UIValue("profilePicSize")] public const float profilePicSize = 20f;
         [UIValue("profileBGPicSize")] public const float profileBGPicSize = 20f + profilePicBorderSize;
-        [UIValue("profilePicAnchor")] public const float profilePicAnchor = profilePicBorderSize / 2f;
 
 
         [UIObject("loader")] private GameObject modalLoader;
@@ -59,6 +59,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("playerImage")] private ImageView modalPlayerImage;
         [UIComponent("playerImageBackground")] private ImageView modalPlayerImageBackground;
+        [UIComponent("playerImageBorder")] private ImageView modalPlayerImageBorder;
 
         [UIComponent("playerName")] private TextMeshProUGUI modalPlayerName;
 
@@ -93,6 +94,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             modalPlayerImage.material = ResourcePaths.BORDER_MATERIAL;
             modalPlayerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
+            modalPlayerImageBorder.material = ResourcePaths.BORDER_MATERIAL;
 
             modalPlayerName.enableVertexGradient = true;
         }
@@ -161,7 +163,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             modalStandardGlobalRank.SetText($"<color={GLOBAL_DIM}>#{GetGlobalRank(stats)}</color>");
             modalStandardCountryRank.SetText($"<color={COUNTRY_DIM}>#{GetCountryRank(stats)}</color>");
 
-            modalPlayerImageBackground.color = c;
+            modalPlayerImageBorder.color = c;
 
 #if NEW_VERSION
             modalPlayerImage.SetImageAsync(GetPlayerAvatar(playerInfo));

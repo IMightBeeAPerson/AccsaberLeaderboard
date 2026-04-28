@@ -28,6 +28,7 @@
         public const string LEVEL_DIM = "#070"; // dim by 8
 
         public const string GREY = "#AAA";
+        public const string DARK_BLUE = "#012";
 
         public const string DIMMER = "#000A"; //#33333388
 
