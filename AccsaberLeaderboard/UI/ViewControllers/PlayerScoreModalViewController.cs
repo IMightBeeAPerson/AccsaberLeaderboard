@@ -75,6 +75,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("#post-parse")] private void PostParse()
         {
             playerImage.material = ResourcePaths.BORDER_MATERIAL;
+            playerNameText.enableVertexGradient = true;
         }
         [UIAction("ShowProfile")] private void ShowProfile()
         {
@@ -124,7 +125,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             yield return new WaitForEndOfFrame();
 
-            playerNameText.SetText($"<color={GetTitleColor(GetTitle(levelInfo))}>{GetPlayerName(scoreInfo)}</color>");
+            playerNameText.colorGradient = MiscUtils.ColorToGradient(GetTitleColor(GetTitle(levelInfo)));
+            playerNameText.SetText(GetPlayerName(scoreInfo));
 
             timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
 

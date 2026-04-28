@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using TMPro;
 using UnityEngine;
 
 namespace AccsaberLeaderboard.Utils
@@ -34,6 +35,13 @@ namespace AccsaberLeaderboard.Utils
             string outp = new string('0', leadingZeros) + (givenNum - dimNum).ToString("X");
             if (outp.Length < hex.Length) outp = new string('0', hex.Length - outp.Length) + outp;
             return (hasHashtag ? "#" : "") + outp;
+        }
+        public static VertexGradient ColorToGradient(string hex, int dimBase = 4)
+        {
+            ColorUtility.TryParseHtmlString(hex, out Color c1);
+            ColorUtility.TryParseHtmlString(DimColor(hex, dimBase), out Color c2);
+            ColorUtility.TryParseHtmlString(DimColor(hex, dimBase * 2), out Color c3);
+            return new(c1, c2, c2, c3);
         }
         public static string InvertColor(string hex)
         {

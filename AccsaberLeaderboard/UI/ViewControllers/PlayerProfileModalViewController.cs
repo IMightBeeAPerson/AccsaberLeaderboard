@@ -88,6 +88,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
             modalPlayerImage.material = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+
+            modalPlayerName.enableVertexGradient = true;
         }
 
         public PlayerProfileModalViewController(GameObject parent)
@@ -111,9 +113,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             yield return new WaitForEndOfFrame();
 
+            string titleColor = GetTitleColor(rank);
+            modalPlayerName.colorGradient = MiscUtils.ColorToGradient(titleColor);
             modalPlayerName.SetText(GetPlayerName(playerInfo));
 
-            modalLevelRank.SetText($"<color={GetTitleColor(rank)}>{rank}</color>");
+            modalLevelRank.SetText($"<color={titleColor}>{rank}</color>");
             modalLevel.SetText($"<color={LEVEL}>Level {GetLevel(levelInfo)}</color>");
 
             modalLevelXpProgress.SetText($"<color={LEVEL_DIM}>({GetCurrentLevelXp(levelInfo):N0}xp / {GetNextLevelXp(levelInfo):N0}xp)</color>");

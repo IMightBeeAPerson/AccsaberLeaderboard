@@ -178,6 +178,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 currentPlayerScoreInfo = token;
                 currentPage = 0;
+                cache.ClearCache();
                 Task.Run(() => ForceRefresh(true));
             };
 
