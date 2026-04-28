@@ -1,9 +1,7 @@
-﻿using AccsaberLeaderboard.UI.BSML_Addons.Components;
-using AccsaberLeaderboard.UI.BSML_Addons.Tags;
+﻿using AccsaberLeaderboard.UI.BSML_Addons.Tags;
 using AccsaberLeaderboard.UI.BSML_Addons.TypeHandlers;
 using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
-using UnityEngine;
 
 namespace AccsaberLeaderboard.UI.BSML_Addons
 {

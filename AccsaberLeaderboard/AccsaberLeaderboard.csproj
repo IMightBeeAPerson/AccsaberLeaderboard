@@ -164,6 +164,7 @@
     <Compile Include="API\HelpfulPaths.cs" />
     <Compile Include="API\Throttler.cs" />
     <Compile Include="Calculators\APCalc.cs" />
+    <Compile Include="Harmony\LeaderboardShownPatch.cs" />
     <Compile Include="Harmony\LoadPatch.cs" />
     <Compile Include="Installers\InstallerHelper.cs" />
     <Compile Include="Installers\MainUIInstaller.cs" />

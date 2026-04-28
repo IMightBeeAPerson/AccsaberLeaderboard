@@ -21,6 +21,7 @@ using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
 using AccsaberLeaderboard.UI.Components;
+using AccsaberLeaderboard.Harmony;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -39,7 +40,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
 
-        private static LeaderboardViewController Instance;
+        public static LeaderboardViewController Instance { get; private set; }
         private static TextSpacer Spacer = new();
         #endregion
 
@@ -172,6 +173,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             // Subscribe to player picture click event & logo clicked event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
+
+            LeaderboardShownPatch.LeaderboardSwapped += TryUpdateCurrentMap;
 
             // Subscribe to the websocket
             AccsaberLiveScores.OnPlayerScoreUpdated += token =>
@@ -353,6 +356,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
 #endif      
             //Plugin.Log.Info("Update called.");
+            if (!gameObject.activeSelf)
+                return;
+
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
 #if NEW_VERSION
             string levelId = beatmap.levelID;
