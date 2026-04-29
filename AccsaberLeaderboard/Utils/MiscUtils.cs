@@ -79,12 +79,12 @@ namespace AccsaberLeaderboard.Utils
 
             string outp = "";
 
-            while (timeSpan.Ticks > 0 && layersDeep-- >= 0)
+            while (timeSpan.Ticks > 0 && layersDeep-- > 0)
             {
                 var (timeDiff, str) = GetMostSignificantTime(timeSpan, dateTime);
                 timeSpan -= timeDiff;
                 dateTime = dateTime.AddSeconds(timeDiff.TotalSeconds);
-                outp += ", " + str;
+                outp += (layersDeep == 0 || timeSpan.Ticks == 0 ? " and " : ", ") + str;
             }
 
             return outp.Substring(2) + " ago.";

@@ -22,8 +22,8 @@
     <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry'/>
   </vertical>
 
-  <my-vertical id='mapStarContainer' anchor-pos-x='-22' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='~mapStarColor'>
-    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='15'>
+  <my-vertical id='mapStarContainer' anchor-pos-x='-25' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='~mapStarColor'>
+    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='20'>
       <text id='mapStarText' text='star' font-size='~complexityFontSize' align='Center'/>
     </horizontal>
   </my-vertical>
