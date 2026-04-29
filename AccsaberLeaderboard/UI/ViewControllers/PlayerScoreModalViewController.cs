@@ -140,7 +140,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (ColorUtility.TryParseHtmlString(titleColor, out Color c))
                 playerImageBorder.color = c;
 
-            timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime());
+            timeSetText.SetText(GetScoreTimeSet(scoreInfo).ToRelativeTime(2));
 
             apText.SetText($"<color={AP}>{GetAP(scoreInfo):N2}ap</color>");
             accText.SetText($"<color={ACC}>{GetAcc(scoreInfo) * 100f:N4}%</color>");

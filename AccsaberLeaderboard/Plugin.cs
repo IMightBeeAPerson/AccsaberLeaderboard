@@ -19,24 +19,31 @@ namespace AccsaberLeaderboard
         internal static HarmonyLib.Harmony Harmony { get; private set; }
         internal static bool IsAPIServiceWorking { get; private set; }
 
+        private string playerID = null;
+        private HashSet<string> playerFriends;
+        private readonly object playerIDLock = new(), playerFriendsLock = new();
         public string PlayerID 
         { 
             get
             {
-                if (playerID is null) LoadPlayerID().GetAwaiter().GetResult();
-                return playerID;
+                lock (playerIDLock)
+                {
+                    if (playerID is null) LoadPlayerID().GetAwaiter().GetResult();
+                    return playerID;
+                }
             } 
         }
-        private string playerID = null;
         public HashSet<string> PlayerFriends
         {
             get
             {
-                if (playerFriends is null) LoadPlayerFriends().GetAwaiter().GetResult();
-                return playerFriends;
+                lock (playerFriendsLock)
+                {
+                    if (playerFriends is null) LoadPlayerFriends().GetAwaiter().GetResult();
+                    return playerFriends;
+                }
             }
         }
-        private HashSet<string> playerFriends;
 
         [Init]
         /// <summary>
@@ -91,10 +98,26 @@ namespace AccsaberLeaderboard
             AccsaberLiveScores.WebsocketCanceller.Cancel();
         }
 
-        private void LoadBSML() => AddonAdder.Load();
-        private async Task LoadPlayerID()
+        private void LoadBSML()
         {
-            playerID = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
+            AddonAdder.Load();
+            Task.Run(() => AccsaberLiveScores.StartWebsocket(AccsaberLiveScores.WebsocketCanceller.Token));
+        }
+        private const int LoadPlayerIDAttempts = 3;
+        private async Task LoadPlayerID(int attemptsLeft = 3)
+        {
+            const int delayMillis = 500;
+            try
+            {
+                playerID = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
+            } catch (System.Exception e)
+            {
+                int delay = (LoadPlayerIDAttempts - --attemptsLeft) * delayMillis;
+                Log.Error($"Exception thrown while loading player ID. Trying again in {delay} milliseconds.");
+                Log.Debug(e);
+                await Task.Delay(delay);
+                await LoadPlayerID(attemptsLeft);
+            }
         }
         private async Task LoadPlayerFriends()
         {

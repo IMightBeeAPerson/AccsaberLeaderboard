@@ -18,13 +18,12 @@ namespace AccsaberLeaderboard.API
         internal const int RecieveBufferSize = 1024;
         internal const int SendBufferSize = 16;
 
-        private static readonly ClientWebSocket webSocket = new();
+        private static ClientWebSocket webSocket;
         private static readonly AsyncLock listenerLock = new();
 
         static AccsaberLiveScores()
         {
             WebsocketCanceller = new();
-            Task.Run(() => StartWebsocket(WebsocketCanceller.Token));
             OnScoreUpdated += token =>
             {
                 string id = AccsaberAPI.GetPlayerId(token);
@@ -36,7 +35,15 @@ namespace AccsaberLeaderboard.API
         public static async Task StartWebsocket(CancellationToken ct = default)
         {
             while (!ct.IsCancellationRequested)
+            {
+                webSocket = new();
                 await ListenForScores(ct);
+                if (!ct.IsCancellationRequested)
+                {
+                    await Task.Delay(2000);
+                    Plugin.Log.Notice("Attempting to restart the websocket");
+                }
+            }
         }
         private static async Task ListenForScores(CancellationToken ct)
         {

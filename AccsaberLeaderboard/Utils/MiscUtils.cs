@@ -6,6 +6,8 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 
+using static AccsaberLeaderboard.Utils.MiscConsts;
+
 namespace AccsaberLeaderboard.Utils
 {
     public static class MiscUtils
@@ -71,23 +73,73 @@ namespace AccsaberLeaderboard.Utils
         public static void Parse(string resourcePath, Transform parent, object controller) =>
             GetParser().Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
 
-        public static string ToRelativeTime(this DateTime dateTime)
+        public static string ToRelativeTime(this DateTime dateTime, int layersDeep = 2)
         {
-            var timeSpan = DateTime.UtcNow - dateTime.ToUniversalTime();
+            TimeSpan timeSpan = DateTime.UtcNow - dateTime.ToUniversalTime();
 
-            return timeSpan.TotalSeconds switch
+            string outp = "";
+
+            while (timeSpan.TotalSeconds >= 1e-6 && layersDeep-- >= 0)
             {
-                < 2 => "1 second ago",
-                < 60 => $"{timeSpan.TotalSeconds} seconds ago",
-                < 120 => "1 minute ago",
-                < 3600 => $"{(int)timeSpan.TotalMinutes} minutes ago",
-                < 7200 => "1 hour ago",
-                < 86400 => $"{(int)timeSpan.TotalHours} hours ago",
-                < 172800 => "yesterday",
-                < 2592000 => $"{(int)timeSpan.TotalDays} days ago",
-                < 31536000 => $"{(int)(timeSpan.TotalDays / 30)} months ago",
-                _ => $"{(int)(timeSpan.TotalDays / 365)} years ago"
+                var (timeDiff, str) = GetMostSignificantTime(timeSpan, dateTime);
+                timeSpan -= timeDiff;
+                dateTime = dateTime.AddSeconds(timeDiff.TotalSeconds);
+                outp += ", " + str;
+            }
+
+            return outp.Substring(2) + " ago.";
+        }
+        public static (TimeSpan timeDiff, string str) GetMostSignificantTime(TimeSpan timeDiff, DateTime startTime)
+        {
+            double totalSeconds = timeDiff.TotalSeconds;
+            string outp = totalSeconds switch
+            {
+                < SECONDS_MILLI => $"{(int)(timeDiff.TotalMilliseconds * 1000)} microseconds",
+                < SECONDS_MILLI * 2 => "1 millisecond",
+                < 1 => $"{(int)timeDiff.TotalMilliseconds} milliseconds",
+                < 2 => "1 second",
+                < SECONDS_MINUTE => $"{(int)totalSeconds} seconds",
+                < SECONDS_MINUTE * 2 => "1 minute",
+                < SECONDS_HOUR => $"{(int)timeDiff.TotalMinutes} minutes",
+                < SECONDS_HOUR * 2 => "1 hour",
+                < SECONDS_DAY => $"{(int)timeDiff.TotalHours} hours",
+                < SECONDS_DAY * 2 => "1 day",
+                < SECONDS_WEEK => $"{(int)timeDiff.TotalDays} days",
+                < SECONDS_WEEK * 2 => "1 week",
+                < SECONDS_WEEK * 4 => $"{(int)(timeDiff.TotalDays / 7)} weeks", 
+                < SECONDS_YEAR => "", // Handle months below
+                < SECONDS_YEAR * 2 => "1 year",
+                _ => $"{(int)(timeDiff.TotalDays / DAYS_YEAR)} years"
             };
+
+            if (outp.Length == 0)
+            {
+                int months = 0;
+                int totalSecondsInMonths = 0, toAdd = SECONDS_DAY * DateTime.DaysInMonth(startTime.Year, startTime.Month);
+                while (totalSecondsInMonths + toAdd < totalSeconds)
+                {
+                    months++;
+                    startTime = startTime.AddMonths(1);
+                    totalSecondsInMonths += toAdd;
+                    toAdd = SECONDS_DAY * DateTime.DaysInMonth(startTime.Year, startTime.Month);
+                }
+                outp = months == 0 ? $"{(int)(timeDiff.TotalDays / 7)} weeks" : $"{months} month{(months == 1 ? "" : "s")}";
+                return (months == 0 ? TimeSpan.FromDays((int)(timeDiff.TotalDays / 7) * 7) : TimeSpan.FromSeconds(totalSecondsInMonths), outp);
+            }
+
+            TimeSpan timeSpent = totalSeconds switch
+            {
+                < SECONDS_MILLI => timeDiff,
+                < 1 => TimeSpan.FromMilliseconds((int)timeDiff.TotalMilliseconds),
+                < SECONDS_MINUTE => TimeSpan.FromSeconds((int)totalSeconds),
+                < SECONDS_HOUR => TimeSpan.FromMinutes((int)timeDiff.TotalMinutes),
+                < SECONDS_DAY => TimeSpan.FromHours((int)timeDiff.TotalHours),
+                < SECONDS_WEEK => TimeSpan.FromDays((int)timeDiff.TotalDays),
+                < SECONDS_YEAR => TimeSpan.FromDays((int)(timeDiff.TotalDays / 7) * 7),
+                _ => TimeSpan.FromSeconds((int)(timeDiff.TotalDays / DAYS_YEAR) * SECONDS_YEAR)
+            };
+
+            return (timeSpent, outp);
         }
         public static string GetColor(string categoryId) => categoryId.Last() switch
         {
