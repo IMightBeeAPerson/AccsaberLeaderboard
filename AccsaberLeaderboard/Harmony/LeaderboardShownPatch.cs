@@ -12,7 +12,7 @@ namespace AccsaberLeaderboard.Harmony
         [UsedImplicitly]
         private static void Postfix()
         {
-            if (UI.ViewControllers.LeaderboardViewController.Instance.gameObject.activeSelf)
+            if (UI.ViewControllers.LeaderboardViewController.Instance?.gameObject?.activeSelf ?? false)
             {
                 LeaderboardSwapped?.Invoke();
             }

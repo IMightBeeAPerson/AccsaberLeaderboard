@@ -22,6 +22,7 @@ namespace AccsaberLeaderboard
         private string playerID = null;
         private HashSet<string> playerFriends;
         private readonly object playerIDLock = new(), playerFriendsLock = new();
+        private bool loadLoaded = false;
         public string PlayerID 
         { 
             get
@@ -85,9 +86,9 @@ namespace AccsaberLeaderboard
             Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
 #if NEW_VERSION
-            BeatSaberMarkupLanguage.Util.MainMenuAwaiter.MainMenuInitializing += LoadBSML;
+            BeatSaberMarkupLanguage.Util.MainMenuAwaiter.MainMenuInitializing += Load;
 #else
-            BSEvents.menuSceneActive += LoadBSML;
+            BSEvents.menuSceneActive += Load;
 #endif
         }
 
@@ -98,8 +99,10 @@ namespace AccsaberLeaderboard
             AccsaberLiveScores.WebsocketCanceller.Cancel();
         }
 
-        private void LoadBSML()
+        private void Load()
         {
+            if (loadLoaded) return;
+            loadLoaded = true;
             AddonAdder.Load();
             Task.Run(() => AccsaberLiveScores.StartWebsocket(AccsaberLiveScores.WebsocketCanceller.Token));
         }

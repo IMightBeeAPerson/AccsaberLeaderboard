@@ -58,6 +58,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private DifficultyInfoToken difficultyInfo;
         private PlayerScoreModalViewController psmvc;
         private PlayerMilestoneModalViewController pmmvc;
+        private bool refreshRequested = false;
 
         private ObjectCacher<(int page, LeaderboardDisplayType displayType), (AccsaberScoreData[] pageData, int nextPage)> cache = new(TimeSpan.FromMinutes(2));
 
@@ -174,7 +175,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
 
-            LeaderboardShownPatch.LeaderboardSwapped += TryUpdateCurrentMap;
+            LeaderboardShownPatch.LeaderboardSwapped += () =>
+            {
+                if (!TryUpdateCurrentMap() && refreshRequested)
+                    Task.Run(ForceRefresh);
+            };
 
             // Subscribe to the websocket
             AccsaberLiveScores.OnPlayerScoreUpdated += token =>
@@ -182,7 +187,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 currentPlayerScoreInfo = token;
                 currentPage = 0;
                 cache.ClearCache();
-                Task.Run(() => ForceRefresh(true));
+                Task.Run(async () =>
+                {
+                    if (!await ForceRefresh(true))
+                        refreshRequested = true;
+                });
             };
 
             //MiscUtils.Parse(ResourcePaths.BSML_LEADERBOARD_CELL, leaderboard.transform, );
@@ -337,27 +346,28 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             }
         }
 
-        private void TryUpdateCurrentMap()
+        private bool TryUpdateCurrentMap()
         {
 #if NEW_VERSION
             if (sldvc is not null && sldvc.beatmapLevel is not null && sldvc.beatmapKey != default)
-                UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
+                return UpdateDiff(sldvc.beatmapLevel, sldvc.beatmapKey);
 #else
             if (sldvc is not null && sldvc.selectedDifficultyBeatmap is not null)
-                UpdateDiff(sldvc.selectedDifficultyBeatmap);
+                return UpdateDiff(sldvc.selectedDifficultyBeatmap);
 #endif
+            return false;
         }
 
 #if NEW_VERSION
-        private void UpdateDiff(BeatmapLevel beatmap, BeatmapKey key)
+        private bool UpdateDiff(BeatmapLevel beatmap, BeatmapKey key)
         {
 #else
-        private void UpdateDiff(IDifficultyBeatmap beatmap)
+        private bool UpdateDiff(IDifficultyBeatmap beatmap)
         {
 #endif      
             //Plugin.Log.Info("Update called.");
             if (!gameObject.activeSelf)
-                return;
+                return false;
 
             // Get hash from the level (custom levels use levelID format: "custom_level_HASH")
 #if NEW_VERSION
@@ -377,7 +387,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             currentDifficulty = key.difficulty;
 #else
             if (hash.Equals(currentHash) && beatmap.difficulty.Equals(currentDifficulty))
-                return; // same map, no need to update
+                return false; // same map, no need to update
             currentDifficulty = beatmap.difficulty;
 #endif
             currentHash = hash;
@@ -389,6 +399,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             // reload leaderboard for the new map
             Task.Run(ForceRefresh);
+            return true;
         }
         private IEnumerator UpdateComplexity()
         {
@@ -405,11 +416,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             PanelViewController.Instance.SetCategoryTexts(category);
         }
-        private async Task ForceRefresh() => await ForceRefresh(true);
-        private async Task ForceRefresh(bool overridePlayerScore)
+        private async Task<bool> ForceRefresh() => await ForceRefresh(true);
+        private async Task<bool> ForceRefresh(bool overridePlayerScore)
         {
             AsyncLock.Releaser? theLock = await forceRefreshLock.LockAsync();
-            if (theLock is null) return;
+            if (theLock is null || !gameObject.activeSelf) return false;
             using (theLock.Value)
             {
                 difficultyInfo = await GetLeaderboard(currentHash, currentDifficulty);
@@ -425,7 +436,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         badMapMessage.SetActive(true);
                     }
                     StartCoroutine(ShowBad());
-                    return;
+                    return true;
                 }
 
                 StartCoroutine(UpdateComplexity());
@@ -435,6 +446,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 currentPlayerScore = data is null ? null : new AccsaberScoreDataInfo(data);
                 await LoadLeaderboardAsync();
             }
+            return true;
         }
 
         private async Task LoadLeaderboardAsync()
