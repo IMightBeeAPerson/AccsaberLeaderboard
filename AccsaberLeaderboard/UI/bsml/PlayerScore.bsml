@@ -19,7 +19,7 @@
     <horizontal>
       <vertical pref-width='~containerWidth'>
         <text text='Time' font-color='~labelColor' font-size='~labelFontSize' align='Center'/>
-        <text id='timeSetText' text='time set' font-size='~valueFontSize' word-wrapping='true' align='Center'/>
+        <text id='timeSetText' text='time set' font-size='~valueFontSize' word-wrapping='false' align='Center'/>
       </vertical>
     </horizontal>
     <horizontal child-expand-width='false'>

@@ -79,7 +79,7 @@ namespace AccsaberLeaderboard.Utils
 
             string outp = "";
 
-            while (timeSpan.TotalSeconds >= 1e-6 && layersDeep-- >= 0)
+            while (timeSpan.Ticks > 0 && layersDeep-- >= 0)
             {
                 var (timeDiff, str) = GetMostSignificantTime(timeSpan, dateTime);
                 timeSpan -= timeDiff;
@@ -92,25 +92,29 @@ namespace AccsaberLeaderboard.Utils
         public static (TimeSpan timeDiff, string str) GetMostSignificantTime(TimeSpan timeDiff, DateTime startTime)
         {
             double totalSeconds = timeDiff.TotalSeconds;
-            string outp = totalSeconds switch
-            {
-                < SECONDS_MILLI => $"{(int)(timeDiff.TotalMilliseconds * 1000)} microseconds",
-                < SECONDS_MILLI * 2 => "1 millisecond",
-                < 1 => $"{(int)timeDiff.TotalMilliseconds} milliseconds",
-                < 2 => "1 second",
-                < SECONDS_MINUTE => $"{(int)totalSeconds} seconds",
-                < SECONDS_MINUTE * 2 => "1 minute",
-                < SECONDS_HOUR => $"{(int)timeDiff.TotalMinutes} minutes",
-                < SECONDS_HOUR * 2 => "1 hour",
-                < SECONDS_DAY => $"{(int)timeDiff.TotalHours} hours",
-                < SECONDS_DAY * 2 => "1 day",
-                < SECONDS_WEEK => $"{(int)timeDiff.TotalDays} days",
-                < SECONDS_WEEK * 2 => "1 week",
-                < SECONDS_WEEK * 4 => $"{(int)(timeDiff.TotalDays / 7)} weeks", 
-                < SECONDS_YEAR => "", // Handle months below
-                < SECONDS_YEAR * 2 => "1 year",
-                _ => $"{(int)(timeDiff.TotalDays / DAYS_YEAR)} years"
-            };
+            string outp;
+            if (timeDiff.Ticks < 10)
+                outp = $"{timeDiff.Ticks * 100} nanoseconds";
+            else
+                outp = totalSeconds switch
+                {
+                    < SECONDS_MILLI => $"{(int)(timeDiff.Ticks / 10)} microseconds",
+                    < SECONDS_MILLI * 2 => "1 millisecond",
+                    < 1 => $"{(int)timeDiff.TotalMilliseconds} milliseconds",
+                    < 2 => "1 second",
+                    < SECONDS_MINUTE => $"{(int)totalSeconds} seconds",
+                    < SECONDS_MINUTE * 2 => "1 minute",
+                    < SECONDS_HOUR => $"{(int)timeDiff.TotalMinutes} minutes",
+                    < SECONDS_HOUR * 2 => "1 hour",
+                    < SECONDS_DAY => $"{(int)timeDiff.TotalHours} hours",
+                    < SECONDS_DAY * 2 => "1 day",
+                    < SECONDS_WEEK => $"{(int)timeDiff.TotalDays} days",
+                    < SECONDS_WEEK * 2 => "1 week",
+                    < SECONDS_WEEK * 4 => $"{(int)(timeDiff.TotalDays / 7)} weeks",
+                    < SECONDS_YEAR => "", // Handle months below
+                    < SECONDS_YEAR * 2 => "1 year",
+                    _ => $"{(int)(timeDiff.TotalDays / DAYS_YEAR)} years"
+                };
 
             if (outp.Length == 0)
             {
@@ -129,7 +133,8 @@ namespace AccsaberLeaderboard.Utils
 
             TimeSpan timeSpent = totalSeconds switch
             {
-                < SECONDS_MILLI => timeDiff,
+                < SECONDS_MICRO => timeDiff,
+                < SECONDS_MILLI => TimeSpan.FromTicks((int)(timeDiff.Ticks / 10) * 10),
                 < 1 => TimeSpan.FromMilliseconds((int)timeDiff.TotalMilliseconds),
                 < SECONDS_MINUTE => TimeSpan.FromSeconds((int)totalSeconds),
                 < SECONDS_HOUR => TimeSpan.FromMinutes((int)timeDiff.TotalMinutes),
