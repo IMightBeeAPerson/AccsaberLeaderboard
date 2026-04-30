@@ -16,10 +16,11 @@
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
   </vertical>
 
-  <vertical anchor-pos-x='50' anchor-pos-y='27' vertical-fit='PreferredSize' pref-height='25' pref-width='8' bg='round-rect-panel'>
-    <clickable-image id='GlobalSelector' src='~globalPic' pref-width='5' pref-height='5' on-click='ShowGlobal'/>
-    <clickable-image id='FriendsSelector' src='~friendsPic' pref-width='5' pref-height='5' on-click='ShowFriends'/>
-    <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry'/>
+  <vertical anchor-pos-x='50' anchor-pos-y='27' vertical-fit='PreferredSize' pref-height='30' pref-width='8' bg='round-rect-panel'>
+    <clickable-image id='GlobalSelector' src='~globalPic' pref-width='5' pref-height='5' on-click='ShowGlobal' hover-hint='Global'/>
+    <clickable-image id='FriendsSelector' src='~friendsPic' pref-width='5' pref-height='5' on-click='ShowFriends' hover-hint='Friends'/>
+    <clickable-image id='RivalsSelector' src='~rivalsPic' pref-width='5' pref-height='5' on-click='ShowRivals' hover-hint='Rivals' img-color='#CCC'/>
+    <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry' hover-hint='Country'/>
   </vertical>
 
   <my-vertical id='mapStarContainer' anchor-pos-x='-25' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='~mapStarColor'>

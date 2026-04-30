@@ -2,6 +2,6 @@
 {
     public enum LeaderboardDisplayType
     {
-        Global, Friends, Country
+        Global, Friends, Rivals, Country
     }
 }

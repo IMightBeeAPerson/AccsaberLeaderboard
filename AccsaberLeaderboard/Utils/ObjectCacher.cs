@@ -46,11 +46,12 @@ namespace AccsaberLeaderboard.Utils
 
         public void RemoveItem(K key)
         {
-            if (cache.ContainsKey(key))
+            if (cache.TryGetValue(key, out V item))
             {
-                V item = cache[key];
                 cache.Remove(key);
-                expirationDates.Remove(expirationDates.First(token => token.key.Equals(key)));
+                var expirationDate = expirationDates.FirstOrDefault(token => token.key.Equals(key));
+                if (expirationDate.expiration != default)
+                    expirationDates.Remove(expirationDate);
             }
         }
         public void ClearCache()

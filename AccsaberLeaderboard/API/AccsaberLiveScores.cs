@@ -27,7 +27,7 @@ namespace AccsaberLeaderboard.API
             OnScoreUpdated += token =>
             {
                 string id = AccsaberAPI.GetPlayerId(token);
-                if (id is null || !id.Equals(Plugin.Instance.PlayerID)) return;
+                if (id is null || !id.Equals(PlayerSocialLife.PlayerID)) return;
                 OnPlayerScoreUpdated?.Invoke(token);
             };
         }

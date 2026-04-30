@@ -128,7 +128,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             try
             {
-                playerInfo = await AccsaberAPI.GetPlayerInfo(Plugin.Instance.PlayerID, true);
+                await PlayerSocialLife.LoadTask;
+
+                playerInfo = await AccsaberAPI.GetPlayerInfo(PlayerSocialLife.PlayerID, true);
                 AccsaberAPI.LevelInfoToken levelInfo = AccsaberAPI.GetPlayerLevelData(playerInfo);
                 IEnumerator WaitThenUpdate() 
                 {

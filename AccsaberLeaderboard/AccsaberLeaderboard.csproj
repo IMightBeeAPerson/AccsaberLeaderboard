@@ -199,6 +199,7 @@
     <Compile Include="Utils\MiscConsts.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
     <Compile Include="Utils\ObjectCacher.cs" />
+    <Compile Include="Utils\PlayerSocialLife.cs" />
     <Compile Include="Utils\ResourcePaths.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +251,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\cornerGradient.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\rivals.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

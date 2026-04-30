@@ -3,7 +3,7 @@
     <text text='~Rank' align='Left' font-size='~FontSize'/>
   </vertical>
   <vertical pref-width='~nameWidth' child-alignment='MiddleCenter'>
-    <text text='~PlayerName' align='Left' font-size='~FontSize'/>
+    <text text='~PlayerName' align='Left' font-size='~FontSize' word-wrapping='false' overflow-mode='Ellipsis'/>
   </vertical>
   <vertical pref-width='~apWidth' child-alignment='MiddleCenter' pad-right='~apPadding'>
     <text text='~AP' align='Right' font-size='~FontSize'/>

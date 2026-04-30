@@ -60,8 +60,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private PlayerMilestoneModalViewController pmmvc;
         private bool refreshRequested = false;
 
-        private ObjectCacher<(int page, LeaderboardDisplayType displayType), (AccsaberScoreData[] pageData, int nextPage)> cache = new(TimeSpan.FromMinutes(2));
-
         private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
@@ -72,9 +70,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 return displayType switch
                 {
 
-                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage <= currentPlayerPage && (nextPage > currentPlayerPage || currentPage == nextPage),
                     LeaderboardDisplayType.Country => scoreDatas.First().rank <= GetRank(currentPlayerScoreInfo) && scoreDatas.Last().rank >= GetRank(currentPlayerScoreInfo),
-                    _ => false
+                    _ => currentPage <= currentPlayerPage && (nextPage > currentPlayerPage || currentPage == nextPage)
                 };
             }
         }
@@ -85,9 +82,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 if (currentPlayerPage == -1) return false;
                 return displayType switch
                 {
-                    LeaderboardDisplayType.Friends or LeaderboardDisplayType.Global => currentPage > currentPlayerPage,
                     LeaderboardDisplayType.Country => scoreDatas.First().rank > GetRank(currentPlayerScoreInfo),
-                    _ => false
+                    _ => currentPage > currentPlayerPage
                 };
             }
         }
@@ -116,6 +112,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("youPic")] private const string youPic = ResourcePaths.RESOURCE_YOU;
         [UIValue("globalPic")] private const string globalPic = ResourcePaths.RESOURCE_GLOBAL;
         [UIValue("friendsPic")] private const string friendsPic = ResourcePaths.RESOURCE_FRIENDS;
+        [UIValue("rivalsPic")] private const string rivalsPic = ResourcePaths.RESOURCE_RIVALS;
         [UIValue("countryPic")] private const string countryPic = ResourcePaths.RESOURCE_COUNTRY;
         [UIValue("complexityBG")] private const string complexityBG = ResourcePaths.RESOURCE_GRADIENT_CORNER;
 
@@ -142,6 +139,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
+        [UIComponent("RivalsSelector")] private ClickableImage rivalsSelector;
         [UIComponent("CountrySelector")] private ClickableImage countrySelector;
 
         [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
@@ -155,9 +153,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Actions
 
         [UIAction("OnCellSelected")]
-        private void OnCellSelected(AccsaberScoreDataInfo cell)
+        private void OnCellSelected(ICellDataSource cell)
         {
-            psmvc.ShowModal(this, cell.ScoreInfo);
+            if (cell is AccsaberScoreDataInfo dataInfo)
+                psmvc.ShowModal(this, dataInfo.ScoreInfo);
         }
 
         [UIAction("#post-parse")]
@@ -172,8 +171,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             mapModeContainer.background.material = ResourcePaths.BORDER_MATERIAL;
 
             // Subscribe to player picture click event & logo clicked event from PanelViewController
-            PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(Plugin.Instance.PlayerID, this);
-            PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(Plugin.Instance.PlayerID, this);
+            PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(PlayerSocialLife.PlayerID, this);
+            PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(PlayerSocialLife.PlayerID, this);
 
             LeaderboardShownPatch.LeaderboardSwapped += () =>
             {
@@ -186,7 +185,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             {
                 currentPlayerScoreInfo = token;
                 currentPage = 0;
-                cache.ClearCache();
                 Task.Run(async () =>
                 {
                     if (!await ForceRefresh(true))
@@ -253,6 +251,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIAction("ShowFriends")]
         private void ShowFriends() => ChangeFilter(LeaderboardDisplayType.Friends);
+        [UIAction("ShowRivals")]
+        private void ShowRivals() => ChangeFilter(LeaderboardDisplayType.Rivals);
         [UIAction("ShowCountry")]
         private void ShowCountry() => ChangeFilter(LeaderboardDisplayType.Country);
 
@@ -286,6 +286,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     friendsSelector.DefaultColor = Color.white;
                     previousPages.Clear();
                     break;
+                case LeaderboardDisplayType.Rivals:
+                    rivalsSelector.DefaultColor = new Color(0.8f, 0.8f, 0.8f);
+                    break;
                 case LeaderboardDisplayType.Country:
                     countrySelector.DefaultColor = Color.white;
                     break;
@@ -298,6 +301,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     break;
                 case LeaderboardDisplayType.Friends:
                     friendsSelector.DefaultColor = friendsSelector.HighlightColor;
+                    break;
+                case LeaderboardDisplayType.Rivals:
+                    rivalsSelector.DefaultColor = rivalsSelector.HighlightColor;
                     break;
                 case LeaderboardDisplayType.Country:
                     countrySelector.DefaultColor = countrySelector.HighlightColor;
@@ -395,7 +401,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             page = 1; // reset to first page on map change
             currentPage = 0;
             currentPlayerPage = 0;
-            cache.ClearCache();
 
             // reload leaderboard for the new map
             Task.Run(ForceRefresh);
@@ -441,6 +446,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                 StartCoroutine(UpdateComplexity());
 
+                await PlayerSocialLife.LoadTask;
+
                 currentPlayerPage = await GetPlayerPage(overridePlayerScore);
                 AccsaberScoreData data = ConvertToScoreData(currentPlayerScoreInfo);
                 currentPlayerScore = data is null ? null : new AccsaberScoreDataInfo(data);
@@ -460,7 +467,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 {
                     currentPage = page;
 
-                    bool gotCachedData = cache.TryGetCachedItem((page, displayType), out var data);
+                    bool gotCachedData = displayType == LeaderboardDisplayType.Global || displayType == LeaderboardDisplayType.Country ?
+                        ScoreDataCached(DifficultyId, page) : FilteredScoreDataCached(DifficultyId, page);
 
                     IEnumerator StartLoading()
                     {
@@ -473,16 +481,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (!gotCachedData)
                         StartCoroutine(StartLoading());
 
+                    await PlayerSocialLife.LoadTask;
+
                     scoreDatas.Clear();
-
                     
-                    if (gotCachedData)
-                    {
-                        scoreDatas.AddRange(data.pageData);
-                        nextPage = data.nextPage;
-                        goto End;
-                    }
-
                     AccsaberScoreData[] scores;
                     (AccsaberScoreData[] scores, int truePage) scoreData;
                     switch (displayType)
@@ -492,7 +494,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             nextPage = page + 1;
                             break;
                         case LeaderboardDisplayType.Friends:
-                            scoreData = await GetScoreData(page, DifficultyId, token => Plugin.Instance.PlayerFriends.Contains(GetPlayerId(token)));
+                            scoreData = await GetScoreData(page, DifficultyId, token => PlayerSocialLife.PlayerFriends.Contains(GetPlayerId(token)));
+                            scores = scoreData.scores;
+                            nextPage = scoreData.truePage;
+                            break;
+                        case LeaderboardDisplayType.Rivals:
+                            scoreData = await GetScoreData(page, DifficultyId, token => PlayerSocialLife.PlayerRivals.Contains(GetPlayerId(token)));
                             scores = scoreData.scores;
                             nextPage = scoreData.truePage;
                             break;
@@ -508,7 +515,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         scoreDatas.AddRange(scores);
 
-                    End:
                     IEnumerator ReloadData()
                     {
                         yield return new WaitForFixedUpdate();
@@ -522,8 +528,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     }
                     StartCoroutine(ReloadData());
 
-                    if (scoreDatas.Count > 0 && !gotCachedData)
-                        cache.CacheItem((scoreDatas.ToArray(), nextPage), (currentPage, displayType));
                 }
                 catch (Exception ex)
                 {
@@ -534,10 +538,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private async Task<int> GetPlayerPage(bool overrideLastScore)
         {
+            await PlayerSocialLife.LoadTask;
+
             if (overrideLastScore || currentPlayerScoreInfo is null)
-                currentPlayerScoreInfo = await GetScoreData(Plugin.Instance.PlayerID, currentHash, currentDifficulty);
+                currentPlayerScoreInfo = await GetScoreData(PlayerSocialLife.PlayerID, currentHash, currentDifficulty);
             if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling(GetRank(currentPlayerScoreInfo) / (float)PAGE_LENGTH);
+            int outp = (int)Math.Ceiling(GetRank(currentPlayerScoreInfo) / (float)PAGE_LENGTH);
+
+            Plugin.Log.Info($"Player page = {outp}, current page = {page}, next page = {nextPage}");
+
+            return outp;
         }
         #endregion
 

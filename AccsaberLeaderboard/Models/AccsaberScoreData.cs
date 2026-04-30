@@ -43,7 +43,7 @@ namespace AccsaberLeaderboard.Models
 
             [UIValue(nameof(Score))] public string Score => $"<color={GREY}>{scoreData.score:N0}</color>";
 
-            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName.ClampString(LeaderboardOnPlayerPage ? 15 : 20);
+            [UIValue(nameof(PlayerName))] public string PlayerName => scoreData.playerName;
 
             [UIValue(nameof(Rank))] public string Rank => $"<color={RANK}>#{scoreData.rank}</color>";
 
@@ -52,7 +52,7 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(AP))] public string AP => $"<color={ColorPalette.AP}>{scoreData.AP:N2}ap</color>";
 
             [UIValue(nameof(Acc))] public string Acc => $"<color={ACC}>{scoreData.Acc * 100f:N4}%</color>";
-            [UIValue(nameof(BGColor))] public string BGColor => scoreData.PlayerId.Equals(Plugin.Instance.PlayerID) ? HIGHLIGHT : "#0009";
+            [UIValue(nameof(BGColor))] public string BGColor => scoreData.PlayerId.Equals(PlayerSocialLife.PlayerID) ? HIGHLIGHT : "#0009";
 
             [UIValue(nameof(FontSize))] public float FontSize => LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;

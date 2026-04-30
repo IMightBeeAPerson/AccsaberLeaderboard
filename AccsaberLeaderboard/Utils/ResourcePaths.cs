@@ -18,6 +18,7 @@ namespace AccsaberLeaderboard.Utils
         public const string RESOURCE_LOGO = RESOURCE_PATH + ".accReloaded.png";
         public const string RESOURCE_COUNTRY = RESOURCE_PATH + ".country.png";
         public const string RESOURCE_FRIENDS = RESOURCE_PATH + ".friends.png";
+        public const string RESOURCE_RIVALS = RESOURCE_PATH + ".rivals.png";
         public const string RESOURCE_GLOBAL = RESOURCE_PATH + ".global.png";
         public const string RESOURCE_TOP_ARROW = RESOURCE_PATH + ".topArrow.png";
         public const string RESOURCE_YOU = RESOURCE_PATH + ".you.png";
