@@ -201,14 +201,14 @@ namespace AccsaberLeaderboard.API
                 return null;
             }
         }
-        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<ScoreInfoToken, bool> filter, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10, bool cacheBatch = true)
+        public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<ScoreInfoToken, bool> filter, int scoresNeeded = PAGE_LENGTH, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10, bool cacheBatch = true)
         { // page is zero indexed.
             try
             {
                 if (maxCalls <= 0)
                     throw new ArgumentException("Don't call a function then ask it to do nothing.");
 
-                int scoresNeeded = PAGE_LENGTH, truePage = page, pageLength = PAGE_LENGTH * pageMult;
+                int truePage = page, pageLength = PAGE_LENGTH * pageMult;
                 page = (page - 1) / pageMult;
 
                 List<AccsaberScoreData> outp = new(PAGE_LENGTH);
@@ -227,15 +227,18 @@ namespace AccsaberLeaderboard.API
                             cachedScores = cachedScores.Take(scoresNeeded);
                             return ([.. cachedScores], (int)Math.Ceiling((float)currentCache.Count / PAGE_LENGTH));
                         }
-                        truePage = currentCache.Count / PAGE_LENGTH;
-                        page = truePage / pageMult;
-                        scoresNeeded -= cachedScores.Count();
-                        outp.AddRange(cachedScores);
+                        if (cachedScores.Any())
+                        {
+                            truePage = currentCache.Count / PAGE_LENGTH;
+                            page = truePage / pageMult;
+                            scoresNeeded -= cachedScores.Count();
+                            outp.AddRange(cachedScores);
+                        }
                     }
                 }
 
                 int leaderboardSize = -1;
-                
+
                 do
                 {
                     string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, diffId, page, pageLength), throttler).ConfigureAwait(false);
@@ -261,6 +264,7 @@ namespace AccsaberLeaderboard.API
                         scores = scores.Take(scoresNeeded);
                         pageMult = (int)Math.Ceiling(scores.Last().rank / (float)PAGE_LENGTH); // This is just to update truePage correctly.
                         outp.AddRange(scores);
+                        scoresNeeded = 0;
                     }
                     else
                     {
@@ -274,7 +278,7 @@ namespace AccsaberLeaderboard.API
 
                     page++;
                     maxCalls--;
-                } while (outp.Count < PAGE_LENGTH && maxCalls > 0);
+                } while (scoresNeeded > 0 && maxCalls > 0);
 
                 if (cacheBatch)
                     CacheScoreData(diffId, toCache!, leaderboardSize);
