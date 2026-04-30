@@ -53,8 +53,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("standardColor")] public const string standardColor = STANDARD;
         [UIValue("trueColor")] public const string trueColor = TRUE;
 
-        [UIValue("dimmer")] public const string dimmer = DIMMER;
-
         [UIValue("containerWidth")] public const float containerWidth = 100f;
         [UIValue("containerHeight")] public const float containerHeight = 18f;
 

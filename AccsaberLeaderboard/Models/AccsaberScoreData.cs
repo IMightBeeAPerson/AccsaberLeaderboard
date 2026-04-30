@@ -5,6 +5,7 @@ using BeatSaberMarkupLanguage.Attributes;
 using static AccsaberLeaderboard.UI.ViewControllers.LeaderboardViewController;
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
+using System.Linq;
 
 namespace AccsaberLeaderboard.Models
 {
@@ -52,7 +53,25 @@ namespace AccsaberLeaderboard.Models
             [UIValue(nameof(AP))] public string AP => $"<color={ColorPalette.AP}>{scoreData.AP:N2}ap</color>";
 
             [UIValue(nameof(Acc))] public string Acc => $"<color={ACC}>{scoreData.Acc * 100f:N4}%</color>";
-            [UIValue(nameof(BGColor))] public string BGColor => scoreData.PlayerId.Equals(PlayerSocialLife.PlayerID) ? HIGHLIGHT : "#0009";
+            [UIValue(nameof(BGColor))] public string BGColor
+            {
+                get
+                {
+                    if (scoreData.PlayerId.Equals(PlayerSocialLife.PlayerID))
+                        return HIGHLIGHT;
+
+                    if (Instance.DisplayType != LeaderboardDisplayType.Relations)
+                        return DIMMER;
+
+                    if (PlayerSocialLife.PlayerFriendIDs.Contains(scoreData.PlayerId))
+                        return STEAM_FRIEND;
+                    if (PlayerSocialLife.PlayerFollowedIDs.Contains(scoreData.PlayerId))
+                        return ACC_FRIEND;
+                    return TARGETED;
+                }
+            }
+                
+                
 
             [UIValue(nameof(FontSize))] public float FontSize => LeaderboardOnPlayerPage ? BIG_FONT_SIZE : SMALL_FONT_SIZE;
             [UIValue(nameof(ContainerHeight))] public float ContainerHeight => (LeaderboardOnPlayerPage ? BIG_CELL_SIZE : SMALL_CELL_SIZE) - 0.1f;

@@ -1,4 +1,5 @@
-﻿using HMUI;
+﻿using BeatSaberMarkupLanguage;
+using HMUI;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,6 +12,10 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
     {
 #pragma warning disable IDE1006
         public event Action<PointerEventData> pointerDidClickEvent;
-        public void OnPointerClick(PointerEventData eventData) => pointerDidClickEvent?.Invoke(eventData);
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            BeatSaberUI.BasicUIAudioManager.HandleButtonClickEvent();
+            pointerDidClickEvent?.Invoke(eventData);
+        }
     }
 }

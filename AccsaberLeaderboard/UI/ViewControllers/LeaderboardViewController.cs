@@ -22,6 +22,11 @@ using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
 using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.Harmony;
+using UnityEngine.UI;
+using AccsaberLeaderboard.Configuration;
+using BeatSaberMarkupLanguage;
+using System.Reflection;
+using BeatSaberMarkupLanguage.TypeHandlers;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -60,6 +65,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private PlayerMilestoneModalViewController pmmvc;
         private bool refreshRequested = false;
 
+        public LeaderboardDisplayType DisplayType => displayType;
         private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
@@ -111,9 +117,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIValue("topArrowPic")] private const string topArrowPic = ResourcePaths.RESOURCE_TOP_ARROW;
         [UIValue("youPic")] private const string youPic = ResourcePaths.RESOURCE_YOU;
+        [UIValue("swapPic")] private const string swapPic = ResourcePaths.RESOURCE_SWAP;
         [UIValue("globalPic")] private const string globalPic = ResourcePaths.RESOURCE_GLOBAL;
         [UIValue("friendsPic")] private const string friendsPic = ResourcePaths.RESOURCE_FRIENDS;
+        [UIValue("followedPic")] private const string followedPic = ResourcePaths.RESOURCE_FOLLOWED;
         [UIValue("rivalsPic")] private const string rivalsPic = ResourcePaths.RESOURCE_RIVALS;
+        [UIValue("relationsPic")] private const string relationsPic = ResourcePaths.RESOURCE_RELATIONS;
         [UIValue("countryPic")] private const string countryPic = ResourcePaths.RESOURCE_COUNTRY;
         [UIValue("complexityBG")] private const string complexityBG = ResourcePaths.RESOURCE_GRADIENT_CORNER;
 
@@ -138,13 +147,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 
+        [UIObject("SwapSelector")] private GameObject swapSelector;
+
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
+        [UIComponent("FollowedSelector")] private ClickableImage followedSelector;
         [UIComponent("RivalsSelector")] private ClickableImage rivalsSelector;
+        [UIComponent("RelationsSelector")] private ClickableImage relationsSelector;
         [UIComponent("CountrySelector")] private ClickableImage countrySelector;
 
         [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
         [UIComponent("mapTypeText")] private TextMeshProUGUI mapTypeText;
+
+        [UIComponent("selectorContainer")] private LayoutElement selectorContainer;
 
         [UIComponent("mapStarContainer")] private CustomBackground mapStarContainer;
         [UIComponent("mapModeContainer")] private CustomBackground mapModeContainer;
@@ -159,6 +174,24 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (cell is AccsaberScoreDataInfo dataInfo)
                 psmvc.ShowModal(this, dataInfo.ScoreInfo);
         }
+        [UIAction("ToggleCombinedIcons")]
+        private void ToggleCombinedIcons()
+        {
+            bool toggle = !PluginConfig.Instance.CombineRelations;
+            IEnumerator UpdateUI()
+            {
+                yield return new WaitForEndOfFrame();
+
+                friendsSelector.gameObject.SetActive(!toggle);
+                followedSelector.gameObject.SetActive(!toggle);
+                rivalsSelector.gameObject.SetActive(!toggle);
+                relationsSelector.gameObject.SetActive(toggle);
+
+                selectorContainer.preferredHeight = toggle ? 25f : 35f;
+            }
+            StartCoroutine(UpdateUI());
+            PluginConfig.Instance.CombineRelations = toggle;
+        }
 
         [UIAction("#post-parse")]
         private void PostParse()
@@ -170,6 +203,25 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             mapStarContainer.background.material = ResourcePaths.BORDER_MATERIAL;
             mapModeContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+
+            if (PluginConfig.Instance.CombineRelations)
+            {
+                PluginConfig.Instance.CombineRelations = false;
+                ToggleCombinedIcons();
+            }
+
+            /*GameObject go = new("MyClickableImage");
+            go.transform.SetParent(swapSelector.transform, false);
+            go.AddComponent<LayoutElement>();
+
+            ClickableImageUnclipped img = go.AddComponent<ClickableImageUnclipped>();
+            img.material = Utilities.ImageResources.NoGlowMat;
+            img.rectTransform.SetParent(swapSelector.transform, false);
+            img.sprite = Utilities.LoadSpriteRaw(Utilities.GetResource(Assembly.GetExecutingAssembly(), ResourcePaths.RESOURCE_SWAP));
+            img.OnClickEvent += _ => ToggleCombinedIcons();
+            new RectTransformHandler().Setters["hoverHint"](img.rectTransform, "Swap the selector buttons!");*/
+
+
 
             // Subscribe to player picture click event & logo clicked event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(PlayerSocialLife.PlayerID, this);
@@ -222,7 +274,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     page--;
                     break;
                 case LeaderboardDisplayType.Friends:
+                case LeaderboardDisplayType.Followed:
                 case LeaderboardDisplayType.Rivals:
+                case LeaderboardDisplayType.Relations:
                     page = previousPages.Pop();
                     break;
             }
@@ -253,8 +307,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIAction("ShowFriends")]
         private void ShowFriends() => ChangeFilter(LeaderboardDisplayType.Friends);
+        [UIAction("ShowFollowed")]
+        private void ShowFollowed() => ChangeFilter(LeaderboardDisplayType.Followed);
         [UIAction("ShowRivals")]
         private void ShowRivals() => ChangeFilter(LeaderboardDisplayType.Rivals);
+        [UIAction("ShowRelations")]
+        private void ShowRelations() => ChangeFilter(LeaderboardDisplayType.Relations);
         [UIAction("ShowCountry")]
         private void ShowCountry() => ChangeFilter(LeaderboardDisplayType.Country);
 
@@ -288,8 +346,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     friendsSelector.DefaultColor = Color.white;
                     previousPages.Clear();
                     break;
+                case LeaderboardDisplayType.Followed:
+                    followedSelector.DefaultColor = Color.white;
+                    previousPages.Clear();
+                    break;
                 case LeaderboardDisplayType.Rivals:
                     rivalsSelector.DefaultColor = new Color(0.8f, 0.8f, 0.8f);
+                    previousPages.Clear();
+                    break;
+                case LeaderboardDisplayType.Relations:
+                    relationsSelector.DefaultColor = Color.white;
+                    previousPages.Clear();
                     break;
                 case LeaderboardDisplayType.Country:
                     countrySelector.DefaultColor = Color.white;
@@ -304,8 +371,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 case LeaderboardDisplayType.Friends:
                     friendsSelector.DefaultColor = friendsSelector.HighlightColor;
                     break;
+                case LeaderboardDisplayType.Followed:
+                    followedSelector.DefaultColor = followedSelector.HighlightColor;
+                    break;
                 case LeaderboardDisplayType.Rivals:
                     rivalsSelector.DefaultColor = rivalsSelector.HighlightColor;
+                    break;
+                case LeaderboardDisplayType.Relations:
+                    relationsSelector.DefaultColor = relationsSelector.HighlightColor;
                     break;
                 case LeaderboardDisplayType.Country:
                     countrySelector.DefaultColor = countrySelector.HighlightColor;
@@ -496,7 +569,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     AccsaberScoreData[] scores;
                     (AccsaberScoreData[] scores, int truePage) scoreData;
-                    int neededScores;
+                    IReadOnlyCollection<string> ids = PlayerSocialLife.GetIds(displayType);
                     switch (displayType)
                     {
                         case LeaderboardDisplayType.Global:
@@ -504,14 +577,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                             nextPage = page + 1;
                             break;
                         case LeaderboardDisplayType.Friends:
-                            neededScores = Math.Min(PlayerSocialLife.PlayerFriends.Count - previousPages.Count * 10, 10);
-                            scoreData = await GetScoreData(page, DifficultyId, token => PlayerSocialLife.PlayerFriends.Contains(GetPlayerId(token)), neededScores);
-                            scores = scoreData.scores;
-                            nextPage = scoreData.truePage;
-                            break;
+                        case LeaderboardDisplayType.Followed:
                         case LeaderboardDisplayType.Rivals:
-                            neededScores = Math.Min(PlayerSocialLife.PlayerRivals.Count - previousPages.Count * 10, 10);
-                            scoreData = await GetScoreData(page, DifficultyId, token => PlayerSocialLife.PlayerRivals.Contains(GetPlayerId(token)), neededScores);
+                        case LeaderboardDisplayType.Relations:
+                            int neededScores = Math.Min(ids.Count - previousPages.Count * 10, 10);
+                            scoreData = await GetScoreData(page, DifficultyId, token => ids.Contains(GetPlayerId(token)), neededScores);
                             scores = scoreData.scores;
                             nextPage = scoreData.truePage;
                             break;

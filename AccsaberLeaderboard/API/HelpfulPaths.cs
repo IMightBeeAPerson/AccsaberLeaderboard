@@ -35,7 +35,7 @@ namespace AccsaberLeaderboard.API
         public const string APAPI_MILESTONE_COMPLETE = APAPI + "users/{0}/milestones/completed"; //user_id
         public const string APAPI_MILESTONE_INCOMPLETE = APAPI + "users/{0}/milestones/uncompleted"; //user_id
 
-        //user_id, one of: ["follower", "rival"], one of: ["outgoing", "incoming"], page (zero indexed), count
+        //user_id, RelationType, one of: ["outgoing", "incoming"], page (zero indexed), count
         public const string APAPI_RELATIONS = APAPI + "users/{0}/relations?type={1}&direction={2}&page={3}&size={4}"; 
 
         public const string APAPI_WEBSOCKET = "wss://accsaberreloaded.com/ws/scores";
@@ -76,5 +76,10 @@ namespace AccsaberLeaderboard.API
         };
         public static int FromDiff(BeatmapDifficulty diff) => (int)diff * 2 + 1;
         public static BeatmapDifficulty ToDiff(int diffNum) => (BeatmapDifficulty)((diffNum - 1) / 2);
+
+        public enum RelationType
+        {
+            follower, rival, blocked
+        }
     }
 }

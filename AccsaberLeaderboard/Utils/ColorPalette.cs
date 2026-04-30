@@ -2,7 +2,7 @@
 {
     public static class ColorPalette
     {
-        public const string GLOBAL= "#89D0F5";
+        public const string GLOBAL = "#89D0F5";
         public const string COUNTRY = "#FFA893";
 
         public const string GLOBAL_DIM = "#347BA0"; // dim by 5
@@ -30,7 +30,11 @@
         public const string GREY = "#AAA";
         public const string DARK_BLUE = "#012";
 
-        public const string DIMMER = "#000A"; //#33333388
+        public const string DIMMER = "#0009";
+
+        public const string STEAM_FRIEND = "#008ABB4F";
+        public const string ACC_FRIEND = "#674F354F";
+        public const string TARGETED = "#9410104F";
 
 
         public const string DEFAULT_COLOR = "#000f";

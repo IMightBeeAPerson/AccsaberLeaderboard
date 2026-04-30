@@ -339,14 +339,19 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<HashSet<string>> GetPlayerRivals(string userId)
+        public static async Task<HashSet<string>> GetPlayerRelations(RelationType relation)
+        {
+            await PlayerSocialLife.LoadTask;
+            return await GetPlayerRelations(relation, PlayerSocialLife.PlayerID);
+        }
+        public static async Task<HashSet<string>> GetPlayerRelations(RelationType relation, string playerId)
         {
             const int pageLength = 1000;
             int page = 0, callsLeft = 0;
             HashSet<string> outp = [];
             do
             {
-                string dataStr = await CallAPI_String(string.Format(APAPI_RELATIONS, userId, "rival", "outgoing", page, pageLength));
+                string dataStr = await CallAPI_String(string.Format(APAPI_RELATIONS, playerId, relation.ToString(), "outgoing", page, pageLength));
                 if (string.IsNullOrEmpty(dataStr))
                     break;
                 JToken response = JToken.Parse(dataStr);
@@ -418,7 +423,7 @@ namespace AccsaberLeaderboard.API
         public static async Task<IEnumerable<ScoreInfoToken>?> GetLeaderboardScores(string difficulty_id, string country, int page = 0, int count = 10, CancellationToken ct = default)
         {
             if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out var data) && (data.data.Count == data.leaderboardSize || page < data.data.Count / count))
-                return data.data.Skip(page * count).Take(count);
+                return data.data.Where(token => GetCountry(token).Equals(country)).Skip(page * count).Take(count);
 
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF_COUNTRY, difficulty_id, country, page, count), throttler, true, ct: ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(dataStr)) return null;
