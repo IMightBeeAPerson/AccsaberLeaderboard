@@ -10,6 +10,7 @@ namespace AccsaberLeaderboard.Utils
         public const string BSML_LEADERBOARD_CELL = BSML_PATH + ".LeaderboardCell.bsml";
         public const string BSML_MILESTONE_MODAL = BSML_PATH + ".MilestoneModal.bsml";
         public const string BSML_PANEL_VIEW = BSML_PATH + ".PanelView.bsml";
+        public const string BSML_TITLE_PANEL = BSML_PATH + ".TitlePanel.bsml";
         public const string BSML_PLAYER_PROFILE = BSML_PATH + ".PlayerProfile.bsml";
         public const string BSML_PLAYER_SCORE = BSML_PATH + ".PlayerScore.bsml";
 
@@ -28,6 +29,7 @@ namespace AccsaberLeaderboard.Utils
         public const string RESOURCE_GRADIENT = RESOURCE_PATH + ".gradient.png";
         public const string RESOURCE_GRADIENT_PANEL = RESOURCE_PATH + ".panelGradient.png";
         public const string RESOURCE_GRADIENT_CORNER = RESOURCE_PATH + ".cornerGradient.png";
+        public const string RESOURCE_GRADIENT_HEADER = RESOURCE_PATH + ".headerBG.png";
 
         //Below line taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
         public static readonly Material BORDER_MATERIAL = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");

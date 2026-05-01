@@ -20,6 +20,8 @@ using Zenject;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
+
+using Screen = HMUI.Screen;
 using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.Harmony;
 using UnityEngine.UI;
@@ -63,7 +65,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private DifficultyInfoToken difficultyInfo;
         private PlayerScoreModalViewController psmvc;
         private PlayerMilestoneModalViewController pmmvc;
-        private bool refreshRequested = false;
+        private bool refreshRequested = false, loaded = false;
+
+        private string titlePanelTitle;
+        private Color titlePanelC;
+        private Sprite titleDefaultSprite, titleCorrectSprite;
 
         public LeaderboardDisplayType DisplayType => displayType;
         private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
@@ -147,7 +153,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIObject("leaderboard_badMap")] private GameObject badMapMessage;
 
-        [UIObject("SwapSelector")] private GameObject swapSelector;
+        [UIObject("titleContainer")] private GameObject titleContainer;
 
         [UIComponent("GlobalSelector")] private ClickableImage globalSelector;
         [UIComponent("FriendsSelector")] private ClickableImage friendsSelector;
@@ -196,13 +202,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("#post-parse")]
         private void PostParse()
         {
+            if (loaded)
+                return;
+            loaded = true;
+
+            HandleHeaderPane();
+
             UpdateSelectors(LeaderboardDisplayType.Global);
 
             psmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
-
-            mapStarContainer.background.material = ResourcePaths.BORDER_MATERIAL;
-            mapModeContainer.background.material = ResourcePaths.BORDER_MATERIAL;
 
             if (PluginConfig.Instance.CombineRelations)
             {
@@ -210,27 +219,20 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 ToggleCombinedIcons();
             }
 
-            /*GameObject go = new("MyClickableImage");
-            go.transform.SetParent(swapSelector.transform, false);
-            go.AddComponent<LayoutElement>();
-
-            ClickableImageUnclipped img = go.AddComponent<ClickableImageUnclipped>();
-            img.material = Utilities.ImageResources.NoGlowMat;
-            img.rectTransform.SetParent(swapSelector.transform, false);
-            img.sprite = Utilities.LoadSpriteRaw(Utilities.GetResource(Assembly.GetExecutingAssembly(), ResourcePaths.RESOURCE_SWAP));
-            img.OnClickEvent += _ => ToggleCombinedIcons();
-            new RectTransformHandler().Setters["hoverHint"](img.rectTransform, "Swap the selector buttons!");*/
-
-
-
             // Subscribe to player picture click event & logo clicked event from PanelViewController
             PanelViewController.OnPlayerPictureClicked += () => psmvc.ppmvc.ShowPlayer(PlayerSocialLife.PlayerID, this);
             PanelViewController.OnLogoClicked += () => pmmvc.ShowMilestoneModal(PlayerSocialLife.PlayerID, this);
 
-            LeaderboardShownPatch.LeaderboardSwapped += () =>
+            LeaderboardShownPatch.LeaderboardShown += () =>
             {
+                titleContainer.SetActive(true);
+
                 if (!TryUpdateCurrentMap() && refreshRequested)
                     Task.Run(ForceRefresh);
+            };
+            LeaderboardHiddenPatch.LeaderboardHidden += () =>
+            {
+                titleContainer.SetActive(false);
             };
 
             // Subscribe to the websocket
@@ -324,6 +326,89 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             Plugin.Log.Debug("LeaderboardViewController Awake");
             Instance = this;
+        }
+
+        private GameObject GetHeaderPane()
+        {
+            /*Transform t = gameObject.transform;
+            GameObject titleBG = null;
+            while (t.parent is not null && !t.gameObject.name.Equals("RightScreen"))
+                t = t.parent;
+            TextMeshProUGUI highscoreText = t.GetComponentsInChildren<TextMeshProUGUI>(false).FirstOrDefault(t => t.text is not null && t.text.Trim().ToLower().Equals("highscores"));
+            if (highscoreText is not null)
+            {
+                titleBG = highscoreText.transform.parent.GetComponentsInChildren<Transform>(false).FirstOrDefault(t => t.gameObject.name.Equals("BG")).gameObject;
+
+                CustomBackground bg = highscoreText.transform.parent.gameObject.AddComponent<CustomBackground>();
+                bg.Apply(ResourcePaths.RESOURCE_GRADIENT_PANEL, GREY.Color());
+
+                MiscUtils.Parse(ResourcePaths.BSML_TITLE_PANEL, highscoreText.transform.parent, this);
+                *//*t = highscoreText.transform;
+                while (t is not null)
+                {
+                    //Plugin.Log.Info($"GameObject: {t.gameObject}");
+                    if (t.gameObject.name.Equals("HeaderPanel"))
+                        break;
+                    t = t.parent;
+                }
+                if (t is not null)
+                {
+                    Component[] comps = t.GetComponents<Component>();
+                    foreach (Component comp in comps)
+                        Plugin.Log.Info($"Component: {comp}");
+                    Transform[] childs = t.GetComponentsInChildren<Transform>(true);
+                    foreach (Transform child in childs)
+                        Plugin.Log.Info($"Child: {child.gameObject}");
+                }*//*
+            }*/
+            // Code for finding this header taken from: https://github.com/BeatLeader/beatleader-mod/blob/1.29.4/Source/2_Core/Managers/Leaderboard/LeaderboardHeaderManager.cs
+            Screen screen = gameObject.GetComponentInParent<Screen>();
+            if (screen is null) return null;
+
+            //var leaderboardVC = screen.transform.FindChildRecursive("PlatformLeaderboardViewController");
+            Transform leaderboardVC = screen.transform.Find("PlatformLeaderboardViewController");
+            if (leaderboardVC is null) return null;
+
+            //GameObject header = leaderboardVC.transform.FindChildRecursive("HeaderPanel").gameObject;
+            return leaderboardVC.transform.Find("HeaderPanel").gameObject;
+        }
+        private void HandleHeaderPane()
+        {
+            GameObject headerPane = GetHeaderPane();
+            if (headerPane is null) return;
+
+            TextMeshProUGUI title = headerPane.GetComponentInChildren<TextMeshProUGUI>();
+            ImageView headerBG = headerPane.GetComponentInChildren<ImageView>();
+
+            titleDefaultSprite = headerBG.sprite;
+            titleCorrectSprite = Utilities.LoadSpriteRaw(Utilities.GetResource(Assembly.GetExecutingAssembly(), ResourcePaths.RESOURCE_GRADIENT_HEADER));
+
+            LeaderboardShownPatch.LeaderboardShown += () =>
+            {
+                titlePanelTitle = title.text;
+                title.SetText("Accsaber");
+
+                titlePanelC = headerBG.color;
+
+                headerBG.color = Color.white;
+                headerBG.gradient = false;
+                headerBG.sprite = titleCorrectSprite;
+            };
+            LeaderboardHiddenPatch.LeaderboardHidden += () =>
+            {
+                Plugin.Log.Info("Setting title back to " + titlePanelTitle);
+                title.SetText(titlePanelTitle);
+                titlePanelTitle = null;
+
+                headerBG.color = titlePanelC;
+                headerBG.gradient = true;
+                headerBG.sprite = titleDefaultSprite;
+            };
+
+            MiscUtils.Parse(ResourcePaths.BSML_TITLE_PANEL, headerPane.transform, this);
+
+            mapStarContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+            mapModeContainer.background.material = ResourcePaths.BORDER_MATERIAL;
         }
 
         private void ChangeFilter(LeaderboardDisplayType type)

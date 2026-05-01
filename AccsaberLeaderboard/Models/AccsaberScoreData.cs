@@ -64,10 +64,10 @@ namespace AccsaberLeaderboard.Models
                         return DIMMER;
 
                     if (PlayerSocialLife.PlayerFriendIDs.Contains(scoreData.PlayerId))
-                        return STEAM_FRIEND;
+                        return RELATIONS_STEAM;
                     if (PlayerSocialLife.PlayerFollowedIDs.Contains(scoreData.PlayerId))
-                        return ACC_FRIEND;
-                    return TARGETED;
+                        return RELATIONS_ACC;
+                    return RELATIONS_TARGETED;
                 }
             }
                 

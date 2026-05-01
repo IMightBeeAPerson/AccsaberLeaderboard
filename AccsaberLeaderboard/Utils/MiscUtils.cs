@@ -1,4 +1,5 @@
 ﻿using BeatSaberMarkupLanguage;
+using BeatSaberMarkupLanguage.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace AccsaberLeaderboard.Utils
             return $"{str.Substring(0, maxLength)}{suffix}";
         }
         public static int ConvertCharFromHex(char c) => c > '9' ? char.ToUpper(c) - 'A' + 10 : c - '0';
-        public static string DimColor(string hex, int dimAmount)
+        public static string DimColor(this string hex, int dimAmount)
         {
             bool hasHashtag = hex[0] == '#';
             if (hasHashtag) hex = hex.Substring(1);
@@ -39,21 +40,21 @@ namespace AccsaberLeaderboard.Utils
             if (outp.Length < hex.Length) outp = new string('0', hex.Length - outp.Length) + outp;
             return (hasHashtag ? "#" : "") + outp;
         }
-        public static VertexGradient ColorToGradient(string hex, int dimBase = 4)
+        public static VertexGradient ColorToGradient(this string hex, int dimBase = 4)
         {
             ColorUtility.TryParseHtmlString(hex, out Color c1);
             ColorUtility.TryParseHtmlString(DimColor(hex, dimBase), out Color c2);
             ColorUtility.TryParseHtmlString(DimColor(hex, dimBase * 2), out Color c3);
             return new(c1, c2, c2, c3);
         }
-        public static string InvertColor(string hex)
+        public static string InvertColor(this string hex)
         {
             bool hasHashtag = hex[0] == '#';
             if (hasHashtag) hex = hex.Substring(1);
             int invertNumber = int.Parse(new string('F', hex.Length), System.Globalization.NumberStyles.HexNumber);
             return (hasHashtag ? "#" : "") + (invertNumber - int.Parse(hex, System.Globalization.NumberStyles.HexNumber)).ToString("X");
         }
-        public static string ChangeAlpha(string hex, string alpha)
+        public static string ChangeAlpha(this string hex, string alpha)
         {
             bool hasHashtag = hex[0] == '#';
             if (hasHashtag) hex = hex.Substring(1);
@@ -71,7 +72,7 @@ namespace AccsaberLeaderboard.Utils
 #else
             BSMLParser.instance;
 #endif
-        public static void Parse(string resourcePath, Transform parent, object controller) =>
+        public static BSMLParserParams Parse(string resourcePath, Transform parent, object controller) =>
             GetParser().Parse(Utilities.GetResourceContent(Assembly.GetExecutingAssembly(), resourcePath), parent.gameObject, controller);
 
         public static string ToRelativeTime(this DateTime dateTime, int layersDeep = 2)

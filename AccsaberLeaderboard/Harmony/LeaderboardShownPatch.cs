@@ -8,13 +8,14 @@ namespace AccsaberLeaderboard.Harmony
     [HarmonyPatch(typeof(CustomLeaderboard), "Show")]
     internal static class LeaderboardShownPatch
     {
-        public static event Action LeaderboardSwapped;
+#pragma warning disable IDE0051
+        public static event Action LeaderboardShown;
         [UsedImplicitly]
         private static void Postfix()
         {
             if (UI.ViewControllers.LeaderboardViewController.Instance?.gameObject?.activeSelf ?? false)
             {
-                LeaderboardSwapped?.Invoke();
+                LeaderboardShown?.Invoke();
             }
         }
     }

@@ -164,6 +164,7 @@
     <Compile Include="API\HelpfulPaths.cs" />
     <Compile Include="API\Throttler.cs" />
     <Compile Include="Calculators\APCalc.cs" />
+    <Compile Include="Harmony\LeaderboardHiddenPatch.cs" />
     <Compile Include="Harmony\LeaderboardShownPatch.cs" />
     <Compile Include="Harmony\LoadPatch.cs" />
     <Compile Include="Installers\InstallerHelper.cs" />
@@ -178,7 +179,6 @@
     <Compile Include="AccsaberLeaderboardController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\BSML Addons\AddonAdder.cs" />
-    <Compile Include="UI\BSML Addons\Components\ClickableImageUnclipped.cs" />
     <Compile Include="UI\BSML Addons\Components\MyCustomCellListTableData.cs" />
     <Compile Include="UI\BSML Addons\Components\MyEventSystemListener.cs" />
     <Compile Include="UI\BSML Addons\Tags\BetterHorizontal.cs" />
@@ -215,6 +215,7 @@
     <EmbeddedResource Include="UI\bsml\MilestoneModal.bsml" />
     <EmbeddedResource Include="UI\bsml\LeaderboardCell.bsml" />
     <EmbeddedResource Include="UI\bsml\PlayerScore.bsml" />
+    <EmbeddedResource Include="UI\bsml\TitlePanel.bsml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">
@@ -264,6 +265,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\swap.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\headerBG.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

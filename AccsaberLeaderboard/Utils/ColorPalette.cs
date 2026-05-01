@@ -1,4 +1,6 @@
-﻿namespace AccsaberLeaderboard.Utils
+﻿using UnityEngine;
+
+namespace AccsaberLeaderboard.Utils
 {
     public static class ColorPalette
     {
@@ -32,9 +34,11 @@
 
         public const string DIMMER = "#0009";
 
-        public const string STEAM_FRIEND = "#008ABB4F";
-        public const string ACC_FRIEND = "#674F354F";
-        public const string TARGETED = "#9410104F";
+        public const string RELOADED = "#86633F";
+
+        public const string RELATIONS_STEAM = "#008ABB4F";
+        public const string RELATIONS_ACC = "#674F354F";
+        public const string RELATIONS_TARGETED = "#9410104F";
 
 
         public const string DEFAULT_COLOR = "#000f";
@@ -63,5 +67,13 @@
             "apex" => "#a855f7",
             _ => "#FFF"
         };
+
+        public static Color Color(this string hex)
+        {
+            if (ColorUtility.TryParseHtmlString(hex, out Color color)) 
+                return color;
+            Plugin.Log.Warn($"The color \"{hex}\" could not be parsed!");
+            return default;
+        }
     }
 }

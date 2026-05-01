@@ -9,14 +9,14 @@
     <text text='Map is Unranked.' font-size='18'/>
   </vertical>
 
-  <vertical anchor-pos-x='50' anchor-pos-y='-13' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
+  <vertical anchor-pos-x='50' anchor-pos-y='-17' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='~topArrowPic' pref-width='5' pref-height='5' on-click='OnPageTop' default-color='~colorGrey'/>
     <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
     <clickable-image src='~youPic' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked' default-color='~colorGrey'/>
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
   </vertical>
 
-  <vertical id='selectorContainer' anchor-pos-x='50' anchor-pos-y='27' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
+  <vertical id='selectorContainer' anchor-pos-x='50' anchor-pos-y='23' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image id='GlobalSelector' src='~globalPic' pref-width='5' pref-height='5' on-click='ShowGlobal' hover-hint='Global'/>
     <clickable-image id='FriendsSelector' src='~friendsPic' pref-width='5' pref-height='5' on-click='ShowFriends' hover-hint='Friends'/>
     <clickable-image id='FollowedSelector' src='~followedPic' pref-width='5' pref-height='5' on-click='ShowFollowed' hover-hint='Followed'/>
@@ -25,21 +25,9 @@
     <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry' hover-hint='Country'/>
   </vertical>
 
-  <vertical id='SwapSelector' anchor-pos-x='40' anchor-pos-y='41.5' vertical-fit='PreferredSize' horizontal-fit='PreferredSize' pref-height='8' pref-width='8' bg='round-rect-panel'>
-    <clickable-image  src='~swapPic' pref-width='5' pref-height='5' on-click='ToggleCombinedIcons' hover-hint='Swap the selector buttons!'/>
-  </vertical>
+  
 
-  <my-vertical id='mapStarContainer' anchor-pos-x='-25' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='~mapStarColor'>
-    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='20'>
-      <text id='mapStarText' text='star' font-size='~complexityFontSize' align='Center'/>
-    </horizontal>
-  </my-vertical>
-
-  <my-vertical id='mapModeContainer' anchor-pos-x='25' anchor-pos-y='41.5' vertical-fit='PreferredSize' child-expand-width='false' child-expand-height='false' bg='~complexityBG' color='#000'>
-    <horizontal vertical-fit='PreferredSize' pref-height='7' pref-width='20'>
-      <text id='mapTypeText' text='type' font-size='~complexityFontSize' align='Center'/>
-    </horizontal>
-  </my-vertical>
+  
 </bg>
 
 <!--A lot of this was inspired from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->
