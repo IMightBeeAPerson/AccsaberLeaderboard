@@ -516,7 +516,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
 #if NEW_VERSION
             if (hash.Equals(currentHash) && key.difficulty.Equals(currentDifficulty))
-                return; // same map, no need to update
+                return false; // same map, no need to update
             currentDifficulty = key.difficulty;
 #else
             if (hash.Equals(currentHash) && beatmap.difficulty.Equals(currentDifficulty))

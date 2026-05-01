@@ -14,7 +14,9 @@ namespace AccsaberLeaderboard.UI.BSML_Addons.Components
         public event Action<PointerEventData> pointerDidClickEvent;
         public void OnPointerClick(PointerEventData eventData)
         {
+#if !NEW_VERSION
             BeatSaberUI.BasicUIAudioManager.HandleButtonClickEvent();
+#endif
             pointerDidClickEvent?.Invoke(eventData);
         }
     }
