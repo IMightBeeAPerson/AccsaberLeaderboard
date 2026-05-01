@@ -358,7 +358,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                 titlePanelC = headerBG.color;
 
-                headerBG.color = Color.white;
+                headerBG.color = new Color(0.4f, 0.4f, 0.4f);
                 headerBG.gradient = false;
                 headerBG.sprite = titleCorrectSprite;
             };

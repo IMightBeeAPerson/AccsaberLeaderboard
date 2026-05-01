@@ -234,8 +234,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             playerId = GetPlayerId(playerInfo);
             bool isMainCharacter = PlayerSocialLife.PlayerID.Equals(playerId);
 
-            setAsFollowerButton.gameObject.SetActive(!isMainCharacter);
-            setAsRivalButton.gameObject.SetActive(!isMainCharacter);
+            followerContainer.gameObject.SetActive(!isMainCharacter);
+            rivalContainer.gameObject.SetActive(!isMainCharacter);
             if (!isMainCharacter)
                 ResetButtons(PlayerSocialLife.PlayerFollowedIDs.Contains(playerId), PlayerSocialLife.PlayerRivalIDs.Contains(playerId));
 
