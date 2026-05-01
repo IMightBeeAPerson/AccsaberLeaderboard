@@ -1,8 +1,16 @@
 <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
     <loading id='loader' preserve-aspect='true'/>
     <vertical id='container' pref-width='~containerWidth' pref-height='~containerHeight' bg='round-rect-panel' child-expand-width='false'>
-      <horizontal pref-width='~containerWidth'>
-        <text id='playerName' font-size='~titleFontSize' align='Center'/>
+      <horizontal pref-width='~containerWidth' child-expand-width='false' spacing='0'>
+        <my-vertical id='followerContainer' pref-width='~namePadding' bg='~oneXonePic' color='~colorFollowBG'>
+          <clickable-image id='setAsFollowerButton' src='~followPic' pref-width='~namePadding' pref-height='~namePadding' on-click='SetAsFollower'/>
+        </my-vertical>
+        <vertical pref-width='~nameSize'>
+          <text id='playerName' font-size='~titleFontSize' align='Center'/>
+        </vertical>
+        <my-vertical id='rivalContainer' pref-width='~namePadding' bg='~oneXonePic' color='~colorRivalBG'>
+          <clickable-image id='setAsRivalButton' src='~rivalPic' pref-width='~namePadding' pref-height='~namePadding' on-click='SetAsRival'/>
+        </my-vertical>
       </horizontal>
       <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
         <text id='levelRank' font-size='~fontSizeBig' align='Left'/>

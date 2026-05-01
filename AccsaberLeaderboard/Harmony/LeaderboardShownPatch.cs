@@ -15,6 +15,7 @@ namespace AccsaberLeaderboard.Harmony
         {
             if (UI.ViewControllers.LeaderboardViewController.Instance?.gameObject?.activeSelf ?? false)
             {
+                LeaderboardHiddenPatch.wasShown = true;
                 LeaderboardShown?.Invoke();
             }
         }

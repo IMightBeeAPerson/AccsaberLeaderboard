@@ -24,6 +24,27 @@ namespace AccsaberLeaderboard.Utils
         public static IReadOnlyCollection<string> PlayerFriendIDs => PlayerFriends;
         public static IReadOnlyCollection<string> PlayerRelationIDs => PlayerRelations;
 
+        public static IReadOnlyCollection<string> GetIds(LeaderboardDisplayType displayType) => GetIds_Internal(displayType);
+        private static HashSet<string> GetIds_Internal(LeaderboardDisplayType displayType) => displayType switch
+        {
+            LeaderboardDisplayType.Rivals => PlayerRivals,
+            LeaderboardDisplayType.Followed => PlayerFollowed,
+            LeaderboardDisplayType.Friends => PlayerFriends,
+            LeaderboardDisplayType.Relations => PlayerRelations,
+            _ => null
+        };
+        internal static void AddId(string id, LeaderboardDisplayType displayType)
+        {
+            GetIds_Internal(displayType).Add(id);
+            if (displayType != LeaderboardDisplayType.Relations)
+                PlayerRelations.Add(id);
+        }
+        internal static void RemoveId(string id, LeaderboardDisplayType displayType)
+        {
+            GetIds_Internal(displayType).Remove(id);
+            if (displayType != LeaderboardDisplayType.Relations)
+                PlayerRelations.Remove(id);
+        }
         public static async Task LoadInfo()
         {
             if (loadTask is not null)
@@ -50,14 +71,6 @@ namespace AccsaberLeaderboard.Utils
             }
                 
         }
-        public static IReadOnlyCollection<string> GetIds(LeaderboardDisplayType displayType) => displayType switch
-        {
-            LeaderboardDisplayType.Rivals => PlayerRivals,
-            LeaderboardDisplayType.Followed => PlayerFollowed,
-            LeaderboardDisplayType.Friends => PlayerFriends,
-            LeaderboardDisplayType.Relations => PlayerRelations,
-            _ => null
-        };
         private static async Task LoadInfo(int retries)
         {
             try

@@ -5,7 +5,6 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Parser;
 using HMUI;
 using System.Collections;
-using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -13,6 +12,9 @@ using UnityEngine.UI;
 
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
+using BeatSaberMarkupLanguage.Components;
+using AccsaberLeaderboard.UI.Components;
+using System.Linq;
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -25,10 +27,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         #region UI Components & Objects
 
         [UIValue("colorGrey")] public const string grey = GREY;
+        [UIValue("colorFollowBG")] public const string followBGColor = RELATIONS_ACC;
+        [UIValue("colorRivalBG")] public const string rivalBGColor = RELATIONS_TARGETED;
         [UIValue("colorDim")] public const string dim = DARK_BLUE;
 
         [UIValue("oneXonePic")] public const string oneXonePic = ResourcePaths.RESOURCE_1X1;
         [UIValue("profileBGPic")] public const string profileBGPic = ResourcePaths.RESOURCE_GRADIENT_CORNER;
+        [UIValue("followPic")] public const string followPic = ResourcePaths.RESOURCE_FOLLOWED;
+        [UIValue("rivalPic")] public const string rivalPic = ResourcePaths.RESOURCE_RIVALS;
 
         [UIValue("titleFontSize")] public const float titleFontSize = 7f;
         [UIValue("fontSizeBig")] public const float fontSizeBig = 4f;
@@ -38,6 +44,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIValue("containerWidth")] public const float containerWidth = 70f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
+
+        [UIValue("namePadding")] public const float namePadding = 10f;
+        [UIValue("nameSize")] public const float nameSize = containerWidth - namePadding * 2f;
 
         [UIValue("levelTextPadding")] public const float levelTextPadding = 17f;
         [UIValue("rowPadding")] public const float rowPadding = 5f;
@@ -62,6 +71,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("playerImageBorder")] private ImageView modalPlayerImageBorder;
 
         [UIComponent("playerName")] private TextMeshProUGUI modalPlayerName;
+
+        [UIComponent("followerContainer")] private CustomBackground followerContainer;
+        [UIComponent("rivalContainer")] private CustomBackground rivalContainer;
+
+        [UIComponent("setAsFollowerButton")] private ClickableImage setAsFollowerButton;
+        [UIComponent("setAsRivalButton")] private ClickableImage setAsRivalButton;
 
         [UIComponent("levelRank")] private TextMeshProUGUI modalLevelRank;
         [UIComponent("level")] private TextMeshProUGUI modalLevel;
@@ -90,19 +105,65 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("standard_rank_country")] private TextMeshProUGUI modalStandardCountryRank;
         #endregion
 
+        private bool isFollower, isRival;
+        private string playerId;
+
         [UIAction("#post-parse")] private void PostParse()
         {
             modalPlayerImage.material = ResourcePaths.BORDER_MATERIAL;
             modalPlayerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
             modalPlayerImageBorder.material = ResourcePaths.BORDER_MATERIAL;
 
+            followerContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+            rivalContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+
             modalPlayerName.enableVertexGradient = true;
+
+            setAsFollowerButton.HighlightColor = RELOADED.Color();
+            setAsRivalButton.HighlightColor = TARGETED.Color();
+        }
+
+        [UIAction("SetAsFollower")] private void SetAsFollower()
+        {
+            isFollower = !isFollower;
+            Swap(setAsFollowerButton);
+            if (isFollower)
+                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Followed);
+            else
+                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Followed);
+        }
+        [UIAction("SetAsRival")] private void SetAsRival()
+        {
+            isRival = !isRival;
+            Swap(setAsRivalButton);
+            if (isRival)
+                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Rivals);
+            else
+                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Rivals);
         }
 
         public PlayerProfileModalViewController(GameObject parent)
         {
             MiscUtils.Parse(ResourcePaths.BSML_PLAYER_PROFILE, parent.transform, this);
             modal.transform.SetParent(parent.transform);
+        }
+
+        private void Swap(ClickableImage img)
+        {
+            (img.HighlightColor, img.DefaultColor) = (img.DefaultColor, img.HighlightColor);
+        }
+        private void ResetButtons(bool follower = false, bool rival = false)
+        {
+            if (follower != isFollower)
+            {
+                isFollower = follower;
+                Swap(setAsFollowerButton);
+            }
+            if (rival != isRival)
+            {
+                isRival = rival;
+                Swap(setAsRivalButton);
+            }
         }
         private IEnumerator ShowPlayerStart()
         {
@@ -170,6 +231,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
             modalPlayerImage.SetImage(GetPlayerAvatar(playerInfo));
 #endif
+            playerId = GetPlayerId(playerInfo);
+            bool isMainCharacter = PlayerSocialLife.PlayerID.Equals(playerId);
+
+            setAsFollowerButton.gameObject.SetActive(!isMainCharacter);
+            setAsRivalButton.gameObject.SetActive(!isMainCharacter);
+            if (!isMainCharacter)
+                ResetButtons(PlayerSocialLife.PlayerFollowedIDs.Contains(playerId), PlayerSocialLife.PlayerRivalIDs.Contains(playerId));
 
             yield return new WaitForFixedUpdate();
 

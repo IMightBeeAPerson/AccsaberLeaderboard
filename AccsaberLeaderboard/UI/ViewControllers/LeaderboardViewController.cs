@@ -7,7 +7,6 @@ using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,19 +15,19 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using Zenject;
-
-using static AccsaberLeaderboard.Models.AccsaberScoreData;
-using static AccsaberLeaderboard.Utils.ColorPalette;
-using static AccsaberLeaderboard.API.AccsaberAPI;
-
-using Screen = HMUI.Screen;
 using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.Harmony;
 using UnityEngine.UI;
 using AccsaberLeaderboard.Configuration;
 using BeatSaberMarkupLanguage;
 using System.Reflection;
-using BeatSaberMarkupLanguage.TypeHandlers;
+
+using static AccsaberLeaderboard.Models.AccsaberScoreData;
+using static AccsaberLeaderboard.Utils.ColorPalette;
+using static AccsaberLeaderboard.API.AccsaberAPI;
+
+using Screen = HMUI.Screen;
+
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -330,37 +329,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         private GameObject GetHeaderPane()
         {
-            /*Transform t = gameObject.transform;
-            GameObject titleBG = null;
-            while (t.parent is not null && !t.gameObject.name.Equals("RightScreen"))
-                t = t.parent;
-            TextMeshProUGUI highscoreText = t.GetComponentsInChildren<TextMeshProUGUI>(false).FirstOrDefault(t => t.text is not null && t.text.Trim().ToLower().Equals("highscores"));
-            if (highscoreText is not null)
-            {
-                titleBG = highscoreText.transform.parent.GetComponentsInChildren<Transform>(false).FirstOrDefault(t => t.gameObject.name.Equals("BG")).gameObject;
-
-                CustomBackground bg = highscoreText.transform.parent.gameObject.AddComponent<CustomBackground>();
-                bg.Apply(ResourcePaths.RESOURCE_GRADIENT_PANEL, GREY.Color());
-
-                MiscUtils.Parse(ResourcePaths.BSML_TITLE_PANEL, highscoreText.transform.parent, this);
-                *//*t = highscoreText.transform;
-                while (t is not null)
-                {
-                    //Plugin.Log.Info($"GameObject: {t.gameObject}");
-                    if (t.gameObject.name.Equals("HeaderPanel"))
-                        break;
-                    t = t.parent;
-                }
-                if (t is not null)
-                {
-                    Component[] comps = t.GetComponents<Component>();
-                    foreach (Component comp in comps)
-                        Plugin.Log.Info($"Component: {comp}");
-                    Transform[] childs = t.GetComponentsInChildren<Transform>(true);
-                    foreach (Transform child in childs)
-                        Plugin.Log.Info($"Child: {child.gameObject}");
-                }*//*
-            }*/
             // Code for finding this header taken from: https://github.com/BeatLeader/beatleader-mod/blob/1.29.4/Source/2_Core/Managers/Leaderboard/LeaderboardHeaderManager.cs
             Screen screen = gameObject.GetComponentInParent<Screen>();
             if (screen is null) return null;
@@ -396,7 +364,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             };
             LeaderboardHiddenPatch.LeaderboardHidden += () =>
             {
-                Plugin.Log.Info("Setting title back to " + titlePanelTitle);
                 title.SetText(titlePanelTitle);
                 titlePanelTitle = null;
 

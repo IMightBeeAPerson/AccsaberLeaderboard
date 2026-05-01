@@ -9,13 +9,15 @@ namespace AccsaberLeaderboard.Harmony
     internal class LeaderboardHiddenPatch
     {
         public static event Action LeaderboardHidden;
+        internal static bool wasShown = false;
 #pragma warning disable IDE0051
         [UsedImplicitly]
         private static void Postfix()
         {
-            if (!UI.ViewControllers.LeaderboardViewController.Instance?.gameObject?.activeSelf ?? false)
+            if (wasShown && (!UI.ViewControllers.LeaderboardViewController.Instance?.gameObject?.activeSelf ?? false))
             {
                 LeaderboardHidden?.Invoke();
+                wasShown = false;
             }
         }
     }

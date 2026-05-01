@@ -34,11 +34,13 @@ namespace AccsaberLeaderboard.Utils
 
         public const string DIMMER = "#0009";
 
+        public const string STEAM = "#008ABB";
         public const string RELOADED = "#86633F";
+        public const string TARGETED = "#941010";
 
-        public const string RELATIONS_STEAM = "#008ABB4F";
+        public const string RELATIONS_STEAM = STEAM + "4F";
         public const string RELATIONS_ACC = "#674F354F";
-        public const string RELATIONS_TARGETED = "#9410104F";
+        public const string RELATIONS_TARGETED = TARGETED + "4F";
 
 
         public const string DEFAULT_COLOR = "#000f";
