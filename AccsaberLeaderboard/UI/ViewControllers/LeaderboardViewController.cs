@@ -1,7 +1,11 @@
 ﻿using AccsaberLeaderboard.API;
+using AccsaberLeaderboard.Configuration;
+using AccsaberLeaderboard.Harmony;
 using AccsaberLeaderboard.Models;
 using AccsaberLeaderboard.UI.BSML_Addons.Components;
+using AccsaberLeaderboard.UI.Components;
 using AccsaberLeaderboard.Utils;
+using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
@@ -11,21 +15,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using Zenject;
-using AccsaberLeaderboard.UI.Components;
-using AccsaberLeaderboard.Harmony;
 using UnityEngine.UI;
-using AccsaberLeaderboard.Configuration;
-using BeatSaberMarkupLanguage;
-using System.Reflection;
-
+using Zenject;
+using static AccsaberLeaderboard.API.AccsaberAPI;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
-using static AccsaberLeaderboard.API.AccsaberAPI;
-
+using static RankModel;
 using Screen = HMUI.Screen;
 
 
@@ -72,6 +71,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         public LeaderboardDisplayType DisplayType => displayType;
         private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
+        public Func<ScoreInfoToken, bool> CurrentFilter
+        {
+            get
+            {
+                return displayType switch
+                {
+                    LeaderboardDisplayType.Global => null,
+                    LeaderboardDisplayType.Country => CountryFilterMaker(GetCountry(currentPlayerScoreInfo)),
+                    _ => token => PlayerSocialLife.GetIds(displayType).Contains(GetPlayerId(token))
+                };
+            }
+        }
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
         public bool OnPlayerPage {
@@ -98,7 +109,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 };
             }
         }
-        public bool UsesPreviousPages => displayType == LeaderboardDisplayType.Friends || displayType == LeaderboardDisplayType.Rivals;
+        public bool UsesPreviousPages => (displayType & LeaderboardDisplayType.Relations) > 0;
 
         #endregion
 
@@ -268,26 +279,16 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private void OnPageUp()
         {
             if (page == 1 || currentHash is null) return; // Can't go back from the first page
-            switch (displayType)
-            {
-                case LeaderboardDisplayType.Global:
-                case LeaderboardDisplayType.Country:
-                    page--;
-                    break;
-                case LeaderboardDisplayType.Friends:
-                case LeaderboardDisplayType.Followed:
-                case LeaderboardDisplayType.Rivals:
-                case LeaderboardDisplayType.Relations:
-                    page = previousPages.Pop();
-                    break;
-            }
+            page = UsesPreviousPages ? previousPages.Pop() : page - 1;
             ReloadLeaderboard();
         }
 
         [UIAction("OnYouClicked")]
         private void OnYouClicked()
         {
-            if (page == 0 || displayType != LeaderboardDisplayType.Global || currentHash is null) return;
+            if (page == 0 || currentPlayerPage < 1 || page == currentPlayerPage || currentHash is null) return;
+            if (UsesPreviousPages)
+                previousPages.Push(page);
             page = currentPlayerPage;
             ReloadLeaderboard();
         }
@@ -588,7 +589,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (leaderboardLoader.activeSelf)
                 return;
 
-            bool gotCachedData = UsesPreviousPages ? FilteredScoreDataCached(DifficultyId, page) : ScoreDataCached(DifficultyId, page);
+            bool gotCachedData = UsesPreviousPages ? ScoreDataCached(DifficultyId, page, CurrentFilter) : ScoreDataCached(DifficultyId, page, CurrentFilter, 1);
 
             IEnumerator StartLoading()
             {
@@ -622,6 +623,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     AccsaberScoreData[] scores;
                     (AccsaberScoreData[] scores, int truePage) scoreData;
                     IReadOnlyCollection<string> ids = PlayerSocialLife.GetIds(displayType);
+
                     switch (displayType)
                     {
                         case LeaderboardDisplayType.Global:
@@ -632,15 +634,19 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         case LeaderboardDisplayType.Followed:
                         case LeaderboardDisplayType.Rivals:
                         case LeaderboardDisplayType.Relations:
-                            int neededScores = Math.Min(ids.Count - previousPages.Count * 10, 10);
-                            scoreData = await GetScoreData(page, DifficultyId, token => ids.Contains(GetPlayerId(token)), neededScores);
+                            int neededScores = Math.Min(ids.Count - previousPages.Count * PAGE_LENGTH, PAGE_LENGTH);
+
+                            scoreData = await GetScoreData(page, DifficultyId, CurrentFilter, neededScores);
                             scores = scoreData.scores;
                             nextPage = scoreData.truePage;
+
                             break;
                         case LeaderboardDisplayType.Country:
                             string country = GetCountry(currentPlayerScoreInfo);
+
                             scores = await GetScoreData(page, DifficultyId, country);
                             nextPage = page + 1;
+
                             break;
                         default:
                             scores = null;
@@ -649,11 +655,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         scoreDatas.AddRange(scores);
 
+                    if (currentPlayerPage <= 0)
+                        AttemptToSetPlayerPage();
+
                     IEnumerator ReloadData()
                     {
                         yield return new WaitForFixedUpdate();
 
-                        leaderboard.PrefNumberOfCells = OnPlayerPage ? 10 : 12;
+                        leaderboard.PrefNumberOfCells = OnPlayerPage ? PAGE_LENGTH : PAGE_LENGTH + 2;
                         leaderboard.MainCellSize = CellSize;
                         leaderboard.Data = LeaderboardInfos;
 
@@ -669,6 +678,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 }
             }
         }
+        private void AttemptToSetPlayerPage()
+        {
+            if (OnPlayerPage)
+                currentPlayerPage = page;
+            else if (TryGetRankWithFilter(DifficultyId, PlayerSocialLife.PlayerID, CurrentFilter, out int rank))
+                currentPlayerPage = (int)Math.Ceiling(rank / (float)PAGE_LENGTH);
+        }
 
         private async Task<int> GetPlayerPage(bool overrideLastScore)
         {
@@ -677,7 +693,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (overrideLastScore || currentPlayerScoreInfo is null)
                 currentPlayerScoreInfo = await GetScoreData(PlayerSocialLife.PlayerID, currentHash, currentDifficulty);
             if (currentPlayerScoreInfo is null) return -1; // Player has no score on this map
-            return (int)Math.Ceiling(GetRank(currentPlayerScoreInfo) / (float)PAGE_LENGTH);
+            return displayType switch
+            {
+                LeaderboardDisplayType.Global => (int)Math.Ceiling(GetRank(currentPlayerScoreInfo) / (float)PAGE_LENGTH),
+                _ => 0 // At this point, we do not have the information needed to get the rank of any other display type.
+            };
         }
         #endregion
 
