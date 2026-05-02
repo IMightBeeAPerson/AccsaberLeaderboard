@@ -37,6 +37,7 @@ namespace AccsaberLeaderboard.Utils
         public const string STEAM = "#008ABB";
         public const string RELOADED = "#86633F";
         public const string TARGETED = "#941010";
+        public const string BLOCKED = "#333";
 
         public const string RELATIONS_STEAM = STEAM + "4F";
         public const string RELATIONS_ACC = "#674F354F";

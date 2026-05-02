@@ -1,81 +1,98 @@
 <modal id='PlayerInfoWindow' show-event='ShowPlayerInfo' hide-event='HidePlayerInfo' click-off-closes='true' move-to-center='true'>
-    <loading id='loader' preserve-aspect='true'/>
-    <vertical id='container' pref-width='~containerWidth' pref-height='~containerHeight' bg='round-rect-panel' child-expand-width='false'>
-      <horizontal pref-width='~containerWidth' child-expand-width='false' spacing='0'>
-        <my-vertical id='followerContainer' pref-width='~namePadding' bg='~oneXonePic' color='~colorFollowBG'>
-          <clickable-image id='setAsFollowerButton' src='~followPic' pref-width='~namePadding' pref-height='~namePadding' on-click='SetAsFollower'/>
-        </my-vertical>
-        <vertical pref-width='~nameSize'>
-          <text id='playerName' font-size='~titleFontSize' align='Center'/>
-        </vertical>
-        <my-vertical id='rivalContainer' pref-width='~namePadding' bg='~oneXonePic' color='~colorRivalBG'>
-          <clickable-image id='setAsRivalButton' src='~rivalPic' pref-width='~namePadding' pref-height='~namePadding' on-click='SetAsRival'/>
-        </my-vertical>
-      </horizontal>
-      <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
-        <text id='levelRank' font-size='~fontSizeBig' align='Left'/>
-        <text id='level' font-size='~fontSizeBig' align='Right'/>
-      </horizontal>
+  <loading id='loader' preserve-aspect='true'/>
+    <vertical id='container' anchor-pos-x='~containerOffset' horizontal-fit='PreferredSize' vertical-fit='PreferredSize' pref-width='~containerWidth' pref-height='~containerHeight' bg='round-rect-panel' child-expand-width='false'>
+      
+    <horizontal pref-width='~containerWidth'>
+        <text id='playerName' font-size='~titleFontSize' align='Center'/>
+    </horizontal>
+      
+    <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
+      <text id='levelRank' font-size='~fontSizeBig' align='Left'/>
+      <text id='level' font-size='~fontSizeBig' align='Right'/>
+    </horizontal>
 
-      <horizontal pref-width='~containerWidth' pref-height='~barGirth' child-expand-width='false' child-control-width='false'>
-        <vertical pref-width='~barPadding'/>
-        <image id='levelProgress' src='~oneXonePic' pref-height='~barGirth'/>
-        <image id='levelProgressInverse' src='~oneXonePic' pref-height='~barGirth'/>
-      </horizontal>
+    <horizontal pref-width='~containerWidth' pref-height='~barGirth' child-expand-width='false' child-control-width='false'>
+      <vertical pref-width='~barPadding'/>
+      <image id='levelProgress' src='~oneXonePic' pref-height='~barGirth'/>
+      <image id='levelProgressInverse' src='~oneXonePic' pref-height='~barGirth'/>
+    </horizontal>
 
-      <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
-        <text id='levelXpProgress' font-size='~fontSizeMid' align='Left'/>
-        <text id='levelProgressNumber' font-size='~fontSizeMid' align='Right'/>
-      </horizontal>
+    <horizontal pad-left='~levelTextPadding' pad-right='~levelTextPadding' pref-width='~containerWidth'>
+      <text id='levelXpProgress' font-size='~fontSizeMid' align='Left'/>
+      <text id='levelProgressNumber' font-size='~fontSizeMid' align='Right'/>
+    </horizontal>
 
-      <stack pref-width='~profileBGPicSize' pref-height='~profileBGPicSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
-        <img id='playerImageBorder' src='~profileBGPic' pref-width='~profileBGPicSize' pref-height='~profileBGPicSize'/>
-        <vertical pref-width='~profilePicSize' pref-height='~profilePicSize' child-expand-width='false' child-expand-height='false'>
-          <stack pref-width='~profilePicSize' pref-height='~profilePicSize'>
-            <img id='playerImageBackground' src='~oneXonePic' img-color='~colorDim' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
-            <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
-          </stack>
-        </vertical>
-      </stack>
-      <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
-        <vertical>
-          <text text='Global' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='globalRank' font-size='~fontSizeBig' align='Center'/>
-        </vertical>
-        <vertical>
-          <text text='Overall' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='overall' font-size='~fontSizeBig' align='Center'/>
-        </vertical>
-        <vertical>
-          <text text='Country' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='countryRank' font-size='~fontSizeBig' align='Center'/>
-        </vertical>
-      </horizontal>
-      <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
-        <vertical>
-          <text text='True' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='true' font-size='~fontSizeBig' align='Center'/>
-          <horizontal>
-            <text id='true_rank_global' font-size='~fontSizeSmall' align='Left'/>
-            <text id='true_rank_country' font-size='~fontSizeSmall' align='Right'/>
-          </horizontal>
-        </vertical>
-        <vertical>
-          <text text='Standard' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='standard' font-size='~fontSizeBig' align='Right'/>
-          <horizontal>
-            <text id='standard_rank_global' font-size='~fontSizeSmall' align='Left'/>
-            <text id='standard_rank_country' font-size='~fontSizeSmall' align='Right'/>
-          </horizontal>
-        </vertical>
-        <vertical>
-          <text text='Tech' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
-          <text id='tech' font-size='~fontSizeBig' align='Center'/>
-          <horizontal>
-            <text id='tech_rank_global' font-size='~fontSizeSmall' align='Left'/>
-            <text id='tech_rank_country' font-size='~fontSizeSmall' align='Right'/>
-          </horizontal>
-        </vertical>
-      </horizontal>
-    </vertical>
-  </modal>
+    <stack pref-width='~profileBGPicSize' pref-height='~profileBGPicSize' vertical-fit='PreferredSize' horizontal-fit='PreferredSize'>
+      <img id='playerImageBorder' src='~profileBGPic' pref-width='~profileBGPicSize' pref-height='~profileBGPicSize'/>
+      <vertical pref-width='~profilePicSize' pref-height='~profilePicSize' child-expand-width='false' child-expand-height='false'>
+        <stack pref-width='~profilePicSize' pref-height='~profilePicSize'>
+          <img id='playerImageBackground' src='~oneXonePic' img-color='~colorDim' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+          <img id='playerImage' preserve-aspect='true' pref-width='~profilePicSize' pref-height='~profilePicSize'/>
+        </stack>
+      </vertical>
+    </stack>
+    <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
+      <vertical>
+        <text text='Global' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='globalRank' font-size='~fontSizeBig' align='Center'/>
+      </vertical>
+      <vertical>
+        <text text='Overall' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='overall' font-size='~fontSizeBig' align='Center'/>
+      </vertical>
+      <vertical>
+        <text text='Country' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='countryRank' font-size='~fontSizeBig' align='Center'/>
+      </vertical>
+    </horizontal>
+    <horizontal pad-left='~rowPadding' pad-right='~rowPadding' pref-width='~containerWidth'>
+      <vertical>
+        <text text='True' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='true' font-size='~fontSizeBig' align='Center'/>
+        <horizontal>
+          <text id='true_rank_global' font-size='~fontSizeSmall' align='Left'/>
+          <text id='true_rank_country' font-size='~fontSizeSmall' align='Right'/>
+        </horizontal>
+      </vertical>
+      <vertical>
+        <text text='Standard' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='standard' font-size='~fontSizeBig' align='Right'/>
+        <horizontal>
+          <text id='standard_rank_global' font-size='~fontSizeSmall' align='Left'/>
+          <text id='standard_rank_country' font-size='~fontSizeSmall' align='Right'/>
+        </horizontal>
+      </vertical>
+      <vertical>
+        <text text='Tech' font-color='~colorGrey' font-size='~labelFontSize' align='Center'/>
+        <text id='tech' font-size='~fontSizeBig' align='Center'/>
+        <horizontal>
+          <text id='tech_rank_global' font-size='~fontSizeSmall' align='Left'/>
+          <text id='tech_rank_country' font-size='~fontSizeSmall' align='Right'/>
+        </horizontal>
+      </vertical>
+    </horizontal>
+  </vertical>
+  
+  <vertical anchor-pos-y='~socialContainerAnchorY' anchor-pos-x='~socialContainerAnchorX'
+              vertical-fit='PreferredSize' horizontal-fit='PreferredSize'
+              pref-height='~socialContainerHeight' pref-width='~socialContainerWidth'
+              spacing='~socialContainerSpacing' pad='~socialContainerPadding'
+              child-expand-width='false' bg='round-rect-panel' id='socialContainer'>
+    <my-vertical id='followerContainer' pref-width='~socialButtonSize' bg='~oneXonePic' color='~colorFollowBG'>
+      <clickable-image id='setAsFollowerButton' src='~followPic' pref-width='~socialButtonSize' pref-height='~socialButtonSize' on-click='SetAsFollower'/>
+    </my-vertical>
+    <my-vertical id='rivalContainer' pref-width='~socialButtonSize' bg='~oneXonePic' color='~colorRivalBG'>
+      <clickable-image id='setAsRivalButton' src='~rivalPic' pref-width='~socialButtonSize' pref-height='~socialButtonSize' on-click='SetAsRival'/>
+    </my-vertical>
+    <my-vertical id='blockedContainer' pref-width='~socialButtonSize' bg='~oneXonePic' color='~colorBlockedBG'>
+      <clickable-image id='setAsBlockedButton' src='~blockPic' pref-width='~socialButtonSize' pref-height='~socialButtonSize' on-click='SetAsBlocked'/>
+    </my-vertical>
+  </vertical>
+
+  <vertical anchor-pos-y='~hiddenExitButtonAnchorY' anchor-pos-x='~hiddenExitButtonAnchorX'
+            vertical-fit='PreferredSize' horizontal-fit='PreferredSize'
+            pref-height='~hiddenExitButtonHeight' pref-width='~hiddenExitButtonWidth' id='hiddenExitButtonContainer'>
+    <clickable-image id='hiddenExitButton' src='~oneXonePic' click-event='HidePlayerInfo'/>
+  </vertical>
+  
+</modal>

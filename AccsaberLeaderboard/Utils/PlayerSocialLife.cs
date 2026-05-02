@@ -18,19 +18,31 @@ namespace AccsaberLeaderboard.Utils
         private static HashSet<string> PlayerRivals = null;
         private static HashSet<string> PlayerRelations = null;
 
+        private static HashSet<string> PlayerBlocked = null; // never expose this.
+
+        private static bool exposeFollowed = false;
+
         public static string PlayerID { get; private set; } = null;
-        public static IReadOnlyCollection<string> PlayerRivalIDs => PlayerRivals;
-        public static IReadOnlyCollection<string> PlayerFollowedIDs => PlayerFollowed;
+        public static IReadOnlyCollection<string> PlayerRivalIDs => exposeFollowed ? PlayerRivals : null;
+        public static IReadOnlyCollection<string> PlayerFollowedIDs => exposeFollowed ? PlayerFollowed : null;
         public static IReadOnlyCollection<string> PlayerFriendIDs => PlayerFriends;
         public static IReadOnlyCollection<string> PlayerRelationIDs => PlayerRelations;
 
-        public static IReadOnlyCollection<string> GetIds(LeaderboardDisplayType displayType) => GetIds_Internal(displayType);
+        public static IReadOnlyCollection<string> GetIds(LeaderboardDisplayType displayType) => displayType switch
+        {
+            LeaderboardDisplayType.Rivals => PlayerRivalIDs,
+            LeaderboardDisplayType.Followed => PlayerFollowedIDs,
+            LeaderboardDisplayType.Friends => PlayerFriendIDs,
+            LeaderboardDisplayType.Relations => PlayerRelationIDs,
+            _ => null
+        };
         private static HashSet<string> GetIds_Internal(LeaderboardDisplayType displayType) => displayType switch
         {
             LeaderboardDisplayType.Rivals => PlayerRivals,
             LeaderboardDisplayType.Followed => PlayerFollowed,
             LeaderboardDisplayType.Friends => PlayerFriends,
             LeaderboardDisplayType.Relations => PlayerRelations,
+            LeaderboardDisplayType.Blocked => PlayerBlocked,
             _ => null
         };
         internal static void AddId(string id, LeaderboardDisplayType displayType)
@@ -74,7 +86,7 @@ namespace AccsaberLeaderboard.Utils
         private static async Task LoadInfo(int retries)
         {
             try
-            {
+            { // todo: add blocked players and set the bool for exposing followed/rivals.
                 string playerId = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
                 IReadOnlyList<string> steamFriends = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserFriendsUserIds(false).ConfigureAwait(false);
                 HashSet<string> friends = [.. steamFriends, playerId];
@@ -86,6 +98,8 @@ namespace AccsaberLeaderboard.Utils
                 playerRelations.UnionWith(friends);
                 playerRelations.UnionWith(accFollowed);
                 playerRelations.UnionWith(rivals);
+
+                exposeFollowed = true; // currently, if I can get their followed/rivals, they are exposed.
 
                 PlayerRivals = rivals;
                 PlayerFriends = friends;

@@ -24,10 +24,5 @@
     <clickable-image id='RelationsSelector' src='~relationsPic' pref-width='5' pref-height='5' on-click='ShowRelations' hover-hint='Friends, Followed, &amp; Rivals' active='false'/>
     <clickable-image id='CountrySelector' src='~countryPic' pref-width='5' pref-height='5' on-click='ShowCountry' hover-hint='Country'/>
   </vertical>
-
-  
-
   
 </bg>
-
-<!--A lot of this was inspired from this file: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/Views/AccSaberLeaderboardView.bsml-->

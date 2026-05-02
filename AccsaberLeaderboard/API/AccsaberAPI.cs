@@ -375,7 +375,7 @@ namespace AccsaberLeaderboard.API
         }
         public static async Task<HashSet<string>> GetPlayerRelations(RelationType relation, string playerId)
         {
-            const int pageLength = 1000;
+            const int pageLength = PAGE_LENGTH * 10;
             int page = 0, callsLeft = 0;
             HashSet<string> outp = [];
             do

@@ -26,6 +26,7 @@ namespace AccsaberLeaderboard.Utils
         public const string RESOURCE_RELATIONS = RESOURCE_PATH + ".relations.png";
         public const string RESOURCE_TOP_ARROW = RESOURCE_PATH + ".topArrow.png";
         public const string RESOURCE_YOU = RESOURCE_PATH + ".you.png";
+        public const string RESOURCE_BLOCK = RESOURCE_PATH + ".block.png";
         public const string RESOURCE_GRADIENT = RESOURCE_PATH + ".gradient.png";
         public const string RESOURCE_GRADIENT_PANEL = RESOURCE_PATH + ".panelGradient.png";
         public const string RESOURCE_GRADIENT_CORNER = RESOURCE_PATH + ".cornerGradient.png";

@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
-using static AccsaberLeaderboard.Utils.ColorPalette;
-using static AccsaberLeaderboard.API.AccsaberAPI;
 using BeatSaberMarkupLanguage.Components;
 using AccsaberLeaderboard.UI.Components;
 using System.Linq;
+
+using static AccsaberLeaderboard.Utils.ColorPalette;
+using static AccsaberLeaderboard.API.AccsaberAPI;
+using System.Collections.Generic;
+
 
 namespace AccsaberLeaderboard.UI.ViewControllers
 {
@@ -29,12 +31,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("colorGrey")] public const string grey = GREY;
         [UIValue("colorFollowBG")] public const string followBGColor = RELATIONS_ACC;
         [UIValue("colorRivalBG")] public const string rivalBGColor = RELATIONS_TARGETED;
+        [UIValue("colorBlockedBG")] public const string blockedBGColor = BLOCKED;
         [UIValue("colorDim")] public const string dim = DARK_BLUE;
 
         [UIValue("oneXonePic")] public const string oneXonePic = ResourcePaths.RESOURCE_1X1;
         [UIValue("profileBGPic")] public const string profileBGPic = ResourcePaths.RESOURCE_GRADIENT_CORNER;
         [UIValue("followPic")] public const string followPic = ResourcePaths.RESOURCE_FOLLOWED;
         [UIValue("rivalPic")] public const string rivalPic = ResourcePaths.RESOURCE_RIVALS;
+        [UIValue("blockPic")] public const string blockPic = ResourcePaths.RESOURCE_BLOCK;
 
         [UIValue("titleFontSize")] public const float titleFontSize = 7f;
         [UIValue("fontSizeBig")] public const float fontSizeBig = 4f;
@@ -45,8 +49,24 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIValue("containerWidth")] public const float containerWidth = 70f;
         [UIValue("containerHeight")] public const float containerHeight = 80f;
 
-        [UIValue("namePadding")] public const float namePadding = 10f;
-        [UIValue("nameSize")] public const float nameSize = containerWidth - namePadding * 2f;
+        public const float trueContainerWidth = containerWidth + 10f;
+        [UIValue("containerOffset")] public const float containerOffset = containerWidth - trueContainerWidth;
+
+        [UIValue("socialContainerAnchorY")] public const float socialContainerAnchorY = (containerHeight - socialContainerHeight) / 2f;
+        [UIValue("socialContainerAnchorX")] public const float socialContainerAnchorX = (containerWidth + socialContainerWidth) / 2f + containerOffset;
+
+        [UIValue("socialContainerHeight")] public const float socialContainerHeight = socialButtonSize * 3f + socialContainerPadding * 2f;
+        [UIValue("socialContainerWidth")] public const float socialContainerWidth = socialButtonSize + socialContainerPadding * 2f;
+
+        [UIValue("socialContainerPadding")] public const float socialContainerPadding = 2f;
+        [UIValue("socialContainerSpacing")] public const float socialContainerSpacing = 1f;
+
+        [UIValue("socialButtonSize")] public const float socialButtonSize = 10f;
+
+        [UIValue("hiddenExitButtonAnchorY")] public const float hiddenExitButtonAnchorY = socialContainerAnchorY - socialContainerHeight - socialButtonSize / 2f - 0.5f;
+        [UIValue("hiddenExitButtonAnchorX")] public const float hiddenExitButtonAnchorX = socialContainerAnchorX - 0.5f;
+        [UIValue("hiddenExitButtonHeight")] public const float hiddenExitButtonHeight = containerHeight - socialContainerHeight;
+        [UIValue("hiddenExitButtonWidth")] public const float hiddenExitButtonWidth = socialContainerWidth + 1f;
 
         [UIValue("levelTextPadding")] public const float levelTextPadding = 17f;
         [UIValue("rowPadding")] public const float rowPadding = 5f;
@@ -72,11 +92,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("playerName")] private TextMeshProUGUI modalPlayerName;
 
+        [UIObject("socialContainer")] private GameObject socialContainer;
+
         [UIComponent("followerContainer")] private CustomBackground followerContainer;
         [UIComponent("rivalContainer")] private CustomBackground rivalContainer;
+        [UIComponent("blockedContainer")] private CustomBackground blockedContainer;
 
         [UIComponent("setAsFollowerButton")] private ClickableImage setAsFollowerButton;
         [UIComponent("setAsRivalButton")] private ClickableImage setAsRivalButton;
+        [UIComponent("setAsBlockedButton")] private ClickableImage setAsBlockedButton;
+
+        [UIObject("hiddenExitButtonContainer")] private GameObject hiddenExitButtonContainer;
+        [UIComponent("hiddenExitButton")] private ClickableImage hiddenExitButton;
 
         [UIComponent("levelRank")] private TextMeshProUGUI modalLevelRank;
         [UIComponent("level")] private TextMeshProUGUI modalLevel;
@@ -105,22 +132,32 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("standard_rank_country")] private TextMeshProUGUI modalStandardCountryRank;
         #endregion
 
-        private bool isFollower, isRival;
+        private bool isFollower, isRival, isBlocked;
         private string playerId;
 
         [UIAction("#post-parse")] private void PostParse()
         {
+            IEnumerable<RectTransform> toDie = modal.GetComponentsInChildren<RectTransform>().Where(rt => rt.name.Equals("BG"));
+            foreach (RectTransform rt in toDie)
+                Object.Destroy(rt.gameObject);
+
             modalPlayerImage.material = ResourcePaths.BORDER_MATERIAL;
             modalPlayerImageBackground.material = ResourcePaths.BORDER_MATERIAL;
             modalPlayerImageBorder.material = ResourcePaths.BORDER_MATERIAL;
 
             followerContainer.background.material = ResourcePaths.BORDER_MATERIAL;
             rivalContainer.background.material = ResourcePaths.BORDER_MATERIAL;
+            blockedContainer.background.material = ResourcePaths.BORDER_MATERIAL;
 
             modalPlayerName.enableVertexGradient = true;
 
             setAsFollowerButton.HighlightColor = RELOADED.Color();
             setAsRivalButton.HighlightColor = TARGETED.Color();
+            setAsBlockedButton.HighlightColor = Color.black;
+
+            hiddenExitButton.DefaultColor = Color.clear;
+            hiddenExitButton.HighlightColor = Color.clear;
+
         }
 
         [UIAction("SetAsFollower")] private void SetAsFollower()
@@ -140,6 +177,15 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Rivals);
             else
                 PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Rivals);
+        }
+        [UIAction("SetAsBlocked")] private void SetAsBlocked()
+        {
+            isBlocked = !isBlocked;
+            Swap(setAsBlockedButton);
+            if (isBlocked)
+                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Blocked);
+            else
+                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Blocked);
         }
 
         public PlayerProfileModalViewController(GameObject parent)
@@ -169,7 +215,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         {
             yield return new WaitForEndOfFrame();
 
-            (modal.transform as RectTransform).sizeDelta = new Vector2(containerWidth, containerHeight);
+            RectTransform rt = modal.transform as RectTransform;
+            rt.sizeDelta = new Vector2(trueContainerWidth, containerHeight);
+
+            Vector2 pos = rt.anchoredPosition;
+            pos.x += -containerOffset;
+            rt.anchoredPosition = pos;
+
             modalLoader.SetActive(true);
             modalContainer.SetActive(false);
         }
@@ -193,8 +245,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             float xpPercent = GetProgress(levelInfo);
             modalLevelProgressNumber.SetText($"<color={GREY}>{xpPercent:N2}%</color>");
             xpPercent /= 100f;
-
-            
 
             modalLevelProgress.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * xpPercent);
             modalLevelProgressInverse.transform.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, barLen * (1 - xpPercent));
@@ -234,8 +284,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             playerId = GetPlayerId(playerInfo);
             bool isMainCharacter = PlayerSocialLife.PlayerID.Equals(playerId);
 
-            followerContainer.gameObject.SetActive(!isMainCharacter);
-            rivalContainer.gameObject.SetActive(!isMainCharacter);
+            socialContainer.gameObject.SetActive(!isMainCharacter);
+
+            RectTransform rt = hiddenExitButtonContainer.transform as RectTransform;
+            Vector2 anchor = rt.anchoredPosition;
+            anchor.y = isMainCharacter ? 0f : hiddenExitButtonAnchorY;
+            rt.anchoredPosition = anchor;
+            hiddenExitButtonContainer.GetComponent<LayoutElement>().preferredHeight = isMainCharacter ? containerHeight : hiddenExitButtonHeight;
+
             if (!isMainCharacter)
                 ResetButtons(PlayerSocialLife.PlayerFollowedIDs.Contains(playerId), PlayerSocialLife.PlayerRivalIDs.Contains(playerId));
 
