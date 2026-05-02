@@ -133,7 +133,7 @@ namespace AccsaberLeaderboard.API
 
             int count = filter is null ? info.data.Count : info.data.Count(filter);
 
-            return count > page * PAGE_LENGTH * pageMult;
+            return count >= page * PAGE_LENGTH * pageMult;
         }
         public static bool TryGetRankWithFilter(string diffId, string userId, Func<ScoreInfoToken, bool> filter, out int rank)
         {

@@ -12,7 +12,7 @@
   <vertical anchor-pos-x='50' anchor-pos-y='-17' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>
     <clickable-image src='~topArrowPic' pref-width='5' pref-height='5' on-click='OnPageTop' default-color='~colorGrey'/>
     <page-button direction='Up' pref-width='5' on-click='OnPageUp'/>
-    <clickable-image src='~youPic' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked' default-color='~colorGrey'/>
+    <clickable-image id='YouSelector' src='~youPic' preserve-aspect='true' pref-width='5' pref-height='5' on-click='OnYouClicked' default-color='~colorGrey'/>
     <page-button direction='Down' pref-width='5' on-click='OnPageDown'/>
   </vertical>
 

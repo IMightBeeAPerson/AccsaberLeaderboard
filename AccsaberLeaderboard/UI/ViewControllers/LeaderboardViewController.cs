@@ -172,6 +172,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("RelationsSelector")] private ClickableImage relationsSelector;
         [UIComponent("CountrySelector")] private ClickableImage countrySelector;
 
+        [UIComponent("YouSelector")] private ClickableImage youSelector;
+
         [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
         [UIComponent("mapTypeText")] private TextMeshProUGUI mapTypeText;
 
@@ -286,7 +288,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("OnYouClicked")]
         private void OnYouClicked()
         {
-            if (page == 0 || currentPlayerPage < 1 || page == currentPlayerPage || currentHash is null) return;
+            if (currentPlayerPage < 1 || page == currentPlayerPage || currentHash is null) return;
             if (UsesPreviousPages)
                 previousPages.Push(page);
             page = currentPlayerPage;
@@ -655,8 +657,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         scoreDatas.AddRange(scores);
 
-                    if (currentPlayerPage <= 0)
-                        AttemptToSetPlayerPage();
+                    youSelector.DefaultColor = currentPlayerPage <= 0 && AttemptToSetPlayerPage() || currentPlayerPage > 0 ? Color.white : new(0.6f, 0.6f, 0.6f, 0.6f);
 
                     IEnumerator ReloadData()
                     {
@@ -678,12 +679,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 }
             }
         }
-        private void AttemptToSetPlayerPage()
+        private bool AttemptToSetPlayerPage()
         {
             if (OnPlayerPage)
                 currentPlayerPage = page;
             else if (TryGetRankWithFilter(DifficultyId, PlayerSocialLife.PlayerID, CurrentFilter, out int rank))
                 currentPlayerPage = (int)Math.Ceiling(rank / (float)PAGE_LENGTH);
+            else return false;
+            return true;
         }
 
         private async Task<int> GetPlayerPage(bool overrideLastScore)
