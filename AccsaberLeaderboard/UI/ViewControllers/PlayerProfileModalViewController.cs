@@ -12,10 +12,10 @@ using UnityEngine.UI;
 using BeatSaberMarkupLanguage.Components;
 using AccsaberLeaderboard.UI.Components;
 using System.Linq;
+using System.Collections.Generic;
 
 using static AccsaberLeaderboard.Utils.ColorPalette;
 using static AccsaberLeaderboard.API.AccsaberAPI;
-using System.Collections.Generic;
 
 
 namespace AccsaberLeaderboard.UI.ViewControllers
@@ -186,6 +186,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Blocked);
             else
                 PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Blocked);
+            InvalidateCache();
         }
 
         public PlayerProfileModalViewController(GameObject parent)

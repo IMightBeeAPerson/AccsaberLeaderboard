@@ -18,7 +18,7 @@ namespace AccsaberLeaderboard.Utils
         private static HashSet<string> PlayerRivals = null;
         private static HashSet<string> PlayerRelations = null;
 
-        private static HashSet<string> PlayerBlocked = null; // never expose this.
+        internal static HashSet<string> PlayerBlocked = null; // never expose this above internal
 
         private static bool exposeFollowed = false;
 
@@ -105,6 +105,7 @@ namespace AccsaberLeaderboard.Utils
                 PlayerFriends = friends;
                 PlayerFollowed = accFollowed;
                 PlayerRelations = playerRelations;
+                PlayerBlocked = [];
                 PlayerID = playerId;
             } catch (Exception e)
             {
