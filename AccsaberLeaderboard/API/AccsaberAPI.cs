@@ -10,6 +10,7 @@ using AccsaberLeaderboard.Utils;
 
 using static AccsaberLeaderboard.API.APIHandler;
 using static AccsaberLeaderboard.API.HelpfulPaths;
+using System.Net.Http;
 
 namespace AccsaberLeaderboard.API
 {
@@ -20,7 +21,7 @@ namespace AccsaberLeaderboard.API
         public static readonly Func<string, Func<ScoreInfoToken, bool>> CountryFilterMaker = country => token => GetCountry(token).Equals(country);
 
         private static readonly ObjectCacher<PlayerInfoToken> playerInfoCacher = new();
-        private static readonly ObjectCacher<(List<ScoreInfoToken> data, HashSet<string> userIds, List<int> blockedUserIndexes, int leaderboardSize)> scoreInfoCacher = new();
+        private static readonly ObjectCacher<ScoreCache> scoreInfoCacher = new();
 
         private static readonly Dictionary<(string hash, BeatmapDifficulty mapDiff), string> diffIdCache = [];
 
@@ -128,12 +129,39 @@ namespace AccsaberLeaderboard.API
         #region Sync Functions
         public static bool ScoreDataCached(string diffId, int page, Func<ScoreInfoToken, bool>? filter = null, int pageMult = FILTER_PAGE_MULT)
         { // page is one indexed.
-            if (!scoreInfoCacher.TryGetCachedItem(diffId, out var info))
+            if (!scoreInfoCacher.TryGetCachedItem(diffId, out ScoreCache info))
                 return false;
 
-            int count = filter is null ? info.data.Count : info.data.Count(filter);
+            int count;
+
+            if (filter is null)
+            {
+                page--;
+                int topIdx = page * PAGE_LENGTH, bottomIdx = topIdx + PAGE_LENGTH;
+                int blocked = info.blockedUserIndexes.SkipWhile(idx => idx < topIdx).TakeWhile(idx => idx < bottomIdx).Count();
+                bottomIdx += blocked;
+                filter = token =>
+                {
+                    int rank = GetRank(token);
+                    return topIdx < rank && bottomIdx >= rank;
+                };
+                count = info.data.Count(filter);
+                //Plugin.Log.Info($"count = {count}, page = {page}");
+                return PAGE_LENGTH == count;
+            }
+
+            count = info.data.Count(filter);
 
             return count >= page * PAGE_LENGTH * pageMult;
+        }
+        public static bool ScoreDataCached(string diffId, int page, string country)
+        { // page is one indexed
+            if (!scoreInfoCacher.TryGetCachedItem(diffId, out ScoreCache info))
+                return false;
+
+            int count = info.data.Count(CountryFilterMaker(country));
+
+            return count >= page * PAGE_LENGTH || (info.leaderboardLengths.TryGetValue(country, out int len) && count == len - info.blockedUserIndexes.Count);
         }
         public static bool TryGetRankWithFilter(string diffId, string userId, Func<ScoreInfoToken, bool> filter, out int rank)
         {
@@ -156,7 +184,7 @@ namespace AccsaberLeaderboard.API
             rank = info.data.Take(userIndex + 1).Where(filter).Count() - 1;
             return true;
         }
-        private static void CacheScoreData(string diffId, IEnumerable<ScoreInfoToken> scoreData, IEnumerable<int> blockedUserIndexes, int leaderboardSize)
+        private static void CacheScoreData(string diffId, IEnumerable<ScoreInfoToken> scoreData, IEnumerable<int> blockedUserIndexes, int leaderboardSize, string country = "N/A")
         {
             if (scoreInfoCacher.TryGetCachedItem(diffId, out var val))
             {
@@ -166,11 +194,19 @@ namespace AccsaberLeaderboard.API
                 ref List<int> blocked = ref val.blockedUserIndexes;
 
                 storedData = MergeListWithEnumerable(storedData, scoreData, token => GetRank(token));
-                blocked = MergeListWithEnumerable(blocked, blockedUserIndexes);
+                if (blockedUserIndexes.Any())
+                    blocked = MergeListWithEnumerable(blocked, blockedUserIndexes);
+                if (!val.leaderboardLengths.ContainsKey(country))
+                    val.leaderboardLengths.Add(country, leaderboardSize);
 
                 scoreInfoCacher.CacheItem(val, diffId);
             }
-            else scoreInfoCacher.CacheItem(([.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. blockedUserIndexes], leaderboardSize), diffId);
+            else scoreInfoCacher.CacheItem(new(new() { { country, leaderboardSize } }, [.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. blockedUserIndexes]), diffId);
+
+            //ScoreCache c = scoreInfoCacher.GetCachedItem(diffId);
+            //Plugin.Log.Info($"The cache now has {c.data.Count} entries: {c.data.Select(GetRank).Print()}");
+            //Plugin.Log.Info($"There are the following sizes: { c.leaderboardLengths.Values.Print()}");
+
         }
         private static List<T> MergeListWithEnumerable<T>(List<T> left, IEnumerable<T> right) where T : IComparable
         {
@@ -203,7 +239,11 @@ namespace AccsaberLeaderboard.API
                 }
             }
             if (i < left.Count)
+            {
+                if (converter(outp.Last()).CompareTo(converter(left[i])) == 0)
+                    i++;
                 outp.AddRange(left.Skip(i));
+            }
             if (rightEnum is not null)
                 do
                     outp.Add(rightEnum.Current);
@@ -267,7 +307,7 @@ namespace AccsaberLeaderboard.API
                     if (currentCache is not null && currentCache.Count / pageLength > page)
                     {
                         IEnumerable<AccsaberScoreData> cachedScores = currentCache.Skip(page * pageLength).Where(filter).Select(ConvertToScoreData)!;
-                        if (currentCache.Count == currentCacheData.leaderboardSize || cachedScores.Count() >= scoresNeeded)
+                        if (currentCache.Count == currentCacheData.LeaderboardSize || cachedScores.Count() >= scoresNeeded)
                         {
                             cachedScores = cachedScores.Take(scoresNeeded);
                             return ([.. cachedScores], (int)Math.Ceiling((float)currentCache.Count / PAGE_LENGTH));
@@ -454,12 +494,30 @@ namespace AccsaberLeaderboard.API
         } 
         public static async Task<IEnumerable<ScoreInfoToken>?> GetLeaderboardScores(string difficulty_id, int page = 0, int count = 10, CancellationToken ct = default)
         {
-            if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out var data) && (data.data.Count == data.leaderboardSize || page < data.data.Count / count))
+            if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out var data))
             {
-                int bottomRank = GetRank(data.data[page * count + count - 1]);
-                int topRank = GetRank(data.data[page * count]);
-                if (bottomRank - topRank == count - 1 + data.blockedUserIndexes.SkipWhile(index => index + 1 < topRank).TakeWhile(index => index + 1 < bottomRank).Count())
-                    return data.data.Skip(page * count).Take(count);
+                int minRank = page * count + 1, maxRank = minRank + count;
+                int topIdx = data.data.FindIndex(token =>
+                {
+                    int rank = GetRank(token);
+                    return rank >= minRank && rank < maxRank; 
+                });
+
+                if (topIdx >= 0 && data.data.Count > topIdx + count - 1)
+                {
+
+                    int topRank = GetRank(data.data[topIdx]);
+                    int bottomRank = GetRank(data.data[topIdx + count - 1]);
+
+                    IEnumerable<int> temp = data.blockedUserIndexes.SkipWhile(idx => idx < topRank);
+                    //int blockedUserCountBefore = data.blockedUserIndexes.Count - temp.Count(); // To use later if I decide to shift pages.
+                    int blockedUserCount = temp.TakeWhile(idx => idx < bottomRank).Count();
+
+                    //Plugin.Log.Info($"bottom = {bottomRank}, top = {topRank}, bottom idx = {topIdx + count - 1}, top idx = {topIdx}, blocked = {blockedUserCount}");
+
+                    if (topRank - page * count == 1 && bottomRank - (page + 1) * count == blockedUserCount)
+                        return data.data.Skip(topIdx).Take(count);
+                }
             }
 
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF, difficulty_id, page, count), throttler, true, ct: ct).ConfigureAwait(false);
@@ -469,23 +527,29 @@ namespace AccsaberLeaderboard.API
             List<ScoreInfoToken> outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
 
             int blockedUsers = 0;
-
             List<int> blockedUserIds = [];
-            for (int i = outp.Count - 1; i >= 0; i--)
-                if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
-                {
-                    blockedUsers++;
-                    blockedUserIds.Add(i + page * count);
-                    outp.RemoveAt(i);
-                }
 
-            if (blockedUsers > 0)
+            if (PlayerSocialLife.PlayerBlocked.Count > 0)
             {
-                int newPage = (page + 1) * count / blockedUsers;
-                IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, newPage, blockedUsers, ct);
-                if (extras is null)
-                    return null;
-                outp.AddRange(extras);
+                bool addNewEntries = data.blockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.blockedUserIndexes.Count;
+
+                for (int i = outp.Count - 1; i >= 0; i--)
+                    if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
+                    {
+                        blockedUsers++;
+                        if (addNewEntries)
+                            blockedUserIds.Add(i + page * count);
+                        outp.RemoveAt(i);
+                    }
+
+                if (blockedUsers > 0)
+                {
+                    int newPage = (page + 1) * count / blockedUsers;
+                    IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, newPage, blockedUsers, ct);
+                    if (extras is null)
+                        return null;
+                    outp.AddRange(extras);
+                }
             }
 
             CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"]);
@@ -493,9 +557,12 @@ namespace AccsaberLeaderboard.API
         }
         public static async Task<IEnumerable<ScoreInfoToken>?> GetLeaderboardScores(string difficulty_id, string country, int page = 0, int count = 10, CancellationToken ct = default)
         {
-            if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out var data)) 
+            if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out ScoreCache data)) 
             {
-                if (data.data.Count == data.leaderboardSize || page < data.data.Count(CountryFilterMaker(country)) / count)
+                int trueCount = data.data.Count(CountryFilterMaker(country));
+                int total = data.leaderboardLengths.TryGetValue(country, out int leng) ? leng : 0;
+                //Plugin.Log.Info($"true count = {trueCount}, blocked = {data.blockedUserIndexes.Count}, total = {total}");
+                if (data.leaderboardLengths.TryGetValue(country, out int len) && trueCount == len - data.blockedUserIndexes.Count || page < trueCount / count)
                     return data.data.Where(CountryFilterMaker(country)).Skip(page * count).Take(count); 
             }
 
@@ -506,26 +573,32 @@ namespace AccsaberLeaderboard.API
             List<ScoreInfoToken> outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
 
             int blockedUsers = 0;
-
             List<int> blockedUserIds = [];
-            for (int i = outp.Count - 1; i >= 0; i--)
-                if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
-                {
-                    blockedUsers++;
-                    blockedUserIds.Add(i + page * count);
-                    outp.RemoveAt(i);
-                }
 
-            if (blockedUsers > 0)
+            if (PlayerSocialLife.PlayerBlocked.Count > 0)
             {
-                int newPage = (page + 1) * count / blockedUsers;
-                IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, country, newPage, blockedUsers, ct);
-                if (extras is null)
-                    return null;
-                outp.AddRange(extras);
+                bool addNewEntries = data.blockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.blockedUserIndexes.Count;
+
+                for (int i = outp.Count - 1; i >= 0; i--)
+                    if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
+                    {
+                        blockedUsers++;
+                        if (addNewEntries)
+                            blockedUserIds.Add(i + page * count);
+                        outp.RemoveAt(i);
+                    }
+
+                if (blockedUsers > 0)
+                {
+                    int newPage = (page + 1) * count / blockedUsers;
+                    IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, country, newPage, blockedUsers, ct);
+                    if (extras is null)
+                        return null;
+                    outp.AddRange(extras);
+                }
             }
 
-            CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"]);
+            CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"], country);
             return outp.Take(count);
         }
         public static async Task<PlayerInfoToken?> GetPlayerInfo(string userId, bool stats, CancellationToken ct = default)
@@ -542,6 +615,13 @@ namespace AccsaberLeaderboard.API
             return outp;
         }
 
+        internal static async Task Authenticate(string ticket)
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, string.Format(APAPI_AUTH, "steam", ticket));
+            var (success, _) = await CallAPI(request, throttler).ConfigureAwait(false);
+            Plugin.Log.Info(success ? "Auth yippee" : "Auth failed");
+        }
+
         #endregion
         #region Token Classes
 
@@ -551,6 +631,19 @@ namespace AccsaberLeaderboard.API
         public class LevelInfoToken(JObject obj) : JObject(obj) { }
         public class StatsInfoToken(JObject obj) : JObject(obj) { }
         public class MilestoneInfoToken(JObject obj) : JObject(obj) { }
+
+        #endregion
+        #region Cache structs
+
+        private struct ScoreCache(Dictionary<string, int> leaderboardLengths, List<ScoreInfoToken> data, HashSet<string> userIds, List<int> blockedUserIndexes)
+        {
+            public Dictionary<string, int> leaderboardLengths = leaderboardLengths;
+            public List<ScoreInfoToken> data = data;
+            public HashSet<string> userIds = userIds;
+            public List<int> blockedUserIndexes = blockedUserIndexes;
+
+            public readonly int LeaderboardSize => leaderboardLengths["N/A"];
+        }
 
         #endregion
     }

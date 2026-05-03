@@ -9,6 +9,7 @@ using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
+using BeatSaberMarkupLanguage.Tags;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
 using System;
@@ -59,6 +60,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private AccsaberScoreDataInfo currentPlayerScore;
         private AsyncLock loadLeaderboardLock = new(), forceRefreshLock = new();
         private LeaderboardDisplayType displayType;
+        private Color selectorDefaultColor, defaultPageTopColor, defaultPageUpColor, defaultPageYouColor, defaultPageDownColor;
+        private Color highlightPageTopColor, highlightPageYouColor;
         private Stack<int> previousPages = [];
         private DifficultyInfoToken difficultyInfo;
         private PlayerScoreModalViewController psmvc;
@@ -66,6 +69,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private bool refreshRequested = false, loaded = false;
 
         private string titlePanelTitle;
+        private TextMeshProUGUI titlePaneTitleText = null;
         private Color titlePanelC;
         private Sprite titleDefaultSprite, titleCorrectSprite;
 
@@ -172,7 +176,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIComponent("RelationsSelector")] private ClickableImage relationsSelector;
         [UIComponent("CountrySelector")] private ClickableImage countrySelector;
 
-        [UIComponent("YouSelector")] private ClickableImage youSelector;
+        [UIComponent("PageTopSelector")] private ClickableImage pageTopSelector;
+        [UIComponent("PageUpSelector")] private NoTransitionsButton pageUpSelector;
+        [UIComponent("PageUpSelector")] private ButtonIconImage pageUpImage;
+        [UIComponent("PageYouSelector")] private ClickableImage pageYouSelector;
+        [UIComponent("PageDownSelector")] private NoTransitionsButton pageDownSelector;
+        [UIComponent("PageDownSelector")] private ButtonIconImage pageDownImage;
 
         [UIComponent("mapStarText")] private TextMeshProUGUI mapStarText;
         [UIComponent("mapTypeText")] private TextMeshProUGUI mapTypeText;
@@ -220,7 +229,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             HandleHeaderPane();
 
+            selectorDefaultColor = globalSelector.DefaultColor;
+            displayType = LeaderboardDisplayType.Global;
             UpdateSelectors(LeaderboardDisplayType.Global);
+
+            defaultPageTopColor = pageTopSelector.DefaultColor;
+            defaultPageUpColor = pageUpImage.image.color;
+            defaultPageYouColor = pageYouSelector.DefaultColor;
+            defaultPageDownColor = pageDownImage.image.color;
+
+            highlightPageTopColor = pageTopSelector.HighlightColor;
+            highlightPageYouColor = pageYouSelector.HighlightColor;
+
+            pageUpSelector.selectionStateDidChangeEvent += state => 
+                pageUpImage.image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageUpColor;
+            pageDownSelector.selectionStateDidChangeEvent += state =>
+                pageDownImage.image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageDownColor;
 
             psmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
@@ -348,7 +372,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             GameObject headerPane = GetHeaderPane();
             if (headerPane is null) return;
 
-            TextMeshProUGUI title = headerPane.GetComponentInChildren<TextMeshProUGUI>();
+            titlePaneTitleText = headerPane.GetComponentInChildren<TextMeshProUGUI>();
             ImageView headerBG = headerPane.GetComponentInChildren<ImageView>();
 
             titleDefaultSprite = headerBG.sprite;
@@ -356,8 +380,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
             LeaderboardShownPatch.LeaderboardShown += () =>
             {
-                titlePanelTitle = title.text;
-                title.SetText("Accsaber");
+                titlePanelTitle = titlePaneTitleText.text;
+                titlePaneTitleText.SetText("Accsaber");
 
                 titlePanelC = headerBG.color;
 
@@ -367,7 +391,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             };
             LeaderboardHiddenPatch.LeaderboardHidden += () =>
             {
-                title.SetText(titlePanelTitle);
+                titlePaneTitleText.SetText(titlePanelTitle);
                 titlePanelTitle = null;
 
                 headerBG.color = titlePanelC;
@@ -390,55 +414,27 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             UpdateSelectors(type);
             FullyReloadLeaderboard();
         }
+        private ClickableImage GetSelector(LeaderboardDisplayType displayType) => displayType switch
+        {
+            LeaderboardDisplayType.Global => globalSelector,
+            LeaderboardDisplayType.Country => countrySelector,
+            LeaderboardDisplayType.Friends => friendsSelector,
+            LeaderboardDisplayType.Followed => followedSelector,
+            LeaderboardDisplayType.Rivals => rivalsSelector,
+            LeaderboardDisplayType.Relations => relationsSelector,
+            _ => null
+        };
         private void UpdateSelectors(LeaderboardDisplayType newDisplayType)
         {
-            switch (displayType)
-            {
-                case LeaderboardDisplayType.Global:
-                    globalSelector.DefaultColor = Color.white;
-                    break;
-                case LeaderboardDisplayType.Friends:
-                    friendsSelector.DefaultColor = Color.white;
-                    previousPages.Clear();
-                    break;
-                case LeaderboardDisplayType.Followed:
-                    followedSelector.DefaultColor = Color.white;
-                    previousPages.Clear();
-                    break;
-                case LeaderboardDisplayType.Rivals:
-                    rivalsSelector.DefaultColor = new Color(0.8f, 0.8f, 0.8f);
-                    previousPages.Clear();
-                    break;
-                case LeaderboardDisplayType.Relations:
-                    relationsSelector.DefaultColor = Color.white;
-                    previousPages.Clear();
-                    break;
-                case LeaderboardDisplayType.Country:
-                    countrySelector.DefaultColor = Color.white;
-                    break;
-            }
+            ClickableImage ci = GetSelector(displayType);
+            ci.DefaultColor = selectorDefaultColor;
 
-            switch (newDisplayType)
-            {
-                case LeaderboardDisplayType.Global:
-                    globalSelector.DefaultColor = globalSelector.HighlightColor;
-                    break;
-                case LeaderboardDisplayType.Friends:
-                    friendsSelector.DefaultColor = friendsSelector.HighlightColor;
-                    break;
-                case LeaderboardDisplayType.Followed:
-                    followedSelector.DefaultColor = followedSelector.HighlightColor;
-                    break;
-                case LeaderboardDisplayType.Rivals:
-                    rivalsSelector.DefaultColor = rivalsSelector.HighlightColor;
-                    break;
-                case LeaderboardDisplayType.Relations:
-                    relationsSelector.DefaultColor = relationsSelector.HighlightColor;
-                    break;
-                case LeaderboardDisplayType.Country:
-                    countrySelector.DefaultColor = countrySelector.HighlightColor;
-                    break;
-            }
+            if (UsesPreviousPages)
+                previousPages.Clear();
+
+            ci = GetSelector(newDisplayType);
+            selectorDefaultColor = ci.DefaultColor;
+            ci.DefaultColor = ci.HighlightColor;
 
             displayType = newDisplayType;
         }
@@ -567,6 +563,14 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     IEnumerator ShowBad()
                     {
                         yield return new WaitForEndOfFrame();
+
+                        mapStarContainer.gameObject.SetActive(false);
+                        mapModeContainer.gameObject.SetActive(false);
+
+                        PanelViewController.Instance.HideCategoryTexts();
+
+                        titlePaneTitleText?.SetText("Not Accsaber");
+
                         leaderboardContainer.SetActive(false);
                         badMapMessage.SetActive(true);
                     }
@@ -591,18 +595,22 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (leaderboardLoader.activeSelf)
                 return;
 
-            bool gotCachedData = UsesPreviousPages ? ScoreDataCached(DifficultyId, page, CurrentFilter) : ScoreDataCached(DifficultyId, page, CurrentFilter, 1);
+            bool gotCachedData = displayType != LeaderboardDisplayType.Country ? 
+                ScoreDataCached(DifficultyId, page, CurrentFilter) : ScoreDataCached(DifficultyId, page, GetCountry(currentPlayerScoreInfo));
 
             IEnumerator StartLoading()
             {
                 yield return new WaitForEndOfFrame();
 
                 badMapMessage.SetActive(false);
-                leaderboardContainer.SetActive(false);
-                leaderboardLoader.SetActive(true);
+                
+                if (!gotCachedData)
+                {
+                    leaderboardContainer.SetActive(false);
+                    leaderboardLoader.SetActive(true);
+                }
             }
-            if (!gotCachedData)
-                StartCoroutine(StartLoading());
+            StartCoroutine(StartLoading());
         }
 
         private async Task LoadLeaderboardAsync()
@@ -657,19 +665,28 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     if (scores is not null)
                         scoreDatas.AddRange(scores);
 
-                    youSelector.DefaultColor = currentPlayerPage <= 0 && AttemptToSetPlayerPage() || currentPlayerPage > 0 ? Color.white : new(0.6f, 0.6f, 0.6f, 0.6f);
+                    bool knowCurrentPlayerPage = currentPlayerPage > 0 || currentPlayerPage <= 0 && AttemptToSetPlayerPage();
 
                     IEnumerator ReloadData()
                     {
+                        yield return new WaitForEndOfFrame();
+
+                        SetSelectorButtonSelectability(knowCurrentPlayerPage);
+
                         yield return new WaitForFixedUpdate();
 
                         leaderboard.PrefNumberOfCells = OnPlayerPage ? PAGE_LENGTH : PAGE_LENGTH + 2;
                         leaderboard.MainCellSize = CellSize;
                         leaderboard.Data = LeaderboardInfos;
 
+                        mapStarContainer.gameObject.SetActive(true);
+                        mapModeContainer.gameObject.SetActive(true);
+                        titlePaneTitleText.SetText("Accsaber");
+
                         leaderboardContainer.SetActive(true);
                         leaderboardLoader.SetActive(false);
                     }
+
                     StartCoroutine(ReloadData());
 
                 }
@@ -678,6 +695,39 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     Plugin.Log.Error($"Error loading leaderboard: {ex}");
                 }
             }
+        }
+        private void SetSelectorButtonSelectability(bool knownPlayerPage)
+        {
+            Color greyedOut = GREYED_OUT.Color();
+
+            bool atTop = currentPage == 1, atBottom = scoreDatas.Count < PAGE_LENGTH;
+
+            if (!atTop)
+            {
+                pageTopSelector.DefaultColor = defaultPageTopColor;
+                pageTopSelector.HighlightColor = highlightPageTopColor;
+
+                pageUpSelector.interactable = true;
+            } else
+            {
+                pageTopSelector.DefaultColor = greyedOut;
+                pageTopSelector.HighlightColor = greyedOut;
+
+                pageUpSelector.interactable = false;
+            }
+
+            if (knownPlayerPage)
+            {
+                pageYouSelector.DefaultColor = defaultPageYouColor;
+                pageYouSelector.HighlightColor = highlightPageYouColor;
+            }
+            else
+            {
+                pageYouSelector.DefaultColor = greyedOut;
+                pageYouSelector.HighlightColor = greyedOut;
+            }
+
+            pageDownSelector.interactable = !atBottom;
         }
         private bool AttemptToSetPlayerPage()
         {

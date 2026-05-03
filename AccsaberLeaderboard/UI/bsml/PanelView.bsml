@@ -16,7 +16,7 @@
           <text text='Overall' font-size='~fontSizeCell' font-color='~overallColor' align='Center'/>
         </vertical>
         <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
-          <text id='selectedLabelText' text='Selected' font-size='~fontSizeCell' align='Center'/>
+          <text id='selectedLabelText' text='Selected' font-size='~fontSizeCell' align='Center' active='false'/>
         </vertical>
       </horizontal>
 
@@ -28,10 +28,10 @@
           <text id='countryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
         </vertical>
         <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
-          <text id='selectedGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
+          <text id='selectedGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center' active='false'/>
         </vertical>
         <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
-          <text id='selectedCountryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
+          <text id='selectedCountryRankText' text='Country' font-size='~fontSizeCell' align='Center' active='false'/>
         </vertical>
       </horizontal>
 
@@ -40,7 +40,7 @@
           <text id='totalAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
         <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
-          <text id='selectedAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
+          <text id='selectedAPText' text='0ap' font-size='~fontSizeCell' align='Center' active='false'/>
         </vertical>
       </horizontal>
     

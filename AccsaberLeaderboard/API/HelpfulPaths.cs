@@ -4,16 +4,6 @@ namespace AccsaberLeaderboard.API
 {
     internal static class HelpfulPaths
     {
-        public const string SSAPI = "https://scoresaber.com/api/";
-        //UNRANKED: https://scoresaber.com/api/leaderboard/by-hash/bdacecbf446f0f066f4189c7fe1a81c6d3664b90/info?difficulty=5
-        //RANKED: https://scoresaber.com/api/leaderboard/by-hash/7c44cdc1e33e2f5f929867b29ceb3860c3716ddc/info?difficulty=5
-        public const string SSAPI_HASH = "https://scoresaber.com/api/leaderboard/by-hash/{0}/{1}?difficulty={2}&page={3}"; //hash, either "info" or "scores", diff_number, pageNumber
-        public const string SSAPI_USERID = "https://scoresaber.com/api/player/{0}/{1}"; //user_id, either "basic", "full", or "scores"
-        public const string SSAPI_DIFFS = "https://scoresaber.com/api/leaderboard/get-difficulties/{0}"; //hash
-        public const string SSAPI_LEADERBOARDID = "https://scoresaber.com/api/leaderboard/by-id/{0}/{1}"; //leaderboard_id, either "info" or "scores"
-        public const string SSAPI_PLAYERSCORES = "https://scoresaber.com/api/player/{0}/scores?limit={2}&sort=top&page={1}"; //user_id, page, count
-        public const string SSAPI_PLAYER_FILTER = "https://scoresaber.com/api/players?page={0}"; //page (count is always 50, sorted by rank)
-
         //Docs: https://api.accsaberreloaded.com/v1/docs
         // Category ID: b0000000-0000-0000-0000-000000000003 for Tech, 2 = Standard, 1 = True, none for overall.
         // Score endpoint example: https://api.accsaberreloaded.com/v1/users/76561198306905129/scores/by-hash/2a579bb1a3efa58af7640f9663c972ee84fea44a?difficulty=EXPERT&characteristic=Standard
@@ -36,7 +26,10 @@ namespace AccsaberLeaderboard.API
         public const string APAPI_MILESTONE_INCOMPLETE = APAPI + "users/{0}/milestones/uncompleted"; //user_id
 
         //user_id, RelationType, one of: ["outgoing", "incoming"], page (zero indexed), count
-        public const string APAPI_RELATIONS = APAPI + "users/{0}/relations?type={1}&direction={2}&page={3}&size={4}"; 
+        public const string APAPI_RELATIONS = APAPI + "users/{0}/relations?type={1}&direction={2}&page={3}&size={4}";
+
+        private const string APAPI_CALLBACK = APAPI + "auth/{0}/callback?state={1}";
+        public const string APAPI_AUTH = APAPI + "auth/{0}/start?returnTo=" + APAPI_CALLBACK; // one of: ["discord", "beatleader", "steam"], ticket
 
         public const string APAPI_WEBSOCKET = "wss://accsaberreloaded.com/ws/scores";
 

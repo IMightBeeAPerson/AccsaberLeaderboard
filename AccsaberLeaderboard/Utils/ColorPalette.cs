@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace AccsaberLeaderboard.Utils
 {
     public static class ColorPalette
     {
+        private static readonly Dictionary<string, Color> colorCache = [];
+
         public const string GLOBAL = "#89D0F5";
         public const string COUNTRY = "#FFA893";
 
@@ -30,6 +33,7 @@ namespace AccsaberLeaderboard.Utils
         public const string LEVEL_DIM = "#070"; // dim by 8
 
         public const string GREY = "#AAA";
+        public const string GREYED_OUT = "#9999";
         public const string DARK_BLUE = "#012";
 
         public const string DIMMER = "#0009";
@@ -73,8 +77,18 @@ namespace AccsaberLeaderboard.Utils
 
         public static Color Color(this string hex)
         {
-            if (ColorUtility.TryParseHtmlString(hex, out Color color)) 
+            if (hex.Length != 9)
+                hex = hex.ToProperColor();
+
+            if (colorCache.TryGetValue(hex, out Color color))
                 return color;
+
+            if (ColorUtility.TryParseHtmlString(hex, out color)) 
+            {
+                colorCache.Add(hex, color);
+                return color;
+            }
+
             Plugin.Log.Warn($"The color \"{hex}\" could not be parsed!");
             return default;
         }

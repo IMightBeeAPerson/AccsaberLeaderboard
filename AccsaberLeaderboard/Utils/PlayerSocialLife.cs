@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Steamworks;
 
 namespace AccsaberLeaderboard.Utils
 {
@@ -87,8 +88,16 @@ namespace AccsaberLeaderboard.Utils
         {
             try
             { // todo: add blocked players and set the bool for exposing followed/rivals.
-                string playerId = (await BS_Utils.Gameplay.GetUserInfo.GetUserAsync()).platformUserId;
-                IReadOnlyList<string> steamFriends = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserFriendsUserIds(false).ConfigureAwait(false);
+                IPlatformUserModel model = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel();
+                UserInfo info = await BS_Utils.Gameplay.GetUserInfo.GetUserAsync();
+                PlatformAuthenticationTokenProvider patc = new(model, info);
+                string session = (await patc.GetAuthenticationToken()).sessionToken;
+                //session = Convert.ToBase64String(MiscUtils.HexStrToBytes(session));
+
+                //await AccsaberAPI.Authenticate(session); //Until I can figure this out, just leave it commented out.
+
+                string playerId = info.platformUserId;
+                IReadOnlyList<string> steamFriends = await model.GetUserFriendsUserIds(false).ConfigureAwait(false);
                 HashSet<string> friends = [.. steamFriends, playerId];
                 HashSet<string> accFollowed = await AccsaberAPI.GetPlayerRelations(HelpfulPaths.RelationType.follower, playerId);
                 accFollowed.Add(playerId);

@@ -3,7 +3,6 @@ using BeatSaberMarkupLanguage.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -15,6 +14,16 @@ namespace AccsaberLeaderboard.Utils
     public static class MiscUtils
     {
         public const char STAR = (char)9733;
+        public static byte[] HexStrToBytes(string str)
+        {
+            if (str.Length % 2 != 0)
+                throw new ArgumentException("Must have an even length string to convert to bytes.");
+
+            byte[] outp = new byte[str.Length / 2];
+            for (int i = 0; i < outp.Length; i++)
+                outp[i] = Convert.ToByte(str.Substring(i * 2, 2), 16);
+            return outp;
+        }
         public static string ClampString(this string str, int maxLength, string suffix = "...")
         {
             if (str.Length < maxLength) return str;
@@ -65,6 +74,26 @@ namespace AccsaberLeaderboard.Utils
             hexNum += int.Parse(alpha.Length == 1 ? alpha + alpha : alpha, System.Globalization.NumberStyles.HexNumber);
 
             return (hasHashtag ? "#" : "") + hexNum.ToString("X");
+        }
+        public static string ToProperColor(this string hex)
+        {
+            if (hex.Length == 9)
+                return hex;
+
+            if (hex[0] == '#') 
+                hex = hex.Substring(1);
+
+            if (hex.Length == 6)
+                return $"#{hex.ToUpper()}FF";
+
+            string outp = "#";
+            foreach (char c in hex)
+                outp += new string(char.ToUpper(c), 2);
+
+            if (outp.Length != 9)
+                outp += "FF";
+
+            return outp;
         }
         public static BSMLParser GetParser() =>
 #if NEW_VERSION

@@ -104,7 +104,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                     UpdateCategoryTexts(category);
             }
         }
-        public void UpdateCategoryTexts(APCategory category)
+        public void HideCategoryTexts()
+        {
+            lock (updateLock)
+            {
+                selectedLabelText.gameObject.SetActive(false);
+                selectedGlobalRankText.gameObject.SetActive(false);
+                selectedCountryRankText.gameObject.SetActive(false);
+                selectedAPText.gameObject.SetActive(false);
+            }
+        }
+        private void UpdateCategoryTexts(APCategory category)
         {
             AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, category);
 
@@ -112,6 +122,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             selectedGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
             selectedCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
             selectedAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
+
+            selectedLabelText.gameObject.SetActive(true);
+            selectedGlobalRankText.gameObject.SetActive(true);
+            selectedCountryRankText.gameObject.SetActive(true);
+            selectedAPText.gameObject.SetActive(true);
         }
         private void SetOverallTexts()
         {

@@ -21,7 +21,7 @@ namespace AccsaberLeaderboard.API
         {
             Timeout = ClientTimeout
         };
-        public static async Task<(bool Success, HttpContent Content)> CallAPI(string path, Throttler throttler = null, bool quiet = false, int maxRetries = 3, CancellationToken ct = default)
+        public static async Task<(bool Success, HttpContent Content)> CallAPI(HttpRequestMessage request, Throttler throttler = null, bool quiet = false, int maxRetries = 3, CancellationToken ct = default)
         {
             const int initialRetryDelayMs = 500;
             bool closeRequest = false;
@@ -37,23 +37,23 @@ namespace AccsaberLeaderboard.API
                     if (throttler != null)
                         await throttler.Call();
 
-                    Plugin.Log.Debug("API Call: " + path);
+                    Plugin.Log.Debug("API Call: " + request.RequestUri);
 
                     HttpResponseMessage response;
                     if (closeRequest)
                     {
-                        HttpRequestMessage request = new(HttpMethod.Get, new Uri(path));
                         request.Headers.ConnectionClose = true;
                         response = await client.SendAsync(request, ct).ConfigureAwait(false);
+                        request.Headers.ConnectionClose = false;
                         closeRequest = false;
                     }
-                    else response = await client.GetAsync(new Uri(path), ct).ConfigureAwait(false);
+                    else response = await client.SendAsync(request, ct).ConfigureAwait(false);
 
                     int status = (int)response.StatusCode;
                     if (status >= 400 && status < 500)
                     {
                         if (!quiet)
-                            Plugin.Log.Error("API request failed, skipping retries due to error code (" + status + ").\nPath: " + path);
+                            Plugin.Log.Error("API request failed, skipping retries due to error code (" + status + ").\nPath: " + request.RequestUri);
                         break;
                     }
                     response.EnsureSuccessStatusCode();
@@ -84,7 +84,7 @@ namespace AccsaberLeaderboard.API
                     }
                     if (!quiet)
                     {
-                        Plugin.Log.Error($"API request failed (attempt {attempt}/{maxRetries})\nPath: {path}\nError: {e.Message}");
+                        Plugin.Log.Error($"API request failed (attempt {attempt}/{maxRetries})\nPath: {request.RequestUri}\nError: {e.Message}");
                         Plugin.Log.Debug(e);
                     }
 
@@ -104,6 +104,11 @@ namespace AccsaberLeaderboard.API
                 }
             }
             return (false, null);
+        }
+        public static async Task<(bool Success, HttpContent Content)> CallAPI(string path, Throttler throttler = null, bool quiet = false, int maxRetries = 3, CancellationToken ct = default)
+        {
+            HttpRequestMessage request = new(HttpMethod.Get, new Uri(path));
+            return await CallAPI(request, throttler, quiet, maxRetries, ct);
         }
         public static async Task<string> CallAPI_String(string path, Throttler t = null, bool quiet = false, int maxRetries = 3, CancellationToken ct = default)
         {
