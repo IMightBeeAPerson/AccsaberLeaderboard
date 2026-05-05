@@ -9,38 +9,38 @@
 
     <vertical pref-width='~elementPadding'/>
 
-    <vertical pref-width='~rowWidth' pref-height='~rowHeight' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+    <vertical pref-width='~rowWidth' pref-height='~rowHeight' child-alignment='MiddleCenter' child-expand-width='false' spacing='~cellSpacing'>
 
-      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' child-expand-width='false' spacing='~cellSpacing'>
         <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
           <text text='Overall' font-size='~fontSizeCell' font-color='~overallColor' align='Center'/>
         </vertical>
-        <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
-          <text id='selectedLabelText' text='Selected' font-size='~fontSizeCell' align='Center' active='false'/>
+        <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter' tags='DisableOnUnranked'>
+          <text id='selectedLabelText' text='Selected' font-size='~fontSizeCell' align='Center'/>
         </vertical>
       </horizontal>
 
-      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' child-expand-width='false' spacing='~cellSpacing'>
         <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
           <text id='globalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
         </vertical>
         <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
           <text id='countryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
-          <text id='selectedGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center' active='false'/>
+        <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter' tags='DisableOnUnranked'>
+          <text id='selectedGlobalRankText' text='Global' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter'>
-          <text id='selectedCountryRankText' text='Country' font-size='~fontSizeCell' align='Center' active='false'/>
+        <vertical pref-width='~cellWidthSmall' child-alignment='MiddleCenter' tags='DisableOnUnranked'>
+          <text id='selectedCountryRankText' text='Country' font-size='~fontSizeCell' align='Center'/>
         </vertical>
       </horizontal>
 
-      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' spacing='~cellSpacing'>
+      <horizontal pref-width='~rowWidth' pref-height='~cellHeight' child-alignment='MiddleCenter' child-expand-width='false' spacing='~cellSpacing'>
         <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
           <text id='totalAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
-        <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter'>
-          <text id='selectedAPText' text='0ap' font-size='~fontSizeCell' align='Center' active='false'/>
+        <vertical pref-width='~cellWidthBig' child-alignment='MiddleCenter' tags='DisableOnUnranked'>
+          <text id='selectedAPText' text='0ap' font-size='~fontSizeCell' align='Center'/>
         </vertical>
       </horizontal>
     

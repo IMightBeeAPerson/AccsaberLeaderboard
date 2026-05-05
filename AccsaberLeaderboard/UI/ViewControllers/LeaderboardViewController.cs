@@ -44,7 +44,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         public const float SMALL_CELL_SIZE = 5.3f;
         public const float SMALL_FONT_SIZE = 3f;
 
+        public const string RANKED_HEADER = "Accsaber";
+        public const string UNRANKED_HEADER = "Not Accsaber";
+
         public static bool LeaderboardOnPlayerPage => Instance.OnPlayerPage;
+
+        public static event Action<bool> OnMapChanged; // bool == is map ranked or not.
 
         public static LeaderboardViewController Instance { get; private set; }
         private static TextSpacer Spacer = new();
@@ -381,7 +386,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             LeaderboardShownPatch.LeaderboardShown += () =>
             {
                 titlePanelTitle = titlePaneTitleText.text;
-                titlePaneTitleText.SetText("Accsaber");
+                titlePaneTitleText.SetText(RANKED_HEADER);
 
                 titlePanelC = headerBG.color;
 
@@ -545,7 +550,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             if (ColorUtility.TryParseHtmlString(color, out Color c))
                 mapModeContainer.background.color = c;
 
-            PanelViewController.Instance.SetCategoryTexts(category);
+            yield return PanelViewController.Instance.SetCategoryTexts(category);
         }
         private async Task<bool> ForceRefresh() => await ForceRefresh(true);
         private async Task<bool> ForceRefresh(bool overridePlayerScore)
@@ -555,8 +560,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             using (theLock.Value)
             {
                 difficultyInfo = await GetLeaderboard(currentHash, currentDifficulty);
+                bool ranked = difficultyInfo is not null;
 
-                if (difficultyInfo is null)
+                OnMapChanged?.Invoke(ranked);
+
+                if (!ranked)
                 {
                     currentHash = null;
                     currentDifficulty = default;
@@ -567,9 +575,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                         mapStarContainer.gameObject.SetActive(false);
                         mapModeContainer.gameObject.SetActive(false);
 
-                        PanelViewController.Instance.HideCategoryTexts();
-
-                        titlePaneTitleText?.SetText("Not Accsaber");
+                        titlePaneTitleText?.SetText(UNRANKED_HEADER);
 
                         leaderboardContainer.SetActive(false);
                         badMapMessage.SetActive(true);

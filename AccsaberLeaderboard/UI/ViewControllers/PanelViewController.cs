@@ -5,6 +5,7 @@ using AccsaberLeaderboard.Utils;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
+using BeatSaberMarkupLanguage.Parser;
 using BeatSaberMarkupLanguage.TypeHandlers;
 using BeatSaberMarkupLanguage.ViewControllers;
 using BS_Utils.Utilities;
@@ -34,6 +35,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private APCategory toUpdate = APCategory.None;
         private object updateLock = new();
 
+        [UIParams] internal BSMLParserParams parserParams;
+
         [UIComponent("panelContainer")] private CustomBackground panelContainer;
 
         [UIComponent("globalRankText")] private TextMeshProUGUI globalRankText;
@@ -47,6 +50,10 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIComponent("profilePicture")] private ImageView profilePicture;
 
+        private GameObject[] toDisableOnUnranked = null;
+
+
+        public const string DisableOnUnrankedTag = "DisableOnUnranked";
 
         [UIValue("overallColor")] public const string overallColor = OVERALL;
         [UIValue("techColor")] public const string techColor = TECH;
@@ -81,10 +88,11 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
         [UIAction("#post-parse")] private void PostParse()
         {
-            //Below lines taken from: https://github.com/accsaber/accsaber-plugin/blob/dev/leaderboard-1.38/AccSaber/UI/ViewControllers/LeaderboardUserModalController.cs#L182
-            Material m = Resources.FindObjectsOfTypeAll<Material>().Last(x => x.name == "UINoGlowRoundEdge");
+            Material m = ResourcePaths.BORDER_MATERIAL;
             profilePicture.material = m;
             panelContainer.background.material = m;
+
+            toDisableOnUnranked = [.. parserParams.GetObjectsWithTag(DisableOnUnrankedTag)];
         }
 
         private void Awake()
@@ -92,29 +100,37 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Plugin.Log.Debug("PanelViewController Awake");
             Instance = this;
             AccsaberLiveScores.OnPlayerScoreUpdated += _ => Task.Run(UpdatePlayer);
+            LeaderboardViewController.OnMapChanged += ranked => StartCoroutine(UpdateRankedVisiblility(ranked));
             Task.Run(UpdatePlayer);
         }
 
-        public void SetCategoryTexts(APCategory category)
+        public IEnumerator SetCategoryTexts(APCategory category)
         {
             lock (updateLock)
             {
                 toUpdate = category;
-                if (playerInfo is not null)
-                    UpdateCategoryTexts(category);
+                if (playerInfo is null)
+                    yield break;
+
+                yield return new WaitForEndOfFrame();
+
+                UpdateCategoryTexts(category);
             }
         }
-        public void HideCategoryTexts()
+        private IEnumerator UpdateRankedVisiblility(bool enabled)
         {
+            if (toDisableOnUnranked is null)
+                yield break;
+
+            yield return new WaitForEndOfFrame();
+
             lock (updateLock)
             {
-                selectedLabelText.gameObject.SetActive(false);
-                selectedGlobalRankText.gameObject.SetActive(false);
-                selectedCountryRankText.gameObject.SetActive(false);
-                selectedAPText.gameObject.SetActive(false);
+                for (int i = 0; i < toDisableOnUnranked.Length; i++)
+                    toDisableOnUnranked[i].SetActive(enabled);
             }
         }
-        private void UpdateCategoryTexts(APCategory category)
+        private void UpdateCategoryTexts(APCategory category) // only call this in a coroutine
         {
             AccsaberAPI.StatsInfoToken playerStats = AccsaberAPI.GetPlayerStats(playerInfo, category);
 
@@ -122,11 +138,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             selectedGlobalRankText.SetText($"<color={GLOBAL}>#{AccsaberAPI.GetGlobalRank(playerStats)}</color>");
             selectedCountryRankText.SetText($"<color={COUNTRY}>#{AccsaberAPI.GetCountryRank(playerStats)}</color>");
             selectedAPText.SetText($"<color={AP}>{AccsaberAPI.GetAP(playerStats):N2}ap</color>");
-
-            selectedLabelText.gameObject.SetActive(true);
-            selectedGlobalRankText.gameObject.SetActive(true);
-            selectedCountryRankText.gameObject.SetActive(true);
-            selectedAPText.gameObject.SetActive(true);
         }
         private void SetOverallTexts()
         {

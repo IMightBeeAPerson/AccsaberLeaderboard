@@ -183,10 +183,17 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             isBlocked = !isBlocked;
             Swap(setAsBlockedButton);
             if (isBlocked)
+            {
                 PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Blocked);
+                RemovePlayerFromCache(playerId);
+            }
             else
+            {
                 PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Blocked);
-            InvalidateCache();
+                InvalidateCache();
+            }
+                
+            
         }
 
         public PlayerProfileModalViewController(GameObject parent)

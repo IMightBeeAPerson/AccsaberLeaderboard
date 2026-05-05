@@ -1,16 +1,16 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using AccsaberLeaderboard.Models;
+using AccsaberLeaderboard.Utils;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using AccsaberLeaderboard.Models;
-using System.Diagnostics.CodeAnalysis;
-using AccsaberLeaderboard.Utils;
-
 using static AccsaberLeaderboard.API.APIHandler;
 using static AccsaberLeaderboard.API.HelpfulPaths;
-using System.Net.Http;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace AccsaberLeaderboard.API
 {
@@ -260,6 +260,28 @@ namespace AccsaberLeaderboard.API
         }
         public static void InvalidateCache() => scoreInfoCacher.ClearCache();
         public static void InvalidateCache(string diffId) => scoreInfoCacher.RemoveItem(diffId);
+        public static void RemovePlayerFromCache(string playerId)
+        {
+            foreach (KeyValuePair<string, ScoreCache> diff in scoreInfoCacher)
+            {
+                if (!diff.Value.userIds.Contains(playerId))
+                    continue;
+
+                diff.Value.userIds.Remove(playerId);
+                ScoreInfoToken info = diff.Value.data.First(token => GetPlayerId(token).Equals(playerId));
+                diff.Value.data.Remove(info);
+                int idx = GetRank(info) - 1;
+
+                if (diff.Value.blockedUserIndexes.Count < 2 || diff.Value.blockedUserIndexes.Last() < idx)
+                    diff.Value.blockedUserIndexes.Add(idx);
+                else for (int i = diff.Value.blockedUserIndexes.Count - 2; i >= 0; i--)
+                        if (diff.Value.blockedUserIndexes[i] < idx)
+                        {
+                            diff.Value.blockedUserIndexes.Insert(i + 1, idx);
+                            break;
+                        }
+            }
+        }
 
         #endregion
         #region Async Functions
@@ -524,33 +546,12 @@ namespace AccsaberLeaderboard.API
             if (string.IsNullOrEmpty(dataStr)) return null;
 
             JToken dataToken = JToken.Parse(dataStr);
-            List<ScoreInfoToken> outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
+            List<ScoreInfoToken>? outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
 
-            int blockedUsers = 0;
-            List<int> blockedUserIds = [];
-
-            if (PlayerSocialLife.PlayerBlocked.Count > 0)
-            {
-                bool addNewEntries = data.blockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.blockedUserIndexes.Count;
-
-                for (int i = outp.Count - 1; i >= 0; i--)
-                    if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
-                    {
-                        blockedUsers++;
-                        if (addNewEntries)
-                            blockedUserIds.Add(i + page * count);
-                        outp.RemoveAt(i);
-                    }
-
-                if (blockedUsers > 0)
-                {
-                    int newPage = (page + 1) * count / blockedUsers;
-                    IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, newPage, blockedUsers, ct);
-                    if (extras is null)
-                        return null;
-                    outp.AddRange(extras);
-                }
-            }
+            List<int>? blockedUserIds;
+            (outp, blockedUserIds) = await HandleBlockedPlayers(outp!, data, page, count, (inPage, inCount) => GetLeaderboardScores(difficulty_id, inPage, inCount, ct));
+            if (outp is null || blockedUserIds is null)
+                return null;
 
             CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"]);
             return outp.Take(count);
@@ -570,7 +571,32 @@ namespace AccsaberLeaderboard.API
             if (string.IsNullOrEmpty(dataStr)) return null;
 
             JToken dataToken = JToken.Parse(dataStr);
-            List<ScoreInfoToken> outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
+            List<ScoreInfoToken>? outp = [.. dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token))];
+
+            List<int>? blockedUserIds;
+            (outp, blockedUserIds) = await HandleBlockedPlayers(outp!, data, page, count, (inPage, inCount) => GetLeaderboardScores(difficulty_id, country, inPage, inCount, ct));
+            if (outp is null || blockedUserIds is null)
+                return null;
+
+            CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"], country);
+            return outp.Take(count);
+        }
+        private static async Task<(List<ScoreInfoToken>? newOutp, List<int>? blockedIds)> HandleBlockedPlayers(List<ScoreInfoToken> scoreTokens, ScoreCache data, int page, int count,
+            Func<int, int, Task<IEnumerable<ScoreInfoToken>?>> getExtraScores)
+        {
+            if (data.blockedUserIndexes is null)
+                return (scoreTokens, []);
+
+            if (data.blockedUserIndexes.Count > 0)
+            {
+                IEnumerable<ScoreInfoToken> toUnblock = scoreTokens.Where(token => data.blockedUserIndexes.Contains(GetRank(token) - 1) && !PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(token)));
+                if (toUnblock.Any())
+                {
+                    List<int> toUnblockIdx = [.. toUnblock.Select(token => GetRank(token) - 1)];
+                    foreach (int i in toUnblockIdx)
+                        data.blockedUserIndexes.Remove(i);
+                }
+            }
 
             int blockedUsers = 0;
             List<int> blockedUserIds = [];
@@ -579,27 +605,26 @@ namespace AccsaberLeaderboard.API
             {
                 bool addNewEntries = data.blockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.blockedUserIndexes.Count;
 
-                for (int i = outp.Count - 1; i >= 0; i--)
-                    if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(outp[i])))
+                for (int i = scoreTokens.Count - 1; i >= 0; i--)
+                    if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(scoreTokens[i])))
                     {
                         blockedUsers++;
                         if (addNewEntries)
-                            blockedUserIds.Add(i + page * count);
-                        outp.RemoveAt(i);
+                            blockedUserIds.Add(GetRank(scoreTokens[i]) - 1);
+                        scoreTokens.RemoveAt(i);
                     }
 
                 if (blockedUsers > 0)
                 {
                     int newPage = (page + 1) * count / blockedUsers;
-                    IEnumerable<ScoreInfoToken>? extras = await GetLeaderboardScores(difficulty_id, country, newPage, blockedUsers, ct);
+                    IEnumerable<ScoreInfoToken>? extras = await getExtraScores(newPage, blockedUsers);
                     if (extras is null)
-                        return null;
-                    outp.AddRange(extras);
+                        return (null, null);
+                    scoreTokens.AddRange(extras);
                 }
             }
 
-            CacheScoreData(difficulty_id, outp, blockedUserIds, (int)dataToken["totalElements"], country);
-            return outp.Take(count);
+            return (scoreTokens, blockedUserIds);
         }
         public static async Task<PlayerInfoToken?> GetPlayerInfo(string userId, bool stats, CancellationToken ct = default)
         {
