@@ -5,8 +5,8 @@ namespace AccsaberLeaderboard.Calculators
 {
     internal class APCalc
     {
-        internal List<(double, double)> PointList { get; } = new List<(double, double)>()
-        {
+        internal List<(double, double)> PointList { get; } =
+        [
             ( 0, 0 ),
             ( 0.9409324581850277, 0.22864617746193472 ),
             ( 0.9421364984358537, 0.2344589535514457 ),
@@ -59,17 +59,17 @@ namespace AccsaberLeaderboard.Calculators
             ( 0.9988016676122579, 0.8810362590039038 ),
             ( 0.9997988680153226, 1 ),
             ( 1, 1 )
-        };
+        ];
         public readonly string StarLabel = "<color=#00FF00>Complexity</color>";
         public static readonly APCalc Instance = new();
         private APCalc()
         {
             PointList.Reverse();
         }
-        public float GetPp(float acc, float complexity) => GetCurve(acc) * (complexity + 18) * 61;
+        public float GetAp(float acc, float complexity) => GetCurve(acc) * (complexity + 18) * 61;
         public float GetAccDeflated(float deflatedPp, float complexity, int precision = -1)
         {
-            if (deflatedPp > GetPp(1.0f, complexity)) return precision < 0 ? 1.0f : 100.0f;
+            if (deflatedPp > GetAp(1.0f, complexity)) return precision < 0 ? 1.0f : 100.0f;
             float outp = InvertCurve(deflatedPp / (complexity + 18) * 61);
             return precision < 0 ? outp : (float)Math.Round(outp * 100.0f, precision);
         }

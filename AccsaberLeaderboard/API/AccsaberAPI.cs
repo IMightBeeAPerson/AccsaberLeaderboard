@@ -491,7 +491,7 @@ namespace AccsaberLeaderboard.API
             {
                 string dataStr = await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, diffStr), throttler, true, ct: ct).ConfigureAwait(false);
 
-                if (dataStr is null || dataStr.Equals(string.Empty)) return null;
+                if (string.IsNullOrEmpty(dataStr)) return null;
                 if (JToken.Parse(dataStr)["difficulties"].Children().FirstOrDefault() is not JObject diffData) return null;
 
                 DifficultyInfoToken outp = new(diffData);

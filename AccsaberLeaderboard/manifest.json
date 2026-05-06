@@ -11,5 +11,23 @@
     "LeaderboardCore": "^1.3.3",
     "BeatSaberMarkupLanguage": "^1.6.10",
     "BS Utils": "^1.12.2"
+  },
+  "features": {
+    "CountersPlus.CustomCounter": {
+      "Name": "AP Counter",
+      "Description": "It counts ap",
+      "CounterLocation": "AccsaberLeaderboard.Counter.APCounter",
+      "MultiplayerReady": true,
+      "ConfigDefaults": {
+        "Enabled": true,
+        "Position": "AboveCombo",
+        "Distance": 0
+      },
+      "BSML": {
+        "Resource": "AccsaberLeaderboard.Counter.Settings.BSML.counterConfig.bsml",
+        "Host": "AccsaberLeaderboard.Counter.Settings.CounterConfigHandler",
+        "Icon": "AccsaberLeaderboard.Resources.accsaberReloaded.png"
+      }
+    }
   }
 }

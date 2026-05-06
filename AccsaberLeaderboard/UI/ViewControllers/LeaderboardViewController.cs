@@ -9,7 +9,6 @@ using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.Parser;
-using BeatSaberMarkupLanguage.Tags;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
 using System;
@@ -25,7 +24,6 @@ using Zenject;
 using static AccsaberLeaderboard.API.AccsaberAPI;
 using static AccsaberLeaderboard.Models.AccsaberScoreData;
 using static AccsaberLeaderboard.Utils.ColorPalette;
-using static RankModel;
 using Screen = HMUI.Screen;
 
 
@@ -94,6 +92,9 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         }
 
         public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
+        public string CurrentHash => currentHash;
+        public BeatmapDifficulty CurrentDiff => currentDifficulty;
+        public float CurrentComplexity => difficultyInfo is null ? 0f : GetComplexity(difficultyInfo);
         public bool OnPlayerPage {
             get
             {

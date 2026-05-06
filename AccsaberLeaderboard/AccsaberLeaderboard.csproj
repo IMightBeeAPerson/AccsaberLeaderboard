@@ -61,6 +61,11 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Core.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="Counters+, Version=2.3.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Plugins\Counters+.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="DataModels, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
@@ -169,6 +174,8 @@
     <Compile Include="API\HelpfulPaths.cs" />
     <Compile Include="API\Throttler.cs" />
     <Compile Include="Calculators\APCalc.cs" />
+    <Compile Include="Counter\APCounter.cs" />
+    <Compile Include="Counter\Settings\CounterConfigHandler.cs" />
     <Compile Include="Harmony\LeaderboardHiddenPatch.cs" />
     <Compile Include="Harmony\LeaderboardShownPatch.cs" />
     <Compile Include="Harmony\LoadPatch.cs" />
@@ -212,6 +219,7 @@
     <EmbeddedResource Include="manifest.json" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Counter\Settings\BSML\counterConfig.bsml" />
     <None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />
     <None Include="AccsaberLeaderboard.csproj.user" Condition="Exists('AccsaberLeaderboard.csproj.user')" />
     <EmbeddedResource Include="UI\bsml\LeaderboardView.bsml" />

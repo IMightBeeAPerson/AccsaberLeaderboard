@@ -4,6 +4,8 @@ using AccsaberLeaderboard.UI.BSML_Addons;
 using BS_Utils.Utilities;
 using IPA;
 using IPA.Config.Stores;
+using IPA.Loader;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using IPALogger = IPA.Logging.Logger;
@@ -76,8 +78,16 @@ namespace AccsaberLeaderboard
         {
             if (loadLoaded) return;
             loadLoaded = true;
+
             AddonAdder.Load();
+
             Task.Run(() => AccsaberLiveScores.StartWebsocket(AccsaberLiveScores.WebsocketCanceller.Token));
+
+            PluginMetadata pm = PluginManager.GetPluginFromId("Counters+");
+            if (pm is not null)
+            {
+
+            }
         }
     }
 }
