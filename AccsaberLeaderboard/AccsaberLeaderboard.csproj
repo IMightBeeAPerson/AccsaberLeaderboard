@@ -219,7 +219,7 @@
     <EmbeddedResource Include="manifest.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Counter\Settings\BSML\counterConfig.bsml" />
+    <EmbeddedResource Include="Counter\Settings\BSML\counterConfig.bsml" />
     <None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />
     <None Include="AccsaberLeaderboard.csproj.user" Condition="Exists('AccsaberLeaderboard.csproj.user')" />
     <EmbeddedResource Include="UI\bsml\LeaderboardView.bsml" />

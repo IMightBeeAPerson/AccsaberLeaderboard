@@ -1,2 +1,4 @@
-<bg>
-</bg>
+<vertical spacing='5' horizontal-fit='PreferredSize'>
+  <increment-setting text='Decimal Precision' apply-on-change='true' value='DecimalPlaces' integer-only='true' min='0' max='4' increment='1'/>
+  <increment-setting text='Font Size' apply-on-change='true' value='FontSize' integer-only='false' min='0.5' max='10' increment='0.5'/>
+</vertical>

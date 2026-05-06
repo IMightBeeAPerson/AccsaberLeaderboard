@@ -95,6 +95,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         public string CurrentHash => currentHash;
         public BeatmapDifficulty CurrentDiff => currentDifficulty;
         public float CurrentComplexity => difficultyInfo is null ? 0f : GetComplexity(difficultyInfo);
+        public APCategory CurrentCategory => difficultyInfo is null ? APCategory.None :
+            (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(GetCategoryId(difficultyInfo)));
         public bool OnPlayerPage {
             get
             {

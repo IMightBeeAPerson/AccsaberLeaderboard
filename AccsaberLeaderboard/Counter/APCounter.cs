@@ -1,5 +1,7 @@
 ﻿using AccsaberLeaderboard.API;
 using AccsaberLeaderboard.Calculators;
+using AccsaberLeaderboard.Configuration;
+using AccsaberLeaderboard.Counter.Settings;
 using CountersPlus.Counters.Custom;
 using System.Threading.Tasks;
 using TMPro;
@@ -21,6 +23,8 @@ namespace AccsaberLeaderboard.Counter
 
         private TMP_Text displayText;
         private float complexity;
+        private string complexityToString;
+
         public override void CounterDestroy()
         {
             
@@ -31,15 +35,20 @@ namespace AccsaberLeaderboard.Counter
             sc.scoreDidChangeEvent += HandleScoreDidChange;
 
             displayText = CanvasUtility.CreateTextFromSettings(Settings);
-
-            complexity = 0f;
+            displayText.fontSize = PluginConfig.Instance.FontSize;
 
             UI.ViewControllers.LeaderboardViewController lvc = UI.ViewControllers.LeaderboardViewController.Instance;
+
+            int decimalPlaces = PluginConfig.Instance.DecimalPlaces;
+            complexityToString = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "N0";
 
             string hash = beatmap.level.levelID.Split('_')[2];
 
             if (lvc is not null && lvc.ValidMapSelected && lvc.CurrentHash.Equals(hash) && lvc.CurrentDiff.Equals(beatmap.difficulty))
+            {
                 complexity = lvc.CurrentComplexity;
+                displayText.SetText($"{complexity:0.##}* {lvc.CurrentCategory} Acc");
+            }
             else
             {
                 complexity = 0f;
@@ -58,11 +67,10 @@ namespace AccsaberLeaderboard.Counter
                 return;
 
             float acc = (float)multScore / sc.immediateMaxPossibleMultipliedScore;
-            Plugin.Log.Info($"acc = {acc}");
 
             float ap = APCalc.Instance.GetAp(acc, complexity);
 
-            displayText.SetText($"{ap:0.##} ap");
+            displayText.SetText($"{ap.ToString(complexityToString)} ap");
         }
     }
 }

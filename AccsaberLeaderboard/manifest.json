@@ -26,7 +26,7 @@
       "BSML": {
         "Resource": "AccsaberLeaderboard.Counter.Settings.BSML.counterConfig.bsml",
         "Host": "AccsaberLeaderboard.Counter.Settings.CounterConfigHandler",
-        "Icon": "AccsaberLeaderboard.Resources.accsaberReloaded.png"
+        "Icon": "AccsaberLeaderboard.Resources.accReloaded.png"
       }
     }
   }
