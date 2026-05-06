@@ -1,6 +1,8 @@
 ﻿
 using System.Runtime.CompilerServices;
+using AccsaberLeaderboard.Counter.Utils;
 using IPA.Config.Stores;
+using IPA.Config.Stores.Attributes;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
 namespace AccsaberLeaderboard.Configuration
@@ -13,6 +15,8 @@ namespace AccsaberLeaderboard.Configuration
         #region Counter Settings
         public virtual int DecimalPlaces { get; set; } = 2;
         public virtual float FontSize { get; set; } = 3f;
+        [UseConverter]
+        public virtual CounterModes CounterMode { get; set; } = CounterModes.Normal;
 
         #endregion
 

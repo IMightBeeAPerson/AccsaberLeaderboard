@@ -176,6 +176,7 @@
     <Compile Include="Calculators\APCalc.cs" />
     <Compile Include="Counter\APCounter.cs" />
     <Compile Include="Counter\Settings\CounterConfigHandler.cs" />
+    <Compile Include="Counter\Utils\CounterModes.cs" />
     <Compile Include="Harmony\LeaderboardHiddenPatch.cs" />
     <Compile Include="Harmony\LeaderboardShownPatch.cs" />
     <Compile Include="Harmony\LoadPatch.cs" />

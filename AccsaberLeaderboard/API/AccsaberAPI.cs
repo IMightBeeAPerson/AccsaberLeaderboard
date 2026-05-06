@@ -321,7 +321,7 @@ namespace AccsaberLeaderboard.API
                 List<AccsaberScoreData> outp = new(PAGE_LENGTH);
 
                 List<ScoreInfoToken>? toCache = null;
-                var currentCacheData = scoreInfoCacher.GetCachedItem(diffId);
+                ScoreCache currentCacheData = scoreInfoCacher.GetCachedItem(diffId);
                 List<ScoreInfoToken>? currentCache = currentCacheData.data;
                 if (cacheBatch)
                 {

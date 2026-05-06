@@ -77,7 +77,13 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         private Sprite titleDefaultSprite, titleCorrectSprite;
 
         public LeaderboardDisplayType DisplayType => displayType;
-        private string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
+        public string DifficultyId => difficultyInfo is null ? null : GetDifficultyId(difficultyInfo);
+        public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
+        public string CurrentHash => currentHash;
+        public BeatmapDifficulty CurrentDiff => currentDifficulty;
+        public float CurrentComplexity => difficultyInfo is null ? 0f : GetComplexity(difficultyInfo);
+        public APCategory CurrentCategory => difficultyInfo is null ? APCategory.None :
+            (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(GetCategoryId(difficultyInfo)));
         public Func<ScoreInfoToken, bool> CurrentFilter
         {
             get
@@ -91,12 +97,6 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             }
         }
 
-        public bool ValidMapSelected => !string.IsNullOrEmpty(currentHash) && currentDifficulty != default;
-        public string CurrentHash => currentHash;
-        public BeatmapDifficulty CurrentDiff => currentDifficulty;
-        public float CurrentComplexity => difficultyInfo is null ? 0f : GetComplexity(difficultyInfo);
-        public APCategory CurrentCategory => difficultyInfo is null ? APCategory.None :
-            (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(GetCategoryId(difficultyInfo)));
         public bool OnPlayerPage {
             get
             {
