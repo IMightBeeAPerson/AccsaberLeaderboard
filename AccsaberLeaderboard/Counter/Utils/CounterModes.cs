@@ -2,6 +2,6 @@
 {
     public enum CounterModes
     {
-        Normal, Targets
+        Normal, Targets, Relations
     }
 }

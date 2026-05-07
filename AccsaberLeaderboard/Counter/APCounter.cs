@@ -74,21 +74,29 @@ namespace AccsaberLeaderboard.Counter
                 });
             }
 
+            LeaderboardDisplayType displayType = PluginConfig.Instance.CounterMode switch
+            {
+                Utils.CounterModes.Targets => LeaderboardDisplayType.Rivals,
+                Utils.CounterModes.Relations => LeaderboardDisplayType.Relations,
+                _ => default
+            };
+
             switch (PluginConfig.Instance.CounterMode)
             {
                 case Utils.CounterModes.Normal:
                     sc.scoreDidChangeEvent += HandleScoreDidChangeNormal;
                     break;
                 case Utils.CounterModes.Targets:
-                    sc.scoreDidChangeEvent += HandleScoreDidChangeTarget;
-
-                    displayText.fontSize *= 0.75f;
+                case Utils.CounterModes.Relations:
+                    sc.scoreDidChangeEvent += HandleScoreDidChangeRelations;
 
                     toCompareAgainst = null;
                     Task.Run(async () => 
                     {
                         await loadTask;
-                        toCompareAgainst = await GetRivals();
+                        toCompareAgainst = await GetRelations(displayType);
+                        int players = Math.Min(4, toCompareAgainst.Length) + 1;
+                        displayText.fontSize *= (1f / players) + (players > 1 ? 0.25f : 0f);
                     });
                     break;
             }
@@ -105,7 +113,7 @@ namespace AccsaberLeaderboard.Counter
 
             displayText.SetText($"{ap.ToString(complexityToString)} ap");
         }
-        private void HandleScoreDidChangeTarget(int multScore, int modScore)
+        private void HandleScoreDidChangeRelations(int multScore, int modScore)
         {
             if (Mathf.Approximately(complexity, 0f) || toCompareAgainst is null)
                 return;
@@ -145,17 +153,17 @@ namespace AccsaberLeaderboard.Counter
         }
 
 
-        private async Task<AccsaberScoreData[]> GetRivals()
+        private async Task<AccsaberScoreData[]> GetRelations(LeaderboardDisplayType ldt)
         {
             await PlayerSocialLife.LoadInfo();
 
-            HashSet<string> rivals = (HashSet<string>)PlayerSocialLife.GetIds(LeaderboardDisplayType.Rivals);
-            rivals.Remove(PlayerSocialLife.PlayerID);
+            HashSet<string> relations = (HashSet<string>)PlayerSocialLife.GetIds(ldt);
+            relations.Remove(PlayerSocialLife.PlayerID);
 
             Func<AccsaberAPI.ScoreInfoToken, bool> filter =
-                token => rivals.Contains(AccsaberAPI.GetPlayerId(token));
+                token => relations.Contains(AccsaberAPI.GetPlayerId(token));
 
-            return (await AccsaberAPI.GetScoreData(0, diffId, filter, rivals.Count)).scores;
+            return (await AccsaberAPI.GetScoreData(0, diffId, filter, relations.Count)).scores;
         }
     }
 }
