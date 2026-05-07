@@ -6,7 +6,7 @@
   </vertical>
 
   <vertical id='leaderboard_badMap' anchor-pos-y='-23' active='false'>
-    <text text='Map is Unranked.' font-size='18'/>
+    <text text='Map is Unranked.' font-size='19'/>
   </vertical>
 
   <vertical anchor-pos-x='50' anchor-pos-y='-17' vertical-fit='PreferredSize' pref-height='35' pref-width='8' bg='round-rect-panel'>

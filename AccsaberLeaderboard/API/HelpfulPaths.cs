@@ -1,8 +1,9 @@
-﻿using System;
+﻿using AccsaberLeaderboard.Models;
+using System;
 
 namespace AccsaberLeaderboard.API
 {
-    internal static class HelpfulPaths
+    public static class HelpfulPaths
     {
         //Docs: https://api.accsaberreloaded.com/v1/docs
         // Category ID: b0000000-0000-0000-0000-000000000003 for Tech, 2 = Standard, 1 = True, none for overall.
@@ -70,6 +71,13 @@ namespace AccsaberLeaderboard.API
         public static int FromDiff(BeatmapDifficulty diff) => (int)diff * 2 + 1;
         public static BeatmapDifficulty ToDiff(int diffNum) => (BeatmapDifficulty)((diffNum - 1) / 2);
 
+        public static LeaderboardDisplayType Convert(this RelationType rt) => rt switch
+        {
+            RelationType.follower => LeaderboardDisplayType.Followed,
+            RelationType.rival => LeaderboardDisplayType.Rivals,
+            RelationType.blocked => LeaderboardDisplayType.Blocked,
+            _ => default
+        };
         public enum RelationType
         {
             follower, rival, blocked

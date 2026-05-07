@@ -37,6 +37,7 @@ namespace AccsaberLeaderboard.Utils
             LeaderboardDisplayType.Relations => PlayerRelationIDs,
             _ => null
         };
+        public static IReadOnlyCollection<string> GetIds(HelpfulPaths.RelationType relationType) => GetIds(relationType.Convert());
         private static HashSet<string> GetIds_Internal(LeaderboardDisplayType displayType) => displayType switch
         {
             LeaderboardDisplayType.Rivals => PlayerRivals,

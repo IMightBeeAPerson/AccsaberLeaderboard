@@ -30,7 +30,7 @@ namespace AccsaberLeaderboard.Counter
         private TMP_Text displayText;
         private Task loadTask;
         private float complexity;
-        private string complexityToString, hash, diffId;
+        private string complexityToString, diffToString, hash, diffId;
         private BeatmapDifficulty mapDiff;
 
         private AccsaberScoreData[] toCompareAgainst;
@@ -48,7 +48,8 @@ namespace AccsaberLeaderboard.Counter
             UI.ViewControllers.LeaderboardViewController lvc = UI.ViewControllers.LeaderboardViewController.Instance;
 
             int decimalPlaces = PluginConfig.Instance.DecimalPlaces;
-            complexityToString = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "N0";
+            complexityToString = decimalPlaces > 0 ? "0." + new string('0', decimalPlaces) : "0";
+            diffToString = $"▲{complexityToString};▼{complexityToString};0";
 
             hash = beatmap.level.levelID.Split('_')[2];
 
@@ -80,6 +81,9 @@ namespace AccsaberLeaderboard.Counter
                     break;
                 case Utils.CounterModes.Targets:
                     sc.scoreDidChangeEvent += HandleScoreDidChangeTarget;
+
+                    displayText.fontSize *= 0.75f;
+
                     toCompareAgainst = null;
                     Task.Run(async () => 
                     {
@@ -110,9 +114,10 @@ namespace AccsaberLeaderboard.Counter
 
             float ap = APCalc.Instance.GetAp(acc, complexity);
 
-            string outp = "", playerLine = $"<color=#FA0>#{{0}}</color> You - {ap.ToString(complexityToString)} ap";
+            string outp = "", playerLine = $"<color=#FA0>#{{0}}</color> <color=#0A0>You - <color={ColorPalette.AP}>{ap.ToString(complexityToString)}</color> ap</color>";
             int maxScores = Math.Min(4, toCompareAgainst.Length);
             bool playerAdded = false;
+            string ppDiffColor = ColorPalette.TECH;
 
             for (int i = 0, r = 1; i < maxScores; i++, r++)
             {
@@ -122,9 +127,13 @@ namespace AccsaberLeaderboard.Counter
                 {
                     playerAdded = true;
                     outp += string.Format(playerLine + '\n', r++);
+                    ppDiffColor = ColorPalette.TRUE;
                 }
 
-                outp += $"<color=#FA0>#{r}</color> <color=#AAA>{current.playerName.ClampString(15)} - {current.AP.ToString(complexityToString)} ap</color>";
+                float diff = ap - current.AP;
+
+                outp += $"<color=#A60>#{r}</color> <color=#888>{current.playerName.ClampString(15)} - <color={ColorPalette.AP}>{current.AP.ToString(complexityToString)}</color> ap (<color={ppDiffColor}>{diff.ToString(diffToString)}</color>)</color>";
+
                 if (i != maxScores - 1 || !playerAdded)
                     outp += '\n';
             }
@@ -146,7 +155,7 @@ namespace AccsaberLeaderboard.Counter
             Func<AccsaberAPI.ScoreInfoToken, bool> filter =
                 token => rivals.Contains(AccsaberAPI.GetPlayerId(token));
 
-            return (await AccsaberAPI.GetScoreData(1, diffId, filter, rivals.Count)).scores;
+            return (await AccsaberAPI.GetScoreData(0, diffId, filter, rivals.Count)).scores;
         }
     }
 }
