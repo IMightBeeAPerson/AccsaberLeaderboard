@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Steamworks;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace AccsaberLeaderboard.Utils
 {
@@ -22,7 +23,7 @@ namespace AccsaberLeaderboard.Utils
 
         internal static HashSet<string> PlayerBlocked = null; // never expose this above internal
 
-        private static readonly Dictionary<string, string> UserIdToRelationId = [];
+        private static Dictionary<HelpfulPaths.RelationType, Dictionary<string, string>> UserIdToRelationId = [];
 
         private static bool exposeFollowed = false, exposeRivals = false;
         private static AccsaberAPI.AuthInfo authInfo;
@@ -67,7 +68,7 @@ namespace AccsaberLeaderboard.Utils
             var (success, relationId) = await AccsaberAPI.AddPlayerRelation(displayType.Convert(), id);
 
             if (success)
-                UserIdToRelationId.TryAdd(id, relationId);
+                UserIdToRelationId[displayType.Convert()].TryAdd(id, relationId);
 
             return success;
         }
@@ -82,7 +83,7 @@ namespace AccsaberLeaderboard.Utils
             if (displayType != LeaderboardDisplayType.Relations)
                 PlayerRelations.Remove(id);
 
-            if (!UserIdToRelationId.TryGetValue(id, out string relationId))
+            if (!UserIdToRelationId[displayType.Convert()].TryGetValue(id, out string relationId))
                 return false;
 
             bool success = await AccsaberAPI.RemovePlayerRelation(relationId);
@@ -127,20 +128,28 @@ namespace AccsaberLeaderboard.Utils
                 IReadOnlyList<string> steamFriends = await model.GetUserFriendsUserIds(false).ConfigureAwait(false);
                 HashSet<string> friends = [.. steamFriends, playerId];
 
-                HashSet<string> accFollowed = await DoPlayerRelation(HelpfulPaths.RelationType.follower, playerId);
-                HashSet<string> rivals = await DoPlayerRelation(HelpfulPaths.RelationType.rival, playerId);
-                HashSet<string> blocked = await DoPlayerRelation(HelpfulPaths.RelationType.blocked, playerId);
+                var relations = await AccsaberAPI.GetPlayerRelations();
+
+                HashSet<string> followed = relations[HelpfulPaths.RelationType.follower].userIds;
+                HashSet<string> rivals = relations[HelpfulPaths.RelationType.rival].userIds;
+                HashSet<string> blocked = relations[HelpfulPaths.RelationType.blocked].userIds;
+
+                followed.Add(playerId);
+                rivals.Add(playerId);
+
+                UserIdToRelationId = new(relations.Select(data => new KeyValuePair<HelpfulPaths.RelationType, Dictionary<string, string>>(data.Key,
+                    new(data.Value.relations.Select(info => new KeyValuePair<string, string>(info.userId, info.relationId))))));
 
                 HashSet<string> playerRelations = [];
                 playerRelations.UnionWith(friends);
-                playerRelations.UnionWith(accFollowed);
+                playerRelations.UnionWith(followed);
                 playerRelations.UnionWith(rivals);
 
                 (exposeFollowed, exposeRivals) = await AccsaberAPI.ExposeRelations();
 
                 PlayerRivals = rivals;
                 PlayerFriends = friends;
-                PlayerFollowed = accFollowed;
+                PlayerFollowed = followed;
                 PlayerRelations = playerRelations;
                 PlayerBlocked = blocked;
                 PlayerID = playerId;
@@ -153,18 +162,6 @@ namespace AccsaberLeaderboard.Utils
                 await Task.Delay(1000);
                 await LoadInfoTask(retries - 1);
             }
-        }
-        private static async Task<HashSet<string>> DoPlayerRelation(HelpfulPaths.RelationType type, string mainPlayerId)
-        {
-            var (ids, relations) = await AccsaberAPI.GetPlayerRelations(type);
-
-            foreach (var (userId, relationId) in relations)
-                UserIdToRelationId.TryAdd(userId, relationId);
-
-            HashSet<string> outp = ids;
-            outp.Add(mainPlayerId);
-
-            return outp;
         }
         private static async Task<AccsaberAPI.AuthInfo> DoAuth()
         {

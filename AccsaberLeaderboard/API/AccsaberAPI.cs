@@ -449,16 +449,18 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<(HashSet<string> ids, IEnumerable<(string userId, string relationId)> relations)> GetPlayerRelations(RelationType relation)
+        public static async Task<Dictionary<RelationType, (HashSet<string> userIds, List<(string userId, string relationId)> relations)>> GetPlayerRelations()
         {
             const int pageLength = PAGE_LENGTH * 10;
             int page = 0, callsLeft = 0;
-            HashSet<string> userIds = [];
-            List<(string, string)> relations = [];
+            Dictionary<RelationType, (HashSet<string> userIds, List<(string userId, string relationId)> relations)> outp = [];
+
+            foreach (RelationType rt in Enum.GetValues(typeof(RelationType)))
+                outp[rt] = ([], []);
 
             do
             {
-                string dataStr = await CallAPI_String(string.Format(APAPI_AUTH_GET_RELATIONS, relation.ToString(), page, pageLength));
+                string dataStr = await CallAPI_String(string.Format(APAPI_AUTH_GET_RELATIONS_ALL, page, pageLength));
                 if (string.IsNullOrEmpty(dataStr))
                     break;
                 JToken response = JToken.Parse(dataStr);
@@ -466,13 +468,18 @@ namespace AccsaberLeaderboard.API
                 if (callsLeft == 0)
                     callsLeft = (int)response["totalElements"] / pageLength;
 
-                IEnumerable<(string userId, string relationId)> ids = response["content"].Children().Select(token => (token["targetUserId"].ToString(), token["id"].ToString()));
-                foreach (var (userId, _) in ids)
-                    userIds.Add(userId);
-                relations.AddRange(ids);
+                //IEnumerable<(string userId, string relationId)> ids = response["content"].Children().Select(token => (token["targetUserId"].ToString(), token["id"].ToString()));
+                IEnumerable<JToken> ids = response["content"].Children();
+                foreach (JToken token in ids)
+                {
+                    RelationType rt = (RelationType)Enum.Parse(typeof(RelationType), token["type"].ToString());
+                    (string userId, string relationId) relation = (token["targetUserId"].ToString(), token["id"].ToString());
+                    outp[rt].userIds.Add(relation.userId);
+                    outp[rt].relations.Add(relation);
+                }
 
             } while (callsLeft > 0);
-            return (userIds, relations);
+            return outp;
         }
         public static async Task<(HashSet<string> ids, IEnumerable<(string userId, string relationId)> relations)> GetPlayerRelations(RelationType relation, string playerId)
         {
