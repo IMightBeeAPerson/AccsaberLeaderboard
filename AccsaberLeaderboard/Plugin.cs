@@ -56,10 +56,11 @@ namespace AccsaberLeaderboard
         [OnStart]
         public void OnApplicationStart()
         {
-            //Log.Debug("OnApplicationStart");
+            Log.Debug("OnApplicationStart");
             //new GameObject("AccsaberLeaderboardController").AddComponent<AccsaberLeaderboardController>();
             Harmony = new HarmonyLib.Harmony("Person.AccsaberLeaderboard");
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
+            loadLoaded = false;
 #if NEW_VERSION
             BeatSaberMarkupLanguage.Util.MainMenuAwaiter.MainMenuInitializing += Load;
 #else
@@ -67,11 +68,16 @@ namespace AccsaberLeaderboard
 #endif
         }
 
-        [OnExit]
+        [OnDisable]
         public void OnApplicationQuit()
         {
-            //Log.Debug("OnApplicationQuit");
+            Log.Debug("OnApplicationQuit");
             AccsaberLiveScores.WebsocketCanceller.Cancel();
+#if NEW_VERSION
+            BeatSaberMarkupLanguage.Util.MainMenuAwaiter.MainMenuInitializing -= Load;
+#else
+            BSEvents.menuSceneActive -= Load;
+#endif
         }
 
         private void Load()
@@ -82,12 +88,6 @@ namespace AccsaberLeaderboard
             AddonAdder.Load();
 
             Task.Run(() => AccsaberLiveScores.StartWebsocket(AccsaberLiveScores.WebsocketCanceller.Token));
-
-            PluginMetadata pm = PluginManager.GetPluginFromId("Counters+");
-            if (pm is not null)
-            {
-
-            }
         }
     }
 }

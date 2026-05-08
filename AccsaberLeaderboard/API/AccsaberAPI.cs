@@ -171,6 +171,7 @@ namespace AccsaberLeaderboard.API
             // check for there being a cache for this map, as well as the targeted user id is in this cache.
             if (!scoreInfoCacher.TryGetCachedItem(diffId, out var info) || !info.userIds.Contains(userId))
                 return false;
+            //Plugin.Log.Info("Passed check 1.");
 
             // if the user is in the cache, get their score data.
             ScoreInfoToken score = info.data.Find(token => GetPlayerId(token).Equals(userId));
@@ -179,9 +180,11 @@ namespace AccsaberLeaderboard.API
             int userIndex = GetRank(score) - 1;
             if (info.data.Count <= userIndex || !GetPlayerId(info.data[userIndex]).Equals(userId))
                 return false;
+            //Plugin.Log.Info("Passed check 2.");
 
             // take all scores up to the player score, filter it using the filter, then since we know the target score in at the end, just return the length minus 1.
-            rank = info.data.Take(userIndex + 1).Where(filter).Count() - 1;
+            //rank = info.data.Take(userIndex + 1).Where(filter).Count() - 1;
+            rank = info.data.Take(userIndex + 1).Count() - 1;
             return true;
         }
         private static void CacheScoreData(string diffId, IEnumerable<ScoreInfoToken> scoreData, IEnumerable<int> blockedUserIndexes, int leaderboardSize, string country = "N/A")
@@ -201,7 +204,7 @@ namespace AccsaberLeaderboard.API
 
                 scoreInfoCacher.CacheItem(val, diffId);
             }
-            else scoreInfoCacher.CacheItem(new(new() { { country, leaderboardSize } }, [.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. blockedUserIndexes]), diffId);
+            else scoreInfoCacher.CacheItem(new(new() { { country, leaderboardSize } }, [.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. blockedUserIndexes]), diffId, TimeSpan.FromMinutes(30));
 
             //ScoreCache c = scoreInfoCacher.GetCachedItem(diffId);
             //Plugin.Log.Info($"The cache now has {c.data.Count} entries: {c.data.Select(GetRank).Print()}");

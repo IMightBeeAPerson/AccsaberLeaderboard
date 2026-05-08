@@ -89,9 +89,11 @@ namespace AccsaberLeaderboard.Utils
         {
             try
             { // todo: add blocked players and set the bool for exposing followed/rivals.
+
                 IPlatformUserModel model = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel();
                 UserInfo info = await BS_Utils.Gameplay.GetUserInfo.GetUserAsync();
                 PlatformAuthenticationTokenProvider patc = new(model, info);
+
                 string session = (await patc.GetAuthenticationToken()).sessionToken;
                 //session = Convert.ToBase64String(MiscUtils.HexStrToBytes(session));
 

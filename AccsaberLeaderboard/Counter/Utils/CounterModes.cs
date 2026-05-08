@@ -2,6 +2,6 @@
 {
     public enum CounterModes
     {
-        Normal, Targets, Relations
+        Normal, Targets, Friends, Followed, Relations
     }
 }

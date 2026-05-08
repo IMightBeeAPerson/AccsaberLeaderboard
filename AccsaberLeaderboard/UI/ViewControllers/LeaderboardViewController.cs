@@ -101,6 +101,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             get
             {
                 if (currentPlayerPage == -1) return true;
+                //Plugin.Log.Info($"current player page = {currentPlayerPage}, current page = {currentPage}, next page = {nextPage}");
                 return displayType switch
                 {
 
@@ -241,18 +242,30 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             displayType = LeaderboardDisplayType.Global;
             UpdateSelectors(LeaderboardDisplayType.Global);
 
+            highlightPageTopColor = pageTopSelector.HighlightColor;
+            highlightPageYouColor = pageYouSelector.HighlightColor;
+
+#if NEW_VERSION
+            defaultPageTopColor = pageTopSelector.DefaultColor;
+            defaultPageUpColor = pageUpImage.Image.color;
+            defaultPageYouColor = pageYouSelector.DefaultColor;
+            defaultPageDownColor = pageDownImage.Image.color;
+
+            pageUpSelector.selectionStateDidChangeEvent += state => 
+                pageUpImage.Image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageUpColor;
+            pageDownSelector.selectionStateDidChangeEvent += state =>
+                pageDownImage.Image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageDownColor;
+#else
             defaultPageTopColor = pageTopSelector.DefaultColor;
             defaultPageUpColor = pageUpImage.image.color;
             defaultPageYouColor = pageYouSelector.DefaultColor;
             defaultPageDownColor = pageDownImage.image.color;
 
-            highlightPageTopColor = pageTopSelector.HighlightColor;
-            highlightPageYouColor = pageYouSelector.HighlightColor;
-
             pageUpSelector.selectionStateDidChangeEvent += state => 
                 pageUpImage.image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageUpColor;
             pageDownSelector.selectionStateDidChangeEvent += state =>
                 pageDownImage.image.color = state == NoTransitionsButton.SelectionState.Disabled ? GREYED_OUT.Color() : defaultPageDownColor;
+#endif
 
             psmvc = new(leaderboardContainer);
             pmmvc = new(leaderboardContainer);
@@ -283,7 +296,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             AccsaberLiveScores.OnPlayerScoreUpdated += token =>
             {
                 currentPlayerScoreInfo = token;
-                currentPage = 0;
+                currentPage = 1;
                 Task.Run(async () =>
                 {
                     if (!await ForceRefresh(true))
@@ -352,7 +365,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         [UIAction("ShowCountry")]
         private void ShowCountry() => ChangeFilter(LeaderboardDisplayType.Country);
 
-        #endregion
+#endregion
         #region Public Methods
         #endregion
         #region Private Methods
@@ -504,7 +517,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 #else
         private bool UpdateDiff(IDifficultyBeatmap beatmap)
         {
-#endif      
+#endif
             //Plugin.Log.Info("Update called.");
             if (!gameObject.activeSelf)
                 return false;

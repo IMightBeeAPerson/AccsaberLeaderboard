@@ -51,9 +51,15 @@ namespace AccsaberLeaderboard.Counter
             complexityToString = decimalPlaces > 0 ? "0." + new string('0', decimalPlaces) : "0";
             diffToString = $"▲{complexityToString};▼{complexityToString};0";
 
+#if NEW_VERSION
+            hash = beatmap.levelID.Split('_')[2];
+            BeatmapDifficulty diff = beatmapDiff.difficulty;
+#else
             hash = beatmap.level.levelID.Split('_')[2];
+            BeatmapDifficulty diff = beatmap.difficulty;
+#endif
 
-            if (lvc is not null && lvc.ValidMapSelected && lvc.CurrentHash.Equals(hash) && lvc.CurrentDiff.Equals(beatmap.difficulty))
+            if (lvc is not null && lvc.ValidMapSelected && lvc.CurrentHash.Equals(hash) && lvc.CurrentDiff.Equals(diff))
             {
                 complexity = lvc.CurrentComplexity;
                 diffId = lvc.DifficultyId;
@@ -65,7 +71,7 @@ namespace AccsaberLeaderboard.Counter
                 complexity = 0f;
                 loadTask = Task.Run(async () =>
                 {
-                    AccsaberAPI.DifficultyInfoToken token = await AccsaberAPI.GetLeaderboard(hash, beatmap.difficulty);
+                    AccsaberAPI.DifficultyInfoToken token = await AccsaberAPI.GetLeaderboard(hash, diff);
                     if (token is not null)
                     {
                         complexity = AccsaberAPI.GetComplexity(token);
@@ -77,6 +83,8 @@ namespace AccsaberLeaderboard.Counter
             LeaderboardDisplayType displayType = PluginConfig.Instance.CounterMode switch
             {
                 Utils.CounterModes.Targets => LeaderboardDisplayType.Rivals,
+                Utils.CounterModes.Friends => LeaderboardDisplayType.Friends,
+                Utils.CounterModes.Followed => LeaderboardDisplayType.Followed,
                 Utils.CounterModes.Relations => LeaderboardDisplayType.Relations,
                 _ => default
             };
@@ -87,6 +95,8 @@ namespace AccsaberLeaderboard.Counter
                     sc.scoreDidChangeEvent += HandleScoreDidChangeNormal;
                     break;
                 case Utils.CounterModes.Targets:
+                case Utils.CounterModes.Friends:
+                case Utils.CounterModes.Followed:
                 case Utils.CounterModes.Relations:
                     sc.scoreDidChangeEvent += HandleScoreDidChangeRelations;
 
