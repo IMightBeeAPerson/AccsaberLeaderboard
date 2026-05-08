@@ -449,16 +449,37 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<HashSet<string>> GetPlayerRelations(RelationType relation)
-        {
-            await PlayerSocialLife.LoadTask;
-            return await GetPlayerRelations(relation, PlayerSocialLife.PlayerID);
-        }
-        public static async Task<HashSet<string>> GetPlayerRelations(RelationType relation, string playerId)
+        public static async Task<(HashSet<string> ids, IEnumerable<(string userId, string relationId)> relations)> GetPlayerRelations(RelationType relation)
         {
             const int pageLength = PAGE_LENGTH * 10;
             int page = 0, callsLeft = 0;
-            HashSet<string> outp = [];
+            HashSet<string> userIds = [];
+            List<(string, string)> relations = [];
+
+            do
+            {
+                string dataStr = await CallAPI_String(string.Format(APAPI_AUTH_GET_RELATIONS, relation.ToString(), page, pageLength));
+                if (string.IsNullOrEmpty(dataStr))
+                    break;
+                JToken response = JToken.Parse(dataStr);
+
+                if (callsLeft == 0)
+                    callsLeft = (int)response["totalElements"] / pageLength;
+
+                IEnumerable<(string userId, string relationId)> ids = response["content"].Children().Select(token => (token["targetUserId"].ToString(), token["id"].ToString()));
+                foreach (var (userId, _) in ids)
+                    userIds.Add(userId);
+                relations.AddRange(ids);
+
+            } while (callsLeft > 0);
+            return (userIds, relations);
+        }
+        public static async Task<(HashSet<string> ids, IEnumerable<(string userId, string relationId)> relations)> GetPlayerRelations(RelationType relation, string playerId)
+        {
+            const int pageLength = PAGE_LENGTH * 10;
+            int page = 0, callsLeft = 0;
+            HashSet<string> userIds = [];
+            List<(string, string)> relations = [];
             do
             {
                 string dataStr = await CallAPI_String(string.Format(APAPI_RELATIONS, playerId, relation.ToString(), "outgoing", page, pageLength));
@@ -469,12 +490,39 @@ namespace AccsaberLeaderboard.API
                 if (callsLeft == 0)
                     callsLeft = (int)response["totalElements"] / pageLength;
 
-                IEnumerable<string> ids = response["content"].Children().Select(token => token["targetUserId"].ToString());
-                foreach (string s in ids)
-                    outp.Add(s);
+                IEnumerable<(string userId, string relationId)> ids = response["content"].Children().Select(token => (token["targetUserId"].ToString(), token["id"].ToString()));
+                foreach (var (userId, _) in ids)
+                    userIds.Add(userId);
+                relations.AddRange(ids);
 
             } while (callsLeft > 0);
-            return outp;
+            return (userIds, relations);
+        }
+        public static async Task<(bool success, string? relationId)> AddPlayerRelation(RelationType relation, string targetId)
+        {
+            if (!long.TryParse(targetId, out long id))
+            {
+                Plugin.Log.Error($"The target id given to SetPlayerRelation, \"{targetId}\", is not able to be parsed!");
+                return (false, null);
+            }
+
+            HttpRequestMessage request = new(HttpMethod.Post, APAPI_AUTH_SET_RELATION)
+            {
+                Content = new StringContent($"{{\"targetUserId\": {id}, \"type\": \"{relation}\"}}", System.Text.Encoding.UTF8, "application/json")
+            };
+
+            var (Success, Content) = await CallAPI(request, throttler, maxRetries: 1).ConfigureAwait(false);
+
+            if (!Success)
+                return (false, null);
+
+            return (true, JToken.Parse(await Content.ReadAsStringAsync())["id"].ToString());
+        }
+        public static async Task<bool> RemovePlayerRelation(string relationId)
+        {
+            HttpRequestMessage request = new(HttpMethod.Delete, string.Format(APAPI_AUTH_DELETE_RELATION, relationId));
+
+            return (await CallAPI(request, throttler, maxRetries: 1).ConfigureAwait(false)).Success;
         }
         public static async Task<ScoreInfoToken?> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
@@ -643,11 +691,32 @@ namespace AccsaberLeaderboard.API
             return outp;
         }
 
-        internal static async Task Authenticate(string ticket)
+        internal static async Task<AuthInfo> Authenticate(string ticket)
         {
-            HttpRequestMessage request = new(HttpMethod.Get, string.Format(APAPI_AUTH, "steam", ticket));
-            var (success, _) = await CallAPI(request, throttler).ConfigureAwait(false);
-            Plugin.Log.Info(success ? "Auth yippee" : "Auth failed");
+            HttpRequestMessage request = new(HttpMethod.Post, APAPI_AUTH)
+            {
+                Content = new StringContent($"{{\"provider\": \"steamTicket\", \"ticket\": \"{ticket}\"}}", System.Text.Encoding.UTF8, "application/json")
+            };
+            var (success, content) = await CallAPI(request, throttler, maxRetries: 1).ConfigureAwait(false);
+
+            if (!success)
+                return default;
+
+            try
+            {
+                JToken token = JToken.Parse(await content.ReadAsStringAsync());
+                AuthInfo outp = new(token["accessToken"].ToString(), token["refreshToken"].ToString(), DateTime.Now.AddSeconds((long)token["expiresIn"]), token["userId"].ToString());
+
+                SetAuthForClient(outp);
+
+                return outp;
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.Error("There was an issue on the end part of doing authentication.");
+                Plugin.Log.Debug(e);
+                return default;
+            }
         }
 
         #endregion
@@ -661,7 +730,7 @@ namespace AccsaberLeaderboard.API
         public class MilestoneInfoToken(JObject obj) : JObject(obj) { }
 
         #endregion
-        #region Cache structs
+        #region Misc structs
 
         private struct ScoreCache(Dictionary<string, int> leaderboardLengths, List<ScoreInfoToken> data, HashSet<string> userIds, List<int> blockedUserIndexes)
         {
@@ -671,6 +740,13 @@ namespace AccsaberLeaderboard.API
             public List<int> blockedUserIndexes = blockedUserIndexes;
 
             public readonly int LeaderboardSize => leaderboardLengths["N/A"];
+        }
+        internal readonly struct AuthInfo(string accessToken, string refreshToken, DateTime expirationDate, string userId)
+        {
+            public readonly string AccessToken = accessToken;
+            public readonly string RefreshToken = refreshToken;
+            public readonly DateTime ExpirationDate = expirationDate;
+            public readonly string UserId = userId;
         }
 
         #endregion

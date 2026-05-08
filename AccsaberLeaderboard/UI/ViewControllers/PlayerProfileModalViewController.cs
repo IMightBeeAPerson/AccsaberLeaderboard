@@ -165,18 +165,18 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             isFollower = !isFollower;
             Swap(setAsFollowerButton);
             if (isFollower)
-                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Followed);
+                AddId(LeaderboardDisplayType.Followed);
             else
-                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Followed);
+                RemoveId(LeaderboardDisplayType.Followed);
         }
         [UIAction("SetAsRival")] private void SetAsRival()
         {
             isRival = !isRival;
             Swap(setAsRivalButton);
             if (isRival)
-                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Rivals);
+                AddId(LeaderboardDisplayType.Rivals);
             else
-                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Rivals);
+                RemoveId(LeaderboardDisplayType.Rivals);
         }
         [UIAction("SetAsBlocked")] private void SetAsBlocked()
         {
@@ -184,12 +184,12 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             Swap(setAsBlockedButton);
             if (isBlocked)
             {
-                PlayerSocialLife.AddId(playerId, LeaderboardDisplayType.Blocked);
+                AddId(LeaderboardDisplayType.Blocked);
                 RemovePlayerFromCache(playerId);
             }
             else
             {
-                PlayerSocialLife.RemoveId(playerId, LeaderboardDisplayType.Blocked);
+                RemoveId(LeaderboardDisplayType.Blocked);
                 InvalidateCache();
             }
                 
@@ -219,6 +219,8 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 Swap(setAsRivalButton);
             }
         }
+        private void AddId(LeaderboardDisplayType displayType) => Task.Run(async () => await PlayerSocialLife.AddId(playerId, displayType));
+        private void RemoveId(LeaderboardDisplayType displayType) => Task.Run(async () => await PlayerSocialLife.RemoveId(playerId, displayType));
         private IEnumerator ShowPlayerStart()
         {
             yield return new WaitForEndOfFrame();
@@ -301,7 +303,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
             hiddenExitButtonContainer.GetComponent<LayoutElement>().preferredHeight = isMainCharacter ? containerHeight : hiddenExitButtonHeight;
 
             if (!isMainCharacter)
-                ResetButtons(PlayerSocialLife.PlayerFollowedIDs.Contains(playerId), PlayerSocialLife.PlayerRivalIDs.Contains(playerId));
+                ResetButtons(PlayerSocialLife.PlayerFollowedIDs_Internal.Contains(playerId), PlayerSocialLife.PlayerRivalIDs_Internal.Contains(playerId));
 
             yield return new WaitForFixedUpdate();
 

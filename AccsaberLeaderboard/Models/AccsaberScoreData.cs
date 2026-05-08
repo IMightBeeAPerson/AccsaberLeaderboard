@@ -65,7 +65,7 @@ namespace AccsaberLeaderboard.Models
 
                     if (PlayerSocialLife.PlayerFriendIDs.Contains(scoreData.PlayerId))
                         return RELATIONS_STEAM;
-                    if (PlayerSocialLife.PlayerFollowedIDs.Contains(scoreData.PlayerId))
+                    if (PlayerSocialLife.PlayerFollowedIDs_Internal.Contains(scoreData.PlayerId))
                         return RELATIONS_ACC;
                     return RELATIONS_TARGETED;
                 }

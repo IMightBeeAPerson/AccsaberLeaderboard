@@ -28,9 +28,11 @@ namespace AccsaberLeaderboard.API
 
         //user_id, RelationType, one of: ["outgoing", "incoming"], page (zero indexed), count
         public const string APAPI_RELATIONS = APAPI + "users/{0}/relations?type={1}&direction={2}&page={3}&size={4}";
+        public const string APAPI_AUTH_SET_RELATION = APAPI + "users/me/relations"; // POST endpoint
+        public const string APAPI_AUTH_DELETE_RELATION = APAPI_AUTH_SET_RELATION + "/{0}"; // DELETE endpoint: relationId
+        public const string APAPI_AUTH_GET_RELATIONS = APAPI_AUTH_SET_RELATION + "?type={0}&page={1}&size={2}"; // RelationType, page (zero indexed), size
 
-        private const string APAPI_CALLBACK = APAPI + "auth/{0}/callback?state={1}";
-        public const string APAPI_AUTH = APAPI + "auth/{0}/start?returnTo=" + APAPI_CALLBACK; // one of: ["discord", "beatleader", "steam"], ticket
+        public const string APAPI_AUTH = APAPI + "auth/ingame"; // POST endpoint
 
         public const string APAPI_WEBSOCKET = "wss://accsaberreloaded.com/ws/scores";
 
@@ -71,13 +73,16 @@ namespace AccsaberLeaderboard.API
         public static int FromDiff(BeatmapDifficulty diff) => (int)diff * 2 + 1;
         public static BeatmapDifficulty ToDiff(int diffNum) => (BeatmapDifficulty)((diffNum - 1) / 2);
 
-        public static LeaderboardDisplayType Convert(this RelationType rt) => rt switch
+        public static LeaderboardDisplayType Convert(this RelationType rt) => (LeaderboardDisplayType)(int)Math.Pow(2, (int)rt + 2);
+        public static RelationType Convert(this LeaderboardDisplayType ldt)
         {
-            RelationType.follower => LeaderboardDisplayType.Followed,
-            RelationType.rival => LeaderboardDisplayType.Rivals,
-            RelationType.blocked => LeaderboardDisplayType.Blocked,
-            _ => default
-        };
+            RelationType outp = (RelationType)(int)(Math.Log((int)ldt, 2) - 2);
+
+            if (outp < RelationType.follower || outp > RelationType.blocked)
+                throw new ArgumentException("The given display type must be able to be converted to RelationType");
+
+            return outp;
+        }
         public enum RelationType
         {
             follower, rival, blocked

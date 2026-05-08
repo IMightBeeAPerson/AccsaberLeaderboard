@@ -167,7 +167,7 @@ namespace AccsaberLeaderboard.Counter
         {
             await PlayerSocialLife.LoadInfo();
 
-            HashSet<string> relations = (HashSet<string>)PlayerSocialLife.GetIds(ldt);
+            HashSet<string> relations = PlayerSocialLife.GetIds_Internal(ldt);
             relations.Remove(PlayerSocialLife.PlayerID);
 
             Func<AccsaberAPI.ScoreInfoToken, bool> filter =

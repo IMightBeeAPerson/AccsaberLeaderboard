@@ -84,7 +84,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
         public float CurrentComplexity => difficultyInfo is null ? 0f : GetComplexity(difficultyInfo);
         public APCategory CurrentCategory => difficultyInfo is null ? APCategory.None :
             (APCategory)Enum.Parse(typeof(APCategory), HelpfulPaths.ReloadedCategoryToCategoryId(GetCategoryId(difficultyInfo)));
-        public Func<ScoreInfoToken, bool> CurrentFilter
+        internal Func<ScoreInfoToken, bool> CurrentFilter
         {
             get
             {
@@ -92,7 +92,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
                 {
                     LeaderboardDisplayType.Global => null,
                     LeaderboardDisplayType.Country => CountryFilterMaker(GetCountry(currentPlayerScoreInfo)),
-                    _ => token => PlayerSocialLife.GetIds(displayType).Contains(GetPlayerId(token))
+                    _ => token => PlayerSocialLife.GetIds_Internal(displayType).Contains(GetPlayerId(token))
                 };
             }
         }
@@ -654,7 +654,7 @@ namespace AccsaberLeaderboard.UI.ViewControllers
 
                     AccsaberScoreData[] scores;
                     (AccsaberScoreData[] scores, int truePage) scoreData;
-                    IReadOnlyCollection<string> ids = PlayerSocialLife.GetIds(displayType);
+                    HashSet<string> ids = PlayerSocialLife.GetIds_Internal(displayType);
 
                     switch (displayType)
                     {

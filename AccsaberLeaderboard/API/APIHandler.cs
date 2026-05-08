@@ -21,6 +21,12 @@ namespace AccsaberLeaderboard.API
         {
             Timeout = ClientTimeout
         };
+
+        internal static void SetAuthForClient(AccsaberAPI.AuthInfo authInfo)
+        {
+            client.DefaultRequestHeaders.Add("Cookie", $"accessToken={authInfo.AccessToken}; refreshToken={authInfo.RefreshToken}");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authInfo.AccessToken);
+        }
         public static async Task<(bool Success, HttpContent Content)> CallAPI(HttpRequestMessage request, Throttler throttler = null, bool quiet = false, int maxRetries = 3, CancellationToken ct = default)
         {
             const int initialRetryDelayMs = 500;

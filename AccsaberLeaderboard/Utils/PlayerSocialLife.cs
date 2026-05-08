@@ -21,11 +21,16 @@ namespace AccsaberLeaderboard.Utils
 
         internal static HashSet<string> PlayerBlocked = null; // never expose this above internal
 
+        private static readonly Dictionary<string, string> UserIdToRelationId = [];
+
         private static bool exposeFollowed = false;
+        private static AccsaberAPI.AuthInfo authInfo;
 
         public static string PlayerID { get; private set; } = null;
         public static IReadOnlyCollection<string> PlayerRivalIDs => exposeFollowed ? PlayerRivals : null;
+        internal static IReadOnlyCollection<string> PlayerRivalIDs_Internal => PlayerRivals;
         public static IReadOnlyCollection<string> PlayerFollowedIDs => exposeFollowed ? PlayerFollowed : null;
+        internal static IReadOnlyCollection<string> PlayerFollowedIDs_Internal => PlayerFollowed;
         public static IReadOnlyCollection<string> PlayerFriendIDs => PlayerFriends;
         public static IReadOnlyCollection<string> PlayerRelationIDs => PlayerRelations;
 
@@ -38,7 +43,7 @@ namespace AccsaberLeaderboard.Utils
             _ => null
         };
         public static IReadOnlyCollection<string> GetIds(HelpfulPaths.RelationType relationType) => GetIds(relationType.Convert());
-        private static HashSet<string> GetIds_Internal(LeaderboardDisplayType displayType) => displayType switch
+        internal static HashSet<string> GetIds_Internal(LeaderboardDisplayType displayType) => displayType switch
         {
             LeaderboardDisplayType.Rivals => PlayerRivals,
             LeaderboardDisplayType.Followed => PlayerFollowed,
@@ -47,17 +52,40 @@ namespace AccsaberLeaderboard.Utils
             LeaderboardDisplayType.Blocked => PlayerBlocked,
             _ => null
         };
-        internal static void AddId(string id, LeaderboardDisplayType displayType)
+        internal static async Task<bool> AddId(string id, LeaderboardDisplayType displayType)
         {
-            GetIds_Internal(displayType).Add(id);
+            HashSet<string> set = GetIds_Internal(displayType);
+
+            if (set is null)
+                return false;
+
+            set.Add(id);
             if (displayType != LeaderboardDisplayType.Relations)
                 PlayerRelations.Add(id);
+
+            var (success, relationId) = await AccsaberAPI.AddPlayerRelation(displayType.Convert(), id);
+
+            if (success)
+                UserIdToRelationId.TryAdd(id, relationId);
+
+            return success;
         }
-        internal static void RemoveId(string id, LeaderboardDisplayType displayType)
+        internal static async Task<bool> RemoveId(string id, LeaderboardDisplayType displayType)
         {
-            GetIds_Internal(displayType).Remove(id);
+            HashSet<string> set = GetIds_Internal(displayType);
+
+            if (set is null)
+                return false;
+
+            set.Remove(id);
             if (displayType != LeaderboardDisplayType.Relations)
                 PlayerRelations.Remove(id);
+
+            if (!UserIdToRelationId.TryGetValue(id, out string relationId))
+                return false;
+
+            bool success = await AccsaberAPI.RemovePlayerRelation(relationId);
+            return success;
         }
         public static async Task LoadInfo()
         {
@@ -78,46 +106,42 @@ namespace AccsaberLeaderboard.Utils
             }
             using (theLock.Value)
             {
-                loadTask = LoadInfo(3);
+                loadTask = LoadInfoTask();
                 await loadTask;
                 lock (loadLock)
                     Monitor.PulseAll(loadLock);
             }
                 
         }
-        private static async Task LoadInfo(int retries)
+        private static async Task LoadInfoTask(int retries = 3)
         {
             try
             { // todo: add blocked players and set the bool for exposing followed/rivals.
-
                 IPlatformUserModel model = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel();
-                UserInfo info = await BS_Utils.Gameplay.GetUserInfo.GetUserAsync();
-                PlatformAuthenticationTokenProvider patc = new(model, info);
 
-                string session = (await patc.GetAuthenticationToken()).sessionToken;
-                //session = Convert.ToBase64String(MiscUtils.HexStrToBytes(session));
+                authInfo = await DoAuth();
 
-                //await AccsaberAPI.Authenticate(session); //Until I can figure this out, just leave it commented out.
+                string playerId = authInfo.UserId;
 
-                string playerId = info.platformUserId;
                 IReadOnlyList<string> steamFriends = await model.GetUserFriendsUserIds(false).ConfigureAwait(false);
                 HashSet<string> friends = [.. steamFriends, playerId];
-                HashSet<string> accFollowed = await AccsaberAPI.GetPlayerRelations(HelpfulPaths.RelationType.follower, playerId);
-                accFollowed.Add(playerId);
-                HashSet<string> rivals = await AccsaberAPI.GetPlayerRelations(HelpfulPaths.RelationType.rival, playerId);
-                rivals.Add(playerId);
+
+                HashSet<string> accFollowed = await DoPlayerRelation(HelpfulPaths.RelationType.follower, playerId);
+                HashSet<string> rivals = await DoPlayerRelation(HelpfulPaths.RelationType.rival, playerId);
+                HashSet<string> blocked = await DoPlayerRelation(HelpfulPaths.RelationType.blocked, playerId);
+
                 HashSet<string> playerRelations = [];
                 playerRelations.UnionWith(friends);
                 playerRelations.UnionWith(accFollowed);
                 playerRelations.UnionWith(rivals);
 
-                exposeFollowed = true; // currently, if I can get their followed/rivals, they are exposed.
+                exposeFollowed = false; // currently, this isn't checked, so don't expose.
 
                 PlayerRivals = rivals;
                 PlayerFriends = friends;
                 PlayerFollowed = accFollowed;
                 PlayerRelations = playerRelations;
-                PlayerBlocked = [];
+                PlayerBlocked = blocked;
                 PlayerID = playerId;
             } catch (Exception e)
             {
@@ -126,8 +150,39 @@ namespace AccsaberLeaderboard.Utils
                 if (retries == 0)
                     return;
                 await Task.Delay(1000);
-                await LoadInfo(retries - 1);
+                await LoadInfoTask(retries - 1);
             }
+        }
+        private static async Task<HashSet<string>> DoPlayerRelation(HelpfulPaths.RelationType type, string mainPlayerId)
+        {
+            var (ids, relations) = await AccsaberAPI.GetPlayerRelations(type);
+
+            foreach (var (userId, relationId) in relations)
+                UserIdToRelationId.TryAdd(userId, relationId);
+
+            HashSet<string> outp = ids;
+            outp.Add(mainPlayerId);
+
+            return outp;
+        }
+        private static async Task<AccsaberAPI.AuthInfo> DoAuth()
+        {
+            if (authInfo.UserId is not null && authInfo.ExpirationDate > DateTime.Now)
+                return authInfo;
+
+            try
+            {
+                IPlatformUserModel model = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel();
+
+                string session = (await model.GetUserAuthToken()).token;
+
+                return await AccsaberAPI.Authenticate(session);
+            } catch (Exception e)
+            {
+                Plugin.Log.Error($"There was an error authenticating.");
+                Plugin.Log.Debug(e);
+            }
+            return default;
         }
     }
 }
