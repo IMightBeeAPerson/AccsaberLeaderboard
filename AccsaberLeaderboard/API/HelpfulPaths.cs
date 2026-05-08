@@ -32,6 +32,8 @@ namespace AccsaberLeaderboard.API
         public const string APAPI_AUTH_DELETE_RELATION = APAPI_AUTH_SET_RELATION + "/{0}"; // DELETE endpoint: relationId
         public const string APAPI_AUTH_GET_RELATIONS = APAPI_AUTH_SET_RELATION + "?type={0}&page={1}&size={2}"; // RelationType, page (zero indexed), size
 
+        public const string APAPI_AUTH_GET_SETTINGS = APAPI + "users/me/settings/{0}"; // group ("privacy", "appearance", etc)
+
         public const string APAPI_AUTH = APAPI + "auth/ingame"; // POST endpoint
 
         public const string APAPI_WEBSOCKET = "wss://accsaberreloaded.com/ws/scores";

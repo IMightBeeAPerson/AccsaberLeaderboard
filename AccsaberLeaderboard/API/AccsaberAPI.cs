@@ -691,6 +691,16 @@ namespace AccsaberLeaderboard.API
             return outp;
         }
 
+        internal static async Task<(bool friends, bool rivals)> ExposeRelations()
+        {
+            string dataStr = await CallAPI_String(string.Format(APAPI_AUTH_GET_SETTINGS, "privacy"), throttler).ConfigureAwait(false);
+
+            if (string.IsNullOrEmpty(dataStr))
+                return (false, false);
+
+            JToken privacySettings = JToken.Parse(dataStr);
+            return (privacySettings["privacy.followingVisibility"].ToString().Equals("public"), privacySettings["privacy.rivalsVisibility"].ToString().Equals("public"));
+        }
         internal static async Task<AuthInfo> Authenticate(string ticket)
         {
             HttpRequestMessage request = new(HttpMethod.Post, APAPI_AUTH)

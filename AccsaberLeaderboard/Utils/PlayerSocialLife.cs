@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Steamworks;
+using Newtonsoft.Json.Linq;
 
 namespace AccsaberLeaderboard.Utils
 {
@@ -23,11 +24,11 @@ namespace AccsaberLeaderboard.Utils
 
         private static readonly Dictionary<string, string> UserIdToRelationId = [];
 
-        private static bool exposeFollowed = false;
+        private static bool exposeFollowed = false, exposeRivals = false;
         private static AccsaberAPI.AuthInfo authInfo;
 
         public static string PlayerID { get; private set; } = null;
-        public static IReadOnlyCollection<string> PlayerRivalIDs => exposeFollowed ? PlayerRivals : null;
+        public static IReadOnlyCollection<string> PlayerRivalIDs => exposeRivals ? PlayerRivals : null;
         internal static IReadOnlyCollection<string> PlayerRivalIDs_Internal => PlayerRivals;
         public static IReadOnlyCollection<string> PlayerFollowedIDs => exposeFollowed ? PlayerFollowed : null;
         internal static IReadOnlyCollection<string> PlayerFollowedIDs_Internal => PlayerFollowed;
@@ -135,7 +136,7 @@ namespace AccsaberLeaderboard.Utils
                 playerRelations.UnionWith(accFollowed);
                 playerRelations.UnionWith(rivals);
 
-                exposeFollowed = false; // currently, this isn't checked, so don't expose.
+                (exposeFollowed, exposeRivals) = await AccsaberAPI.ExposeRelations();
 
                 PlayerRivals = rivals;
                 PlayerFriends = friends;
