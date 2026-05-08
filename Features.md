@@ -29,6 +29,15 @@ This is the stuff that lets the leaderboard work. Not really the connecting code
     - HelpfulPaths class (contains all endpoints used by the api, as well as some helper functions with converting types)
     - Throttler class (simple class to make sure the api is never called more than max allowed)
 
+- BSML Addons (not entirely a system, but thought this was the best place to place this)
+    - Components
+        - CustomBackground (this a component that allows for a background of any image, without annoying dimmers, to be added)
+        - MyCustomCellListTableData (the name is a bit of a lie, this is mainly a special cell that doesn't work with TableView, nor is scrollable. Mainly specialized for the leaderboard display)
+        - MyEventSystemListener (like 3 lines of code that detect when a click happens)
+    - Tags
+        - Better vertical/horizontal (these are vertical/horizontal tags that have the Backgroundable component replaced with the CustomBackground component)
+        - MyCustomList (This is a custom list that doesn't implement a TableView or Scrollable, just purely displays the cells)
+
 ### Models
 
 - AccsaberMilestoneData class (this one contains JValues for a milestone cell to be displayed on the milestone list)
