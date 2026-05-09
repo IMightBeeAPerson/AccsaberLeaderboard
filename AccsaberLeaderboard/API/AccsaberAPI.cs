@@ -36,7 +36,7 @@ namespace AccsaberLeaderboard.API
 
                 playerInfoCacher.RemoveItem(playerId);
 
-                if (scoreInfoCacher.TryGetCachedItem(diffId, out var item) && item.userIds.Contains(playerId))
+                if (scoreInfoCacher.TryGetCachedItem(diffId, out var item) && item.UserIds.Contains(playerId))
                 {
                     Plugin.Log.Notice($"Difficulty id {diffId} was removed from cache.");
                     scoreInfoCacher.RemoveItem(diffId);
@@ -127,7 +127,7 @@ namespace AccsaberLeaderboard.API
 
         #endregion
         #region Sync Functions
-        public static bool ScoreDataCached(string diffId, int page, Func<ScoreInfoToken, bool>? filter = null, int pageMult = FILTER_PAGE_MULT)
+        public static bool ScoreDataCached(string diffId, int page, Func<ScoreInfoToken, bool>? filter = null, int setCount = -1)
         { // page is one indexed.
             if (!scoreInfoCacher.TryGetCachedItem(diffId, out ScoreCache info))
                 return false;
@@ -138,30 +138,30 @@ namespace AccsaberLeaderboard.API
             {
                 page--;
                 int topIdx = page * PAGE_LENGTH, bottomIdx = topIdx + PAGE_LENGTH;
-                int blocked = info.blockedUserIndexes.SkipWhile(idx => idx < topIdx).TakeWhile(idx => idx < bottomIdx).Count();
+                int blocked = info.BlockedUserIndexes.SkipWhile(idx => idx < topIdx).TakeWhile(idx => idx < bottomIdx).Count();
                 bottomIdx += blocked;
                 filter = token =>
                 {
                     int rank = GetRank(token);
                     return topIdx < rank && bottomIdx >= rank;
                 };
-                count = info.data.Count(filter);
+                count = info.Data.Count(filter);
                 //Plugin.Log.Info($"count = {count}, page = {page}");
                 return PAGE_LENGTH == count;
             }
 
-            count = info.data.Count(filter);
+            count = info.Data.Count(filter);
 
-            return count >= page * PAGE_LENGTH * pageMult;
+            return count == setCount || count - ((page - 1) * PAGE_LENGTH) >= PAGE_LENGTH;
         }
         public static bool ScoreDataCached(string diffId, int page, string country)
         { // page is one indexed
             if (!scoreInfoCacher.TryGetCachedItem(diffId, out ScoreCache info))
                 return false;
 
-            int count = info.data.Count(CountryFilterMaker(country));
+            int count = info.Data.Count(CountryFilterMaker(country));
 
-            return count >= page * PAGE_LENGTH || (info.leaderboardLengths.TryGetValue(country, out int len) && count == len - info.blockedUserIndexes.Count);
+            return count >= page * PAGE_LENGTH || (info.LeaderboardLengths.TryGetValue(country, out int len) && count == len - info.BlockedUserIndexes.Count);
         }
         public static bool TryGetRankWithFilter(string diffId, string userId, Func<ScoreInfoToken, bool> filter, out int rank)
         {
@@ -169,46 +169,50 @@ namespace AccsaberLeaderboard.API
             rank = -1;
 
             // check for there being a cache for this map, as well as the targeted user id is in this cache.
-            if (!scoreInfoCacher.TryGetCachedItem(diffId, out var info) || !info.userIds.Contains(userId))
+            if (!scoreInfoCacher.TryGetCachedItem(diffId, out var info) || !info.UserIds.Contains(userId))
                 return false;
             //Plugin.Log.Info("Passed check 1.");
 
             // if the user is in the cache, get their score data.
-            ScoreInfoToken score = info.data.Find(token => GetPlayerId(token).Equals(userId));
+            ScoreInfoToken score = info.Data.Find(token => GetPlayerId(token).Equals(userId));
 
             // check to make sure that all scores before the targeted one are loaded (to insure that the page number will be correct).
             int userIndex = GetRank(score) - 1;
-            if (info.data.Count <= userIndex || !GetPlayerId(info.data[userIndex]).Equals(userId))
+            if (info.Data.Count <= userIndex || !GetPlayerId(info.Data[userIndex]).Equals(userId))
                 return false;
             //Plugin.Log.Info("Passed check 2.");
 
             // take all scores up to the player score, filter it using the filter, then since we know the target score in at the end, just return the length minus 1.
-            //rank = info.data.Take(userIndex + 1).Where(filter).Count() - 1;
-            rank = info.data.Take(userIndex + 1).Count() - 1;
+            rank = info.Data.Take(userIndex + 1).Where(filter).Count() - 1;
+
             return true;
         }
-        private static void CacheScoreData(string diffId, IEnumerable<ScoreInfoToken> scoreData, IEnumerable<int> blockedUserIndexes, int leaderboardSize, string country = "N/A")
+        private static void CacheScoreData(string diffId, IEnumerable<ScoreInfoToken> scoreData, IEnumerable<int> BlockedUserIndexes, int leaderboardSize, string country = "N/A")
         {
             if (scoreInfoCacher.TryGetCachedItem(diffId, out var val))
             {
-                val.userIds.UnionWith(scoreData.Select(GetPlayerId));
+                val.UserIds.UnionWith(scoreData.Select(GetPlayerId));
 
-                ref List<ScoreInfoToken> storedData = ref val.data;
-                ref List<int> blocked = ref val.blockedUserIndexes;
+                ref List<ScoreInfoToken> storedData = ref val.Data;
+                ref List<int> blocked = ref val.BlockedUserIndexes;
 
                 storedData = MergeListWithEnumerable(storedData, scoreData, token => GetRank(token));
-                if (blockedUserIndexes.Any())
-                    blocked = MergeListWithEnumerable(blocked, blockedUserIndexes);
-                if (!val.leaderboardLengths.ContainsKey(country))
-                    val.leaderboardLengths.Add(country, leaderboardSize);
+                if (BlockedUserIndexes.Any())
+                    blocked = MergeListWithEnumerable(blocked, BlockedUserIndexes);
+                if (!val.LeaderboardLengths.ContainsKey(country) && leaderboardSize >= 0)
+                    val.LeaderboardLengths.Add(country, leaderboardSize);
 
                 scoreInfoCacher.CacheItem(val, diffId);
             }
-            else scoreInfoCacher.CacheItem(new(new() { { country, leaderboardSize } }, [.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. blockedUserIndexes]), diffId, TimeSpan.FromMinutes(30));
+            else
+            {
+                Dictionary<string, int> len = leaderboardSize >= 0 ? new() { { country, leaderboardSize } } : [];
+                scoreInfoCacher.CacheItem(new(len, [.. scoreData], [.. scoreData.Select(GetPlayerId)], [.. BlockedUserIndexes]), diffId);
+            }
 
             //ScoreCache c = scoreInfoCacher.GetCachedItem(diffId);
-            //Plugin.Log.Info($"The cache now has {c.data.Count} entries: {c.data.Select(GetRank).Print()}");
-            //Plugin.Log.Info($"There are the following sizes: { c.leaderboardLengths.Values.Print()}");
+            //Plugin.Log.Info($"The cache now has {c.Data.Count} entries: {c.Data.Select(GetRank).Print()}");
+            //Plugin.Log.Info($"There are the following sizes: { c.LeaderboardLengths.Values.Print()}");
 
         }
         private static List<T> MergeListWithEnumerable<T>(List<T> left, IEnumerable<T> right) where T : IComparable
@@ -267,23 +271,45 @@ namespace AccsaberLeaderboard.API
         {
             foreach (KeyValuePair<string, ScoreCache> diff in scoreInfoCacher)
             {
-                if (!diff.Value.userIds.Contains(playerId))
+                if (!diff.Value.UserIds.Contains(playerId))
                     continue;
 
-                diff.Value.userIds.Remove(playerId);
-                ScoreInfoToken info = diff.Value.data.First(token => GetPlayerId(token).Equals(playerId));
-                diff.Value.data.Remove(info);
+                diff.Value.UserIds.Remove(playerId);
+                ScoreInfoToken info = diff.Value.Data.First(token => GetPlayerId(token).Equals(playerId));
+                diff.Value.Data.Remove(info);
                 int idx = GetRank(info) - 1;
 
-                if (diff.Value.blockedUserIndexes.Count < 2 || diff.Value.blockedUserIndexes.Last() < idx)
-                    diff.Value.blockedUserIndexes.Add(idx);
-                else for (int i = diff.Value.blockedUserIndexes.Count - 2; i >= 0; i--)
-                        if (diff.Value.blockedUserIndexes[i] < idx)
+                if (diff.Value.BlockedUserIndexes.Count < 2 || diff.Value.BlockedUserIndexes.Last() < idx)
+                    diff.Value.BlockedUserIndexes.Add(idx);
+                else for (int i = diff.Value.BlockedUserIndexes.Count - 2; i >= 0; i--)
+                        if (diff.Value.BlockedUserIndexes[i] < idx)
                         {
-                            diff.Value.blockedUserIndexes.Insert(i + 1, idx);
+                            diff.Value.BlockedUserIndexes.Insert(i + 1, idx);
                             break;
                         }
             }
+        }
+        private static (AccsaberScoreData[] scores, bool success) SearchInCache(ScoreCache cache, ref int page, Func<ScoreInfoToken, bool> filter, int pageLength, int scoresNeeded, int pageMult)
+        {
+            List<ScoreInfoToken>? currentCache = cache.Data;
+            if (currentCache is not null && currentCache.Count / pageLength > page)
+            {
+                IEnumerable<AccsaberScoreData> cachedScores = currentCache.Skip(page * pageLength).Where(filter).Select(ConvertToScoreData)!;
+                int cachedScoresLen = cachedScores.Count();
+                if (currentCache.Count == cache.LeaderboardSize || cachedScoresLen >= scoresNeeded)
+                {
+                    cachedScores = cachedScores.Take(scoresNeeded);
+                    return ([.. cachedScores], true);
+                }
+                if (cachedScores.Any())
+                {
+                    int truePage = currentCache.Count / PAGE_LENGTH;
+                    page = truePage / pageMult;
+                    scoresNeeded -= cachedScores.Count();
+                    return ([.. cachedScores], false);
+                }
+            }
+            return ([], false);
         }
 
         #endregion
@@ -312,7 +338,7 @@ namespace AccsaberLeaderboard.API
             }
         }
         public static async Task<(AccsaberScoreData[] scores, int truePage)> GetScoreData(int page, string diffId, Func<ScoreInfoToken, bool> filter, int scoresNeeded = PAGE_LENGTH, int pageMult = FILTER_PAGE_MULT, int maxCalls = 10, bool cacheBatch = true)
-        { // page is zero indexed.
+        { // page is one indexed.
             try
             {
                 if (maxCalls <= 0)
@@ -325,26 +351,14 @@ namespace AccsaberLeaderboard.API
 
                 List<ScoreInfoToken>? toCache = null;
                 ScoreCache currentCacheData = scoreInfoCacher.GetCachedItem(diffId);
-                List<ScoreInfoToken>? currentCache = currentCacheData.data;
                 if (cacheBatch)
                 {
                     toCache = new(pageLength);
-                    if (currentCache is not null && currentCache.Count / pageLength > page)
-                    {
-                        IEnumerable<AccsaberScoreData> cachedScores = currentCache.Skip(page * pageLength).Where(filter).Select(ConvertToScoreData)!;
-                        if (currentCache.Count == currentCacheData.LeaderboardSize || cachedScores.Count() >= scoresNeeded)
-                        {
-                            cachedScores = cachedScores.Take(scoresNeeded);
-                            return ([.. cachedScores], (int)Math.Ceiling((float)currentCache.Count / PAGE_LENGTH));
-                        }
-                        if (cachedScores.Any())
-                        {
-                            truePage = currentCache.Count / PAGE_LENGTH;
-                            page = truePage / pageMult;
-                            scoresNeeded -= cachedScores.Count();
-                            outp.AddRange(cachedScores);
-                        }
-                    }
+                    var (scores, success) = SearchInCache(currentCacheData, ref page, filter, pageLength, scoresNeeded, pageMult);
+                    if (success)
+                        return (scores, currentCacheData.Data.Count / PAGE_LENGTH);
+                    else
+                        outp.AddRange(scores);
                 }
 
                 int leaderboardSize = -1;
@@ -401,6 +415,52 @@ namespace AccsaberLeaderboard.API
                 return default;
             }
         }
+        public static async Task<AccsaberScoreData[]?> GetScoreData(int page, string diffId, RelationType relation)
+        { // page is one indexed
+            try
+            {
+                --page;
+                if (scoreInfoCacher.TryGetCachedItem(diffId, out ScoreCache cache))
+                {
+                    HashSet<string> relations = PlayerSocialLife.GetIds_Internal(relation.Convert());
+                    IEnumerable<ScoreInfoToken> tokens = cache.Data.Where(token => relations.Contains(GetPlayerId(token)));
+
+                    int tokenCount = tokens.Count();
+                    int scoreCount = cache.RelationScoresCount[(int)relation];
+                    int pageCount = page * PAGE_LENGTH;
+
+                    //Plugin.Log.Info($"token count = {tokenCount} || score count = {scoreCount} || page count = {pageCount}");
+
+                    if (scoreCount == 0)
+                        return [];
+
+                    if (tokenCount == scoreCount || tokenCount > pageCount && (scoreCount < pageCount + PAGE_LENGTH || tokenCount >= pageCount + PAGE_LENGTH))
+                        return [.. tokens.Skip(pageCount).Take(PAGE_LENGTH).Select(token => new AccsaberScoreData(token))];
+
+                }
+
+                string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF_RELATION, diffId, relation.ToString(), page, PAGE_LENGTH));
+
+                if (string.IsNullOrEmpty(dataStr))
+                    return null;
+
+                JToken dataToken = JToken.Parse(dataStr);
+                IEnumerable<ScoreInfoToken> outp = dataToken["content"].Children().Select(token => new ScoreInfoToken((JObject)token));
+
+                CacheScoreData(diffId, outp, [], -1);
+                cache = scoreInfoCacher.GetCachedItem(diffId);
+                cache.RelationScoresCount[(int)relation] = (int)dataToken["totalElements"];
+                scoreInfoCacher.CacheItem(cache, diffId);
+
+                return [.. outp.Select(token => new AccsaberScoreData(token))];
+
+            } catch (Exception e)
+            {
+                Plugin.Log.Error("There was an error getting score data.");
+                Plugin.Log.Debug(e);
+            }
+            return null;
+        }
         public static async Task<List<MilestoneInfoToken>?> GetMilestoneData(string userId, Func<MilestoneInfoToken, bool>? filter = null, Comparison<MilestoneInfoToken>? sorter = null, int pageMult = FILTER_PAGE_MULT)
         {
             int page = 0;
@@ -449,11 +509,11 @@ namespace AccsaberLeaderboard.API
             (int)JToken.Parse(await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler))["difficulties"].Children().First()["maxScore"];
         public static async Task<string> GetHashData(string hash, int diffNum) =>
             await CallAPI_String(string.Format(APAPI_HASH_DIFF, hash, DiffNumToReloadedDiff(diffNum)), throttler, true, maxRetries: 1).ConfigureAwait(false);
-        public static async Task<Dictionary<RelationType, (HashSet<string> userIds, List<(string userId, string relationId)> relations)>> GetPlayerRelations()
+        public static async Task<Dictionary<RelationType, (HashSet<string> userIds, Dictionary<string, string> relations)>> GetPlayerRelations()
         {
             const int pageLength = PAGE_LENGTH * 10;
             int page = 0, callsLeft = 0;
-            Dictionary<RelationType, (HashSet<string> userIds, List<(string userId, string relationId)> relations)> outp = [];
+            Dictionary<RelationType, (HashSet<string> userIds, Dictionary<string, string> relations)> outp = [];
 
             foreach (RelationType rt in Enum.GetValues(typeof(RelationType)))
                 outp[rt] = ([], []);
@@ -473,9 +533,9 @@ namespace AccsaberLeaderboard.API
                 foreach (JToken token in ids)
                 {
                     RelationType rt = (RelationType)Enum.Parse(typeof(RelationType), token["type"].ToString());
-                    (string userId, string relationId) relation = (token["targetUserId"].ToString(), token["id"].ToString());
-                    outp[rt].userIds.Add(relation.userId);
-                    outp[rt].relations.Add(relation);
+                    string userId = token["targetUserId"].ToString(), relationId = token["id"].ToString();
+                    outp[rt].userIds.Add(userId);
+                    outp[rt].relations.Add(userId, relationId);
                 }
 
             } while (callsLeft > 0);
@@ -533,8 +593,8 @@ namespace AccsaberLeaderboard.API
         }
         public static async Task<ScoreInfoToken?> GetScoreData(string userId, string hash, BeatmapDifficulty diff, CancellationToken ct = default)
         {
-            if (diffIdCache.TryGetValue((hash, diff), out string diffId) && scoreInfoCacher.TryGetCachedItem(diffId, out var val) && val.userIds.Contains(userId))
-                return val.data.First(token => GetPlayerId(token).Equals(userId));
+            if (diffIdCache.TryGetValue((hash, diff), out string diffId) && scoreInfoCacher.TryGetCachedItem(diffId, out var val) && val.UserIds.Contains(userId))
+                return val.Data.First(token => GetPlayerId(token).Equals(userId));
 
             string reloadedDiff = DiffNumToReloadedDiff(FromDiff(diff));
             string dataStr = await CallAPI_String(string.Format(APAPI_SCORE, userId, hash.ToLower(), reloadedDiff), throttler, true, ct: ct).ConfigureAwait(false);
@@ -577,26 +637,26 @@ namespace AccsaberLeaderboard.API
             if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out var data))
             {
                 int minRank = page * count + 1, maxRank = minRank + count;
-                int topIdx = data.data.FindIndex(token =>
+                int topIdx = data.Data.FindIndex(token =>
                 {
                     int rank = GetRank(token);
                     return rank >= minRank && rank < maxRank; 
                 });
 
-                if (topIdx >= 0 && data.data.Count > topIdx + count - 1)
+                if (topIdx >= 0 && data.Data.Count > topIdx + count - 1)
                 {
 
-                    int topRank = GetRank(data.data[topIdx]);
-                    int bottomRank = GetRank(data.data[topIdx + count - 1]);
+                    int topRank = GetRank(data.Data[topIdx]);
+                    int bottomRank = GetRank(data.Data[topIdx + count - 1]);
 
-                    IEnumerable<int> temp = data.blockedUserIndexes.SkipWhile(idx => idx < topRank);
-                    //int blockedUserCountBefore = data.blockedUserIndexes.Count - temp.Count(); // To use later if I decide to shift pages.
+                    IEnumerable<int> temp = data.BlockedUserIndexes.SkipWhile(idx => idx < topRank);
+                    //int blockedUserCountBefore = data.BlockedUserIndexes.Count - temp.Count(); // To use later if I decide to shift pages.
                     int blockedUserCount = temp.TakeWhile(idx => idx < bottomRank).Count();
 
                     //Plugin.Log.Info($"bottom = {bottomRank}, top = {topRank}, bottom idx = {topIdx + count - 1}, top idx = {topIdx}, blocked = {blockedUserCount}");
 
                     if (topRank - page * count == 1 && bottomRank - (page + 1) * count == blockedUserCount)
-                        return data.data.Skip(topIdx).Take(count);
+                        return data.Data.Skip(topIdx).Take(count);
                 }
             }
 
@@ -618,11 +678,11 @@ namespace AccsaberLeaderboard.API
         {
             if (scoreInfoCacher.TryGetCachedItem(difficulty_id, out ScoreCache data)) 
             {
-                int trueCount = data.data.Count(CountryFilterMaker(country));
-                int total = data.leaderboardLengths.TryGetValue(country, out int leng) ? leng : 0;
-                //Plugin.Log.Info($"true count = {trueCount}, blocked = {data.blockedUserIndexes.Count}, total = {total}");
-                if (data.leaderboardLengths.TryGetValue(country, out int len) && trueCount == len - data.blockedUserIndexes.Count || page < trueCount / count)
-                    return data.data.Where(CountryFilterMaker(country)).Skip(page * count).Take(count); 
+                int trueCount = data.Data.Count(CountryFilterMaker(country));
+                int total = data.LeaderboardLengths.TryGetValue(country, out int leng) ? leng : 0;
+                //Plugin.Log.Info($"true count = {trueCount}, blocked = {data.BlockedUserIndexes.Count}, total = {total}");
+                if (data.LeaderboardLengths.TryGetValue(country, out int len) && trueCount == len - data.BlockedUserIndexes.Count || page < trueCount / count)
+                    return data.Data.Where(CountryFilterMaker(country)).Skip(page * count).Take(count); 
             }
 
             string dataStr = await CallAPI_String(string.Format(APAPI_LEADERBOARD_DIFF_COUNTRY, difficulty_id, country, page, count), throttler, true, ct: ct).ConfigureAwait(false);
@@ -642,17 +702,17 @@ namespace AccsaberLeaderboard.API
         private static async Task<(List<ScoreInfoToken>? newOutp, List<int>? blockedIds)> HandleBlockedPlayers(List<ScoreInfoToken> scoreTokens, ScoreCache data, int page, int count,
             Func<int, int, Task<IEnumerable<ScoreInfoToken>?>> getExtraScores)
         {
-            if (data.blockedUserIndexes is null)
+            if (data.BlockedUserIndexes is null)
                 return (scoreTokens, []);
 
-            if (data.blockedUserIndexes.Count > 0)
+            if (data.BlockedUserIndexes.Count > 0)
             {
-                IEnumerable<ScoreInfoToken> toUnblock = scoreTokens.Where(token => data.blockedUserIndexes.Contains(GetRank(token) - 1) && !PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(token)));
+                IEnumerable<ScoreInfoToken> toUnblock = scoreTokens.Where(token => data.BlockedUserIndexes.Contains(GetRank(token) - 1) && !PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(token)));
                 if (toUnblock.Any())
                 {
                     List<int> toUnblockIdx = [.. toUnblock.Select(token => GetRank(token) - 1)];
                     foreach (int i in toUnblockIdx)
-                        data.blockedUserIndexes.Remove(i);
+                        data.BlockedUserIndexes.Remove(i);
                 }
             }
 
@@ -661,7 +721,7 @@ namespace AccsaberLeaderboard.API
 
             if (PlayerSocialLife.PlayerBlocked.Count > 0)
             {
-                bool addNewEntries = data.blockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.blockedUserIndexes.Count;
+                bool addNewEntries = data.BlockedUserIndexes is null || PlayerSocialLife.PlayerBlocked.Count != data.BlockedUserIndexes.Count;
 
                 for (int i = scoreTokens.Count - 1; i >= 0; i--)
                     if (PlayerSocialLife.PlayerBlocked.Contains(GetPlayerId(scoreTokens[i])))
@@ -726,6 +786,8 @@ namespace AccsaberLeaderboard.API
 
                 SetAuthForClient(outp);
 
+                Plugin.Log.Info("Successfully authenticated!");
+
                 return outp;
             }
             catch (Exception e)
@@ -749,14 +811,27 @@ namespace AccsaberLeaderboard.API
         #endregion
         #region Misc structs
 
-        private struct ScoreCache(Dictionary<string, int> leaderboardLengths, List<ScoreInfoToken> data, HashSet<string> userIds, List<int> blockedUserIndexes)
+        private struct ScoreCache
         {
-            public Dictionary<string, int> leaderboardLengths = leaderboardLengths;
-            public List<ScoreInfoToken> data = data;
-            public HashSet<string> userIds = userIds;
-            public List<int> blockedUserIndexes = blockedUserIndexes;
+            public Dictionary<string, int> LeaderboardLengths;
+            public List<ScoreInfoToken> Data;
+            public HashSet<string> UserIds;
+            public List<int> BlockedUserIndexes;
+            public int[] RelationScoresCount;
 
-            public readonly int LeaderboardSize => leaderboardLengths["N/A"];
+            public readonly int LeaderboardSize => LeaderboardLengths["N/A"];
+
+            public ScoreCache(Dictionary<string, int> leaderboardLengths, List<ScoreInfoToken> data, HashSet<string> userIds, List<int> blockedUserIndexes)
+            {
+                LeaderboardLengths = leaderboardLengths;
+                Data = data;
+                UserIds = userIds;
+                BlockedUserIndexes = blockedUserIndexes;
+                RelationScoresCount = new int[Enum.GetValues(typeof(RelationType)).Length];
+
+                for (int i = 0; i < RelationScoresCount.Length; i++)
+                    RelationScoresCount[i] = -1;
+            }
         }
         internal readonly struct AuthInfo(string accessToken, string refreshToken, DateTime expirationDate, string userId)
         {
